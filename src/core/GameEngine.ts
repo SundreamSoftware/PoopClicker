@@ -71,6 +71,9 @@ export class GameEngine {
   private storage: Storage | null
   private frenzyActiveUntil = 0
   private lastPersistAt = 0
+  private cachedSnapshot: EngineSnapshot | null = null
+  private uiVersion = 0
+  private lastUiEmitAt = 0
 
   constructor(
     options: {
@@ -94,6 +97,7 @@ export class GameEngine {
         : options.storage
     this.lastTickAt = now
     this.bootstrap(now)
+    this.cachedSnapshot = this.buildSnapshot()
   }
 
   static fromStorage(
@@ -112,8 +116,17 @@ export class GameEngine {
     return () => this.listeners.delete(listener)
   }
 
-  private emit(): void {
+  private emit(force = true): void {
+    this.cachedSnapshot = this.buildSnapshot()
+    this.uiVersion += 1
+    if (force) this.lastUiEmitAt = this.time.now()
     for (const listener of this.listeners) listener()
+  }
+
+  /** Throttled UI notify for high-frequency ticks (keeps getSnapshot referentially stable between emits). */
+  private emitUiThrottled(now: number, minIntervalMs = 100): void {
+    if (now - this.lastUiEmitAt < minIntervalMs) return
+    this.emit(true)
   }
 
   private bootstrap(now: number): void {
@@ -141,6 +154,13 @@ export class GameEngine {
   }
 
   getSnapshot(): EngineSnapshot {
+    if (!this.cachedSnapshot) {
+      this.cachedSnapshot = this.buildSnapshot()
+    }
+    return this.cachedSnapshot
+  }
+
+  private buildSnapshot(): EngineSnapshot {
     const now = this.time.now()
     const production = computeProduction(this.save, this.combo, now)
     return {
@@ -190,7 +210,8 @@ export class GameEngine {
     this.processScheduledEvents(now)
     this.syncMeta(now)
     this.maybePersist(now)
-    this.emit()
+    // Invalidate cache so next forced read is fresh; notify React at ~10Hz.
+    this.emitUiThrottled(now)
   }
 
   tap(): TapResult {
