@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { createTestEngine } from '../../src/core/GameEngine'
 import { ECONOMY } from '../../src/core/economy/formulas'
 import { LargeNumber } from '../../src/core/numbers/LargeNumber'
-import { buildFlushPreview } from '../../src/core/systems/flush'
+import { createDefaultSave } from '../../src/core/save/defaultSave'
+import { buildFlushPreview, milestoneEventBonus, performFlush } from '../../src/core/systems/flush'
+import { computeProduction } from '../../src/core/systems/production'
 
 describe('Flush', () => {
   it('rewards based on runPPEarned not currentPP', () => {
@@ -68,5 +70,30 @@ describe('Flush', () => {
     const secondPreview = buildFlushPreview(engine.exportSave(), now)
     expect(secondPreview.firstFlushBonusApplied).toBe(false)
     expect(secondPreview.flushPowerGain).toBeLessThanOrEqual(first)
+  })
+
+  it('applies start bonus from post-flush production', () => {
+    const now = Date.UTC(2026, 7, 7, 12)
+    const save = {
+      ...createDefaultSave(now),
+      flushCount: 2,
+      runPPEarned: LargeNumber.from(1_000_000).serialize(),
+      currentPP: LargeNumber.from(1_000_000).serialize(),
+      generators: { plunger_intern: 10 },
+    }
+    const result = performFlush(save, now)
+    expect(result.ok).toBe(true)
+    const production = computeProduction(result.save, 0, now)
+    const bonus = production.pps.mul(5 * 60)
+    expect(LargeNumber.deserialize(result.save.currentPP).toNumber()).toBeCloseTo(
+      bonus.toNumber(),
+      -1,
+    )
+  })
+
+  it('exports milestone event bonus at flush 15', () => {
+    const save = { ...createDefaultSave(), flushCount: 15 }
+    expect(milestoneEventBonus(save)).toBe(0.25)
+    expect(milestoneEventBonus({ ...save, flushCount: 10 })).toBe(0)
   })
 })

@@ -4,7 +4,13 @@ import { FixedClock } from '../../src/core/time/TimeService'
 import { GameEngine } from '../../src/core/GameEngine'
 import { createDefaultSave } from '../../src/core/save/defaultSave'
 import { LargeNumber } from '../../src/core/numbers/LargeNumber'
-import { generateDailyChallenges, progressChallenge } from '../../src/core/systems/daily'
+import {
+  claimChallenge,
+  generateDailyChallenges,
+  processStreak,
+  progressChallenge,
+  rerollChallengeAt,
+} from '../../src/core/systems/daily'
 
 describe('Daily Challenges', () => {
   it('generates 3 challenges from different categories', () => {
@@ -102,6 +108,57 @@ describe('Daily Challenges', () => {
     const next = progressChallenge(withChallenge, 'cps', 6)
     expect(next.dailyChallenges[0].progress).toBe(6)
   })
+
+  it('scales crit_taps target by crit chance', () => {
+    const save = {
+      ...createDefaultSave(),
+      flushCount: 0,
+      highestCPS: 0,
+      purchasedRunUpgrades: { lucky_streak: 10 },
+    }
+    const withCrit = generateDailyChallenges(save, Date.UTC(2026, 7, 7), LargeNumber.from(10))
+    const base = generateDailyChallenges(createDefaultSave(), Date.UTC(2026, 7, 7), LargeNumber.from(10))
+    const critChallenge = withCrit.find((c) => c.metric === 'crit_taps')
+    const baseCrit = base.find((c) => c.metric === 'crit_taps')
+    if (critChallenge && baseCrit) {
+      expect(critChallenge.target).toBeLessThanOrEqual(baseCrit.target)
+    }
+  })
+
+  it('rerollChallengeAt excludes current template ids', () => {
+    const now = Date.UTC(2026, 7, 7)
+    const save = createDefaultSave(now)
+    const challenges = generateDailyChallenges(save, now, LargeNumber.from(10))
+    const saveWith = { ...save, dailyChallenges: challenges }
+    const rerolled = rerollChallengeAt(saveWith, 0, now, LargeNumber.from(10))
+    expect(rerolled.dailyChallenges[0].templateId).not.toBe(challenges[0].templateId)
+  })
+
+  it('claimChallenge boost expiry uses provided now', () => {
+    const now = Date.UTC(2026, 7, 7, 12)
+    const save = {
+      ...createDefaultSave(now),
+      dailyChallenges: [
+        {
+          templateId: 'events_n',
+          category: 'event' as const,
+          metric: 'events' as const,
+          name: 'Events',
+          description: 'Events',
+          target: 1,
+          progress: 1,
+          completed: true,
+          claimed: false,
+          rewardGtp: 18,
+          rewardBoostMinutes: 10,
+        },
+      ],
+    }
+    const result = claimChallenge(save, 0, now)
+    expect(result.ok).toBe(true)
+    const boost = result.save.activeBoosts.find((b) => b.label === 'Daily Boost')
+    expect(boost?.expiresAt).toBe(now + 10 * 60_000)
+  })
 })
 
 describe('Streak', () => {
@@ -140,6 +197,34 @@ describe('Streak', () => {
     expect(result.ok).toBe(true)
     expect(engine.exportSave().streakSaverCharges).toBe(0)
     expect(engine.exportSave().dailyStreak).toBe(4)
+  })
+
+  it('resets streak to day 1 without incrementing cycle on break', () => {
+    const now = Date.UTC(2026, 7, 10, 12)
+    const save = {
+      ...createDefaultSave(now),
+      dailyStreak: 5,
+      dailyStreakCycle: 2,
+      lastDailyClaim: '2026-08-07',
+      streakSaverCharges: 0,
+    }
+    const result = processStreak(save, now)
+    expect(result.streakBroken).toBe(true)
+    expect(result.save.dailyStreak).toBe(1)
+    expect(result.save.dailyStreakCycle).toBe(2)
+  })
+
+  it('increments cycle only when wrapping day 7', () => {
+    const now = Date.UTC(2026, 7, 8, 12)
+    const save = {
+      ...createDefaultSave(now),
+      dailyStreak: 7,
+      dailyStreakCycle: 1,
+      lastDailyClaim: '2026-08-07',
+    }
+    const result = processStreak(save, now)
+    expect(result.save.dailyStreak).toBe(1)
+    expect(result.save.dailyStreakCycle).toBe(2)
   })
 })
 
