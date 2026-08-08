@@ -113,7 +113,11 @@ export function CollectionPanel() {
           return (
             <div className="list-row" key={skin.id}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <div className="skin-swatch" style={{ background: color }} aria-hidden />
+                <div
+                  className={`skin-swatch skin-preview-${skin.id.replace(/[^a-z0-9_-]/gi, '_')}`}
+                  style={{ ['--preview-color' as string]: color }}
+                  aria-hidden
+                />
                 <div>
                   <strong>{skin.name}</strong>{' '}
                   <span className={`badge ${skin.rarity}`}>{skin.rarity}</span>

@@ -6,8 +6,8 @@
   --w-prop: rgba(255, 255, 255, 0.12);
   position: relative;
   width: 100%;
-  min-height: 52dvh;
-  border-radius: 22px;
+  min-height: clamp(430px, 59dvh, 620px);
+  border-radius: 28px;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -19,7 +19,121 @@
       transparent 42%
     ),
     linear-gradient(180deg, var(--w-a), var(--w-b) 48%, var(--w-c));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 -80px 90px rgba(0, 0, 0, 0.16),
+    0 18px 42px rgba(8, 18, 25, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.world-environment {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.world-environment::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 26%;
+  opacity: 0.34;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px);
+  background-size: 54px 38px;
+  mask-image: linear-gradient(180deg, #000 20%, rgba(0, 0, 0, 0.45));
+}
+
+.env-light {
+  position: absolute;
+  width: 58%;
+  height: 28%;
+  left: 21%;
+  top: -18%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--w-accent) 72%, white);
+  filter: blur(32px);
+  opacity: 0.48;
+}
+
+.env-floor {
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  bottom: -12%;
+  height: 40%;
+  transform: perspective(320px) rotateX(54deg);
+  transform-origin: 50% 100%;
+  background:
+    linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.16) 50%, transparent 51%) 0 0 /
+      72px 100%,
+    linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px) 0 0 / 100% 40px,
+    color-mix(in srgb, var(--w-c) 62%, #17232a);
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 -18px 30px rgba(0, 0, 0, 0.13);
+}
+
+.env-wall-detail {
+  position: absolute;
+  top: 18%;
+  width: 22%;
+  height: 29%;
+  border-radius: 12px;
+  border: 5px solid color-mix(in srgb, var(--w-accent) 28%, rgba(255, 255, 255, 0.5));
+  background: rgba(6, 15, 22, 0.2);
+  box-shadow:
+    inset 0 0 28px rgba(255, 255, 255, 0.1),
+    0 8px 18px rgba(0, 0, 0, 0.15);
+}
+
+.env-wall-detail-left {
+  left: 5%;
+}
+
+.env-wall-detail-right {
+  right: 5%;
+  height: 14%;
+  top: 28%;
+  border-width: 3px;
+}
+
+.env-prop {
+  position: absolute;
+  z-index: 1;
+  bottom: 20%;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.25));
+}
+
+.env-prop-left {
+  left: 5%;
+  width: 14px;
+  height: 94px;
+  border-radius: 9px 9px 4px 4px;
+  background: linear-gradient(90deg, #7a3f26, #d78b55 45%, #63311d);
+}
+
+.env-prop-left::after {
+  content: '';
+  position: absolute;
+  width: 38px;
+  height: 25px;
+  left: -12px;
+  top: -8px;
+  border-radius: 50% 50% 30% 30%;
+  background: color-mix(in srgb, var(--w-accent) 62%, #7a3f26);
+}
+
+.env-prop-right {
+  right: 5%;
+  width: 54px;
+  height: 46px;
+  border-radius: 50% 50% 42% 42%;
+  background:
+    radial-gradient(circle at 50% 50%, var(--w-b) 0 18%, transparent 20%),
+    linear-gradient(145deg, #fff, #cfd8df);
+  border: 4px solid rgba(255, 255, 255, 0.5);
 }
 
 .world-stage > .world-children {
@@ -43,12 +157,29 @@
   left: 12px;
   top: 10px;
   z-index: 3;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   pointer-events: none;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  background: rgba(8, 16, 22, 0.32);
+  backdrop-filter: blur(8px);
+}
+
+.world-label-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--w-accent);
+  box-shadow: 0 0 10px var(--w-accent);
 }
 
 /* Per-world palettes */
@@ -123,6 +254,66 @@
   --w-b: #44403c;
   --w-c: #a8a29e;
   --w-accent: #fbbf24;
+}
+
+.world-space_loo .env-wall-detail-left,
+.world-void_washroom .env-wall-detail-left {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 65% 30%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 25% 65%, #9ad7ff 0 1px, transparent 2px),
+    radial-gradient(circle at 48% 52%, #fff 0 2px, transparent 3px), #060b22;
+  box-shadow:
+    inset 0 0 24px #1d4ed8,
+    0 0 22px rgba(128, 216, 255, 0.28);
+}
+
+.world-neon_arcade_stall .world-environment::before,
+.world-quantum_bathroom .world-environment::before {
+  background-size: 34px 34px;
+  filter: drop-shadow(0 0 4px var(--w-accent));
+}
+
+.world-office_toilet .env-light {
+  width: 72%;
+  height: 12px;
+  left: 14%;
+  top: 5%;
+  border-radius: 4px;
+  filter: blur(5px);
+  animation: officeLight 4.8s steps(1) infinite;
+}
+
+.world-volcanic_spa_toilet .env-floor {
+  background:
+    radial-gradient(ellipse at 35% 45%, #ffb020 0 3%, transparent 4%),
+    radial-gradient(ellipse at 72% 62%, #ff6b00 0 4%, transparent 5%),
+    linear-gradient(135deg, #29120c, #6b1c0a);
+}
+
+.world-cloud_restroom .env-wall-detail,
+.world-cloud_restroom .env-prop {
+  opacity: 0.5;
+  filter: blur(1px) drop-shadow(0 8px 12px rgba(255, 255, 255, 0.4));
+}
+
+.world-omni_throne .env-wall-detail {
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow:
+    inset 0 0 28px rgba(251, 191, 36, 0.12),
+    0 0 22px rgba(251, 191, 36, 0.2);
+}
+
+@keyframes officeLight {
+  0%,
+  94%,
+  100% {
+    opacity: 0.65;
+  }
+  95%,
+  97% {
+    opacity: 0.18;
+  }
 }
 
 /* Environmental animated props */

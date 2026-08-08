@@ -34,7 +34,18 @@ export function WorldStage({ worldId, children, reducedMotion = false }: WorldSt
       data-world={safeId}
       aria-label={world?.name ?? 'Bathroom'}
     >
-      <div className="world-label">{world?.name ?? 'Home Bathroom'}</div>
+      <div className="world-environment" aria-hidden>
+        <span className="env-light" />
+        <span className="env-wall-detail env-wall-detail-left" />
+        <span className="env-wall-detail env-wall-detail-right" />
+        <span className="env-floor" />
+        <span className="env-prop env-prop-left" />
+        <span className="env-prop env-prop-right" />
+      </div>
+      <div className="world-label">
+        <span className="world-label-dot" aria-hidden />
+        {world?.name ?? 'Home Bathroom'}
+      </div>
       <div className="world-fx" aria-hidden>
         {fx.flatMap((group) =>
           Array.from({ length: group.count }, (_, i) => (

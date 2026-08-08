@@ -656,9 +656,9 @@ function BodyPath({
 }) {
   const swirl = (
     <g className="body-main layer-body">
-      <ellipse cx="100" cy="128" rx="62" ry="48" fill={color} />
-      <ellipse cx="100" cy="95" rx="50" ry="40" fill={color} />
-      <ellipse cx="100" cy="68" rx="34" ry="28" fill={light} />
+      <ellipse cx="100" cy="128" rx="62" ry="48" fill="url(#skinBodyGradient)" />
+      <ellipse cx="100" cy="95" rx="50" ry="40" fill="url(#skinBodyGradient)" />
+      <ellipse cx="100" cy="68" rx="34" ry="28" fill="url(#skinBodyLightGradient)" />
       <ellipse cx="88" cy="60" rx="10" ry="7" fill={shade(light, 30)} opacity="0.55" />
       <path d="M78 88 Q100 100 122 88" fill="none" stroke={dark} strokeWidth="3" opacity="0.25" />
     </g>
@@ -668,9 +668,9 @@ function BodyPath({
     case 'chunky':
       return (
         <g className="body-main layer-body">
-          <ellipse cx="100" cy="125" rx="68" ry="52" fill={color} />
-          <ellipse cx="100" cy="90" rx="54" ry="42" fill={color} />
-          <ellipse cx="100" cy="62" rx="36" ry="28" fill={light} />
+          <ellipse cx="100" cy="125" rx="68" ry="52" fill="url(#skinBodyGradient)" />
+          <ellipse cx="100" cy="90" rx="54" ry="42" fill="url(#skinBodyGradient)" />
+          <ellipse cx="100" cy="62" rx="36" ry="28" fill="url(#skinBodyLightGradient)" />
         </g>
       )
     case 'crystal':
@@ -783,9 +783,9 @@ function BodyPath({
     case 'soft':
       return (
         <g className="body-main layer-body">
-          <ellipse cx="100" cy="120" rx="64" ry="50" fill={color} />
-          <ellipse cx="100" cy="88" rx="52" ry="40" fill={color} />
-          <ellipse cx="100" cy="62" rx="36" ry="28" fill={light} />
+          <ellipse cx="100" cy="120" rx="64" ry="50" fill="url(#skinBodyGradient)" />
+          <ellipse cx="100" cy="88" rx="52" ry="40" fill="url(#skinBodyGradient)" />
+          <ellipse cx="100" cy="62" rx="36" ry="28" fill="url(#skinBodyLightGradient)" />
         </g>
       )
     case 'swirl':
@@ -880,6 +880,17 @@ export function PoopCharacter({
       >
         <svg className="character-svg" viewBox="0 0 200 200" role="img">
           <defs>
+            <radialGradient id="skinBodyGradient" cx="34%" cy="22%" r="78%">
+              <stop offset="0%" stopColor={shade(light, 34)} />
+              <stop offset="38%" stopColor={light} />
+              <stop offset="72%" stopColor={color} />
+              <stop offset="100%" stopColor={dark} />
+            </radialGradient>
+            <radialGradient id="skinBodyLightGradient" cx="32%" cy="20%" r="82%">
+              <stop offset="0%" stopColor={shade(light, 48)} />
+              <stop offset="48%" stopColor={light} />
+              <stop offset="100%" stopColor={color} />
+            </radialGradient>
             <linearGradient id="holoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#85c1e9" />
               <stop offset="50%" stopColor="#f8c8dc" />
@@ -890,6 +901,32 @@ export function PoopCharacter({
           <AuraLayer aura={visual.aura} color={color} />
           <BodyPath bodyShape={visual.bodyShape} color={color} dark={dark} light={light} />
           <TextureOverlay texture={visual.texture} color={color} />
+          <g className="layer-body-details" aria-hidden>
+            <path
+              d="M54 107 Q39 104 31 116 Q38 124 47 119"
+              fill="none"
+              stroke={dark}
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+            <path
+              d="M146 107 Q161 104 169 116 Q162 124 153 119"
+              fill="none"
+              stroke={dark}
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+            <ellipse cx="71" cy="101" rx="10" ry="5" fill="#ff9a88" opacity="0.2" />
+            <ellipse cx="129" cy="101" rx="10" ry="5" fill="#ff9a88" opacity="0.2" />
+            <path
+              d="M72 51 Q87 37 102 45"
+              fill="none"
+              stroke="white"
+              strokeWidth="5"
+              strokeLinecap="round"
+              opacity="0.25"
+            />
+          </g>
 
           <g className={`layer-eyes face-${face}`}>
             {face === 'dizzy' ? (
