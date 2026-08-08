@@ -5,17 +5,62 @@ export function assetUrl(path: string): string {
   return `${import.meta.env.BASE_URL}${ASSET_ROOT}/${normalized}`
 }
 
-export type AuthoredSkinSlug = 'classic' | 'corny' | 'diamond' | 'cyber' | 'blackhole' | '404'
-export type AuthoredExpression = 'normal' | 'happy' | 'frenzy'
+/** Folder slug under `public/assets/P1_skins/<slug>/`. */
+export type AuthoredSkinSlug = string
+export type AuthoredExpression = 'normal' | 'happy'
 export type WorldLayer = 'background' | 'midground' | 'foreground' | 'vfx'
 
+/**
+ * Maps gameplay skin ids → authored pack folder ids.
+ * Exact matches prefer the same name; close thematic aliases fill remaining roster slots.
+ */
 const SKIN_SLUGS: Partial<Record<string, AuthoredSkinSlug>> = {
   classic_poop: 'classic',
   corny_poop: 'corny',
+  coffee_poop: 'coffee',
+  burrito_poop: 'burrito',
+  taco_poop: 'taco',
+  office_poop: 'business',
+  gamer_poop: 'gamer',
+  construction_poop: 'plumber',
+  doctor_poop: 'doctor',
+  cactus_poop: 'cactus',
+  cowboy_poop: 'cowboy',
+  pirate_poop: 'pirate',
+  rainbow_poop: 'rainbow',
+  disco_poop: 'disco',
+  ghost_poop: 'ghost',
+  zombie_poop: 'zombie',
+  vampire_poop: 'vampire',
+  pumpkin_poop: 'pumpkin',
+  santa_poop: 'santa',
+  unicorn_poop: 'unicorn',
+  alien_poop: 'alien',
+  astronaut_poop: 'astronaut',
+  viking_poop: 'viking',
+  samurai_poop: 'samurai',
+  knight_poop: 'knight',
+  wizard_poop: 'witch',
+  devil_poop: 'demon',
+  angel_poop: 'angel',
   diamond_poop: 'diamond',
   cyber_poop: 'cyber',
+  pixel_poop: 'rgb',
+  glitch_poop: 'hacker',
+  nuclear_poop: 'radioactive',
+  king_poop: 'king',
   black_hole_poop: 'blackhole',
+  holographic_poop: 'cosmic',
+  time_traveller_poop: 'scientist',
+  multiverse_poop: 'infinity',
+  void_poop: 'obsidian',
+  developer_poop: 'hacker',
+  ceo_poop: 'ceo',
   '404_poop': '404',
+  schrodingers_poop: 'cat',
+  the_final_poop: 'god',
+  toilet_tycoon: 'prestige',
+  // chef_poop has no authored pack counterpart yet
 }
 
 export const AUTHORED_WORLD_IDS = new Set([
@@ -26,21 +71,37 @@ export const AUTHORED_WORLD_IDS = new Set([
   'omni_throne',
 ])
 
+const CLASSIC_EXTRA_EXPRESSIONS = new Set(['effort', 'panic', 'overdrive', 'dizzy', 'frenzy'])
+
+export function authoredSkinSlug(skinId: string): AuthoredSkinSlug | null {
+  return SKIN_SLUGS[skinId] ?? null
+}
+
 export function resolveSkinExpressionPath(skinId: string, face: string): string | null {
   const slug = SKIN_SLUGS[skinId]
   if (!slug) return null
 
-  if (slug === 'classic' && ['effort', 'panic', 'overdrive', 'dizzy'].includes(face)) {
+  if (slug === 'classic' && CLASSIC_EXTRA_EXPRESSIONS.has(face)) {
     return assetUrl(`P0_character/expressions/poop_classic_${face}.svg`)
   }
 
+  // Pack ships normal + happy only; intense faces use happy + aura overlays.
   const expression: AuthoredExpression =
-    face === 'frenzy' || face === 'overdrive'
-      ? 'frenzy'
-      : face === 'happy' || face === 'event'
-        ? 'happy'
-        : 'normal'
+    face === 'happy' ||
+    face === 'event' ||
+    face === 'frenzy' ||
+    face === 'overdrive' ||
+    face === 'effort'
+      ? 'happy'
+      : 'normal'
+
   return assetUrl(`P1_skins/${slug}/poop_${slug}_${expression}.svg`)
+}
+
+export function resolveSkinThumbnailPath(skinId: string): string | null {
+  const slug = SKIN_SLUGS[skinId]
+  if (!slug) return null
+  return assetUrl(`P1_skins/_thumbnails/${slug}_192.png`)
 }
 
 export function resolveCharacterAuraPath(face: string): string | null {

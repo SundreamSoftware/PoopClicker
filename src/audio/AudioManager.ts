@@ -1,10 +1,10 @@
 /**
- * Procedural Web Audio SFX + layered music beds.
- * No external audio files — oscillators / noise buffers only.
+ * Web Audio SFX (sampled tap farts + procedural cues) and layered music beds.
  */
 
 export type SfxId =
   | 'tap_plop'
+  | 'tap_fart'
   | 'tap_squish'
   | 'crit'
   | 'upgrade'
@@ -52,6 +52,15 @@ class AudioManagerImpl {
   private eventGain: GainNode | null = null
   private noiseCache: AudioBuffer | null = null
   private plopVariant = 0
+  private fartBuffers: AudioBuffer[] = []
+  private fartLoadPromise: Promise<void> | null = null
+
+  private static readonly FART_SAMPLE_PATHS = [
+    'assets/P0_audio/farts/fart_classic.mp3',
+    'assets/P0_audio/farts/fart_small.mp3',
+    'assets/P0_audio/farts/fart_deep.mp3',
+    'assets/P0_audio/farts/fart_deep_alt.mp3',
+  ] as const
 
   private ensureContext(): AudioContext | null {
     if (typeof window === 'undefined') return null
@@ -96,6 +105,7 @@ class AudioManagerImpl {
       }
     }
     this.unlocked = ctx.state === 'running'
+    void this.preloadFartSamples()
     if (this.unlocked && this.musicEnabled && !this.musicPlaying) {
       this.startMusic()
     }
@@ -123,11 +133,13 @@ class AudioManagerImpl {
     if (!this.unlocked) {
       void this.unlock()
     }
+    void this.preloadFartSamples()
     if (ctx.state !== 'running') return
 
     switch (id) {
       case 'tap_plop':
-        this.playTapPlop()
+      case 'tap_fart':
+        this.playTapFart()
         break
       case 'tap_squish':
         this.playNoiseBurst(0.05, 0.12, 900, 0.18)
@@ -358,26 +370,58 @@ class AudioManagerImpl {
     else this.musicPlaying = false
   }
 
-  private playTapPlop(): void {
-    const variants: ToneSpec[][] = [
-      [
-        { freq: 160, dur: 0.07, type: 'sine', gain: 0.14, slide: -50 },
-        { freq: 90, dur: 0.1, type: 'triangle', gain: 0.08, delay: 0.02 },
-      ],
-      [
-        { freq: 190, dur: 0.06, type: 'triangle', gain: 0.13, slide: -70 },
-        { freq: 110, dur: 0.09, type: 'sine', gain: 0.07, delay: 0.015 },
-      ],
-      [
-        { freq: 140, dur: 0.08, type: 'sine', gain: 0.15, slide: -40 },
-        { freq: 70, dur: 0.11, type: 'triangle', gain: 0.09, delay: 0.025 },
-      ],
-    ]
-    const tones = variants[this.plopVariant % 3]!
+  private fartSampleUrl(relativePath: string): string {
+    const base = import.meta.env.BASE_URL ?? './'
+    const normalizedBase = base.endsWith('/') ? base : `${base}/`
+    return `${normalizedBase}${relativePath.replace(/^\/+/, '')}`
+  }
+
+  private preloadFartSamples(): Promise<void> {
+    if (this.fartLoadPromise) return this.fartLoadPromise
+    this.fartLoadPromise = (async () => {
+      const ctx = this.ensureContext()
+      if (!ctx) return
+      const loaded: AudioBuffer[] = []
+      for (const relativePath of AudioManagerImpl.FART_SAMPLE_PATHS) {
+        try {
+          const response = await fetch(this.fartSampleUrl(relativePath))
+          if (!response.ok) continue
+          const bytes = await response.arrayBuffer()
+          loaded.push(await ctx.decodeAudioData(bytes.slice(0)))
+        } catch {
+          /* keep going — remaining samples / procedural fallback still work */
+        }
+      }
+      this.fartBuffers = loaded
+    })()
+    return this.fartLoadPromise
+  }
+
+  /** Cycles authored MP3 fart samples so taps stay varied. */
+  private playTapFart(): void {
+    void this.preloadFartSamples()
+    const ctx = this.ctx
+    const bus = this.sfxBus
+    if (!ctx || !bus) return
+
+    if (this.fartBuffers.length === 0) {
+      // First taps may race preload; tiny procedural stub until samples decode.
+      this.playTones([{ freq: 120, dur: 0.08, type: 'sawtooth', gain: 0.08, slide: -50 }])
+      this.playNoiseBurst(0.01, 0.06, 400, 0.1)
+      return
+    }
+
+    const buffer = this.fartBuffers[this.plopVariant % this.fartBuffers.length]!
     this.plopVariant += 1
-    const jitter = 0.92 + Math.random() * 0.16
-    this.playTones(tones.map((t) => ({ ...t, freq: t.freq * jitter })))
-    this.playNoiseBurst(0.02, 0.05, 700, 0.08)
+
+    const src = ctx.createBufferSource()
+    src.buffer = buffer
+    src.playbackRate.value = 0.94 + Math.random() * 0.12
+    const g = ctx.createGain()
+    g.gain.value = 0.95
+    src.connect(g)
+    g.connect(bus)
+    src.start(ctx.currentTime)
   }
 
   private playTones(specs: ToneSpec[]): void {

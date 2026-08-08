@@ -90,7 +90,8 @@ function GameScreen() {
     window.setTimeout(() => setSquish(false), 230)
     if (snap.save.settings.haptics) void tapHaptic(result.crit)
     if (snap.save.settings.sfx) {
-      AudioManager.play(result.crit ? 'crit' : 'tap_plop')
+      AudioManager.play('tap_fart')
+      if (result.crit) AudioManager.play('crit')
     }
   }
 
@@ -278,7 +279,10 @@ function GameScreen() {
             const result = engine.startDailyDump()
             if (result.ok) setDumpModalOpen(true)
           }}
-          onTap={() => engine.tapDailyDumpChallenge()}
+          onTap={() => {
+            engine.tapDailyDumpChallenge()
+            if (snap.save.settings.sfx) AudioManager.play('tap_fart')
+          }}
           onClaim={() => engine.claimDailyDumpReward()}
           onClose={() => {
             if (snap.dailyDump.phase === 'idle') setDumpModalOpen(false)

@@ -13,6 +13,10 @@ const forbidden = [
 const required = [
   'P0_character/expressions/poop_classic_normal.svg',
   'P0_toilet/toilet_idle.svg',
+  'P0_audio/farts/fart_classic.mp3',
+  'P0_audio/farts/fart_small.mp3',
+  'P0_audio/farts/fart_deep.mp3',
+  'P0_audio/farts/fart_deep_alt.mp3',
   'P1_worlds/home_bathroom/layers/world_home_bathroom_background.webp',
   'P1_events/golden_poop/golden_poop_target.svg',
   'P1_ui/currency/icon_pp.svg',

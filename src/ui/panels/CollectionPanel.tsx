@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
 import { ACHIEVEMENTS } from '../../content/achievements'
 import { ASSET_MANIFEST } from '../../content/assetManifest'
-import { resolveSkinExpressionPath } from '../../content/assetPaths'
+import {
+  resolveSkinExpressionPath,
+  resolveSkinThumbnailPath,
+} from '../../content/assetPaths'
 import { EVENTS } from '../../content/events'
 import { GENERATORS } from '../../content/generators'
 import { SKINS } from '../../content/skins'
@@ -98,7 +101,8 @@ export function CollectionPanel() {
           const met = isSkinUnlockRequirementMet(snap.save, skin.id)
           const color =
             ASSET_MANIFEST.skins[skin.id as keyof typeof ASSET_MANIFEST.skins]?.color ?? '#8B5A2B'
-          const authoredPreview = resolveSkinExpressionPath(skin.id, 'normal')
+          const authoredPreview =
+            resolveSkinThumbnailPath(skin.id) ?? resolveSkinExpressionPath(skin.id, 'happy')
           const unlockText =
             skin.unlock.type === 'gtp'
               ? `${skin.unlock.amount} GTP`

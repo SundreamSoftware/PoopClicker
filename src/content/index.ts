@@ -11,7 +11,9 @@ export { ASSET_MANIFEST } from './assetManifest'
 export {
   assetUrl,
   worldLayerPath,
+  authoredSkinSlug,
   resolveSkinExpressionPath,
+  resolveSkinThumbnailPath,
   resolveCharacterAuraPath,
   resolveToiletPath,
   AUTHORED_WORLD_IDS,

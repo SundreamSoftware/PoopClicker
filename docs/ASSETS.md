@@ -17,14 +17,16 @@ Status vocabulary:
 
 `public/assets/` has been technically audited and integrated with procedural fallback:
 
-- **FINAL:** Classic, Corny, Diamond, Cyber, 404 and Black Hole benchmark skins.
+- **FINAL:** 45/46 roster skins mapped to `P1_skins/<slug>/` (normal + happy SVG; classic extra
+  faces from `P0_character/expressions/`). Only `chef_poop` remains procedural.
 - **FINAL:** Home, Office, Space, Quantum and Omni world layer sets.
 - **FINAL:** event target/boss/banner art for all runtime event types.
 - **FINAL:** Classic expressions, toilet states, currency/nav icons and core sprite sheets.
-- **PROCEDURAL_FINAL:** remaining 40 skins and 7 worlds without authored files.
+- **PROCEDURAL_FINAL:** 7 worlds without authored files.
 
 Runtime paths are centralized in `src/content/assetPaths.ts`. Large worlds use WebP layers;
 characters/events/UI use SVG through `<img>`, avoiding inline gradient/filter id collisions.
+Poopdex uses `_thumbnails/<slug>_192.png` when present.
 
 ## Skins
 
@@ -42,8 +44,8 @@ without authored files retain the CSS renderer. Unlocks still use `src/content/w
 
 ## Missing final art
 
-`ASSET_MANIFEST.missingFinalArt` lists the remaining 40 skin compositions and 7 world
-illustrations. Procedural stand-ins remain intentional fallbacks.
+`ASSET_MANIFEST.missingFinalArt` lists `chef_poop`, unused extra pack skins beyond the current
+roster, and 7 world illustrations. Procedural stand-ins remain intentional fallbacks.
 
 ## Production bundle and Android
 

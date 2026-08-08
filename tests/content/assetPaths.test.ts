@@ -3,11 +3,14 @@ import { describe, expect, it } from 'vitest'
 import {
   AUTHORED_WORLD_IDS,
   assetUrl,
+  authoredSkinSlug,
   resolveSkinExpressionPath,
+  resolveSkinThumbnailPath,
   resolveToiletPath,
   worldLayerPath,
 } from '../../src/content/assetPaths'
 import { ASSET_MANIFEST } from '../../src/content/assetManifest'
+import { SKINS } from '../../src/content/skins'
 
 function publicPath(runtimeUrl: string): string {
   return runtimeUrl.replace(/^(?:\.\/|\/)?assets\//, 'public/assets/')
@@ -20,15 +23,35 @@ describe('authored asset paths', () => {
     )
   })
 
-  it('maps benchmark skins and preserves procedural fallback for others', () => {
+  it('maps roster skins to the authored pack with happy/normal expressions', () => {
     const classic = resolveSkinExpressionPath('classic_poop', 'panic')
-    const cyber = resolveSkinExpressionPath('cyber_poop', 'frenzy')
+    const cyberHappy = resolveSkinExpressionPath('cyber_poop', 'frenzy')
+    const coffee = resolveSkinExpressionPath('coffee_poop', 'normal')
 
     expect(classic).not.toBeNull()
-    expect(cyber).not.toBeNull()
+    expect(cyberHappy).not.toBeNull()
+    expect(coffee).not.toBeNull()
     expect(existsSync(publicPath(classic!))).toBe(true)
-    expect(existsSync(publicPath(cyber!))).toBe(true)
-    expect(resolveSkinExpressionPath('coffee_poop', 'normal')).toBeNull()
+    expect(existsSync(publicPath(cyberHappy!))).toBe(true)
+    expect(existsSync(publicPath(coffee!))).toBe(true)
+    expect(cyberHappy).toContain('poop_cyber_happy.svg')
+    expect(resolveSkinExpressionPath('chef_poop', 'normal')).toBeNull()
+  })
+
+  it('backs every mapped roster skin with normal/happy SVG and a thumbnail', () => {
+    for (const skin of SKINS) {
+      const slug = authoredSkinSlug(skin.id)
+      if (!slug) continue
+      const normal = resolveSkinExpressionPath(skin.id, 'normal')
+      const happy = resolveSkinExpressionPath(skin.id, 'happy')
+      const thumb = resolveSkinThumbnailPath(skin.id)
+      expect(normal, skin.id).not.toBeNull()
+      expect(happy, skin.id).not.toBeNull()
+      expect(thumb, skin.id).not.toBeNull()
+      expect(existsSync(publicPath(normal!)), `${skin.id} normal`).toBe(true)
+      expect(existsSync(publicPath(happy!)), `${skin.id} happy`).toBe(true)
+      expect(existsSync(publicPath(thumb!)), `${skin.id} thumb`).toBe(true)
+    }
   })
 
   it('provides every layer for each authored world', () => {
@@ -56,7 +79,7 @@ describe('authored asset paths', () => {
     ]
     for (const group of groups) {
       for (const [id, entry] of Object.entries(group)) {
-        if (entry.status !== 'FINAL' || !('path' in entry)) continue
+        if (entry.status !== 'FINAL' || !('path' in entry) || !entry.path) continue
         expect(existsSync(`public/assets/${entry.path}`), id).toBe(true)
       }
     }

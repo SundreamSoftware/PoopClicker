@@ -5,86 +5,78 @@
  * FINAL = authored file integrated at runtime; PROCEDURAL_FINAL = intentional runtime fallback.
  */
 
+import { authoredSkinSlug } from './assetPaths'
+
 export type AssetStatus = 'FINAL' | 'PROCEDURAL_FINAL' | 'TEMPORARY' | 'MISSING'
+
+type SkinManifestEntry = {
+  variant: string
+  color: string
+  status: AssetStatus
+  path?: string
+}
+
+function skinEntry(variant: string, color: string, skinId: string): SkinManifestEntry {
+  const slug = authoredSkinSlug(skinId)
+  if (!slug) {
+    return { variant, color, status: 'PROCEDURAL_FINAL' }
+  }
+  return {
+    variant,
+    color,
+    status: 'FINAL',
+    path: `P1_skins/${slug}/poop_${slug}_normal.svg`,
+  }
+}
 
 export const ASSET_MANIFEST = {
   skins: {
-    classic_poop: {
-      variant: 'default',
-      color: '#8B5A2B',
-      status: 'FINAL',
-      path: 'P1_skins/classic/poop_classic_normal.svg',
-    },
-    corny_poop: {
-      variant: 'chunky',
-      color: '#C4A35A',
-      status: 'FINAL',
-      path: 'P1_skins/corny/poop_corny_normal.svg',
-    },
-    coffee_poop: { variant: 'jitter', color: '#4B2E1E', status: 'PROCEDURAL_FINAL' },
-    burrito_poop: { variant: 'soft', color: '#A67C52', status: 'PROCEDURAL_FINAL' },
-    taco_poop: { variant: 'crunch', color: '#D4A017', status: 'PROCEDURAL_FINAL' },
-    office_poop: { variant: 'tie', color: '#5C4033', status: 'PROCEDURAL_FINAL' },
-    gamer_poop: { variant: 'rgb', color: '#7B2CBF', status: 'PROCEDURAL_FINAL' },
-    construction_poop: { variant: 'helmet', color: '#E67E22', status: 'PROCEDURAL_FINAL' },
-    chef_poop: { variant: 'hat', color: '#F5F5F5', status: 'PROCEDURAL_FINAL' },
-    doctor_poop: { variant: 'stethoscope', color: '#ECF0F1', status: 'PROCEDURAL_FINAL' },
-    cactus_poop: { variant: 'spiky', color: '#2E8B57', status: 'PROCEDURAL_FINAL' },
-    cowboy_poop: { variant: 'hat_tip', color: '#A0522D', status: 'PROCEDURAL_FINAL' },
-    pirate_poop: { variant: 'eyepatch', color: '#2C3E50', status: 'PROCEDURAL_FINAL' },
-    rainbow_poop: { variant: 'prism', color: '#FF6BCB', status: 'PROCEDURAL_FINAL' },
-    disco_poop: { variant: 'disco', color: '#9B59B6', status: 'PROCEDURAL_FINAL' },
-    ghost_poop: { variant: 'fade', color: '#D5DBDB', status: 'PROCEDURAL_FINAL' },
-    zombie_poop: { variant: 'lurch', color: '#7D8F69', status: 'PROCEDURAL_FINAL' },
-    vampire_poop: { variant: 'cape', color: '#6C1D45', status: 'PROCEDURAL_FINAL' },
-    pumpkin_poop: { variant: 'carve', color: '#E67E22', status: 'PROCEDURAL_FINAL' },
-    santa_poop: { variant: 'jolly', color: '#C0392B', status: 'PROCEDURAL_FINAL' },
-    unicorn_poop: { variant: 'sparkle', color: '#F8C8DC', status: 'PROCEDURAL_FINAL' },
-    alien_poop: { variant: 'float', color: '#2ECC71', status: 'PROCEDURAL_FINAL' },
-    astronaut_poop: { variant: 'zero_g', color: '#BDC3C7', status: 'PROCEDURAL_FINAL' },
-    viking_poop: { variant: 'horn', color: '#7F8C8D', status: 'PROCEDURAL_FINAL' },
-    samurai_poop: { variant: 'katana', color: '#34495E', status: 'PROCEDURAL_FINAL' },
-    knight_poop: { variant: 'armor', color: '#95A5A6', status: 'PROCEDURAL_FINAL' },
-    wizard_poop: { variant: 'staff', color: '#5B2C6F', status: 'PROCEDURAL_FINAL' },
-    devil_poop: { variant: 'horns', color: '#922B21', status: 'PROCEDURAL_FINAL' },
-    angel_poop: { variant: 'halo', color: '#FCF3CF', status: 'PROCEDURAL_FINAL' },
-    diamond_poop: {
-      variant: 'crystal',
-      color: '#AED6F1',
-      status: 'FINAL',
-      path: 'P1_skins/diamond/poop_diamond_normal.svg',
-    },
-    cyber_poop: {
-      variant: 'neon',
-      color: '#00F5FF',
-      status: 'FINAL',
-      path: 'P1_skins/cyber/poop_cyber_normal.svg',
-    },
-    pixel_poop: { variant: 'pixel', color: '#E74C3C', status: 'PROCEDURAL_FINAL' },
-    glitch_poop: { variant: 'glitch', color: '#1ABC9C', status: 'PROCEDURAL_FINAL' },
-    nuclear_poop: { variant: 'glow', color: '#A8FF3E', status: 'PROCEDURAL_FINAL' },
-    king_poop: { variant: 'crown', color: '#F4D03F', status: 'PROCEDURAL_FINAL' },
-    black_hole_poop: {
-      variant: 'singularity',
-      color: '#1C1C1C',
-      status: 'FINAL',
-      path: 'P1_skins/blackhole/poop_blackhole_normal.svg',
-    },
-    holographic_poop: { variant: 'holo', color: '#85C1E9', status: 'PROCEDURAL_FINAL' },
-    time_traveller_poop: { variant: 'chrono', color: '#5DADE2', status: 'PROCEDURAL_FINAL' },
-    multiverse_poop: { variant: 'split', color: '#AF7AC5', status: 'PROCEDURAL_FINAL' },
-    void_poop: { variant: 'void', color: '#2C003E', status: 'PROCEDURAL_FINAL' },
-    developer_poop: { variant: 'coffee_code', color: '#273746', status: 'PROCEDURAL_FINAL' },
-    ceo_poop: { variant: 'suit', color: '#1A5276', status: 'PROCEDURAL_FINAL' },
-    '404_poop': {
-      variant: 'error',
-      color: '#E74C3C',
-      status: 'FINAL',
-      path: 'P1_skins/404/poop_404_normal.svg',
-    },
-    schrodingers_poop: { variant: 'box', color: '#ABB2B9', status: 'PROCEDURAL_FINAL' },
-    the_final_poop: { variant: 'final', color: '#F5B041', status: 'PROCEDURAL_FINAL' },
-    toilet_tycoon: { variant: 'tycoon', color: '#C0C0C0', status: 'PROCEDURAL_FINAL' },
+    classic_poop: skinEntry('default', '#8B5A2B', 'classic_poop'),
+    corny_poop: skinEntry('chunky', '#C4A35A', 'corny_poop'),
+    coffee_poop: skinEntry('jitter', '#4B2E1E', 'coffee_poop'),
+    burrito_poop: skinEntry('soft', '#A67C52', 'burrito_poop'),
+    taco_poop: skinEntry('crunch', '#D4A017', 'taco_poop'),
+    office_poop: skinEntry('tie', '#5C4033', 'office_poop'),
+    gamer_poop: skinEntry('rgb', '#7B2CBF', 'gamer_poop'),
+    construction_poop: skinEntry('helmet', '#E67E22', 'construction_poop'),
+    chef_poop: skinEntry('hat', '#F5F5F5', 'chef_poop'),
+    doctor_poop: skinEntry('stethoscope', '#ECF0F1', 'doctor_poop'),
+    cactus_poop: skinEntry('spiky', '#2E8B57', 'cactus_poop'),
+    cowboy_poop: skinEntry('hat_tip', '#A0522D', 'cowboy_poop'),
+    pirate_poop: skinEntry('eyepatch', '#2C3E50', 'pirate_poop'),
+    rainbow_poop: skinEntry('prism', '#FF6BCB', 'rainbow_poop'),
+    disco_poop: skinEntry('disco', '#9B59B6', 'disco_poop'),
+    ghost_poop: skinEntry('fade', '#D5DBDB', 'ghost_poop'),
+    zombie_poop: skinEntry('lurch', '#7D8F69', 'zombie_poop'),
+    vampire_poop: skinEntry('cape', '#6C1D45', 'vampire_poop'),
+    pumpkin_poop: skinEntry('carve', '#E67E22', 'pumpkin_poop'),
+    santa_poop: skinEntry('jolly', '#C0392B', 'santa_poop'),
+    unicorn_poop: skinEntry('sparkle', '#F8C8DC', 'unicorn_poop'),
+    alien_poop: skinEntry('float', '#2ECC71', 'alien_poop'),
+    astronaut_poop: skinEntry('zero_g', '#BDC3C7', 'astronaut_poop'),
+    viking_poop: skinEntry('horn', '#7F8C8D', 'viking_poop'),
+    samurai_poop: skinEntry('katana', '#34495E', 'samurai_poop'),
+    knight_poop: skinEntry('armor', '#95A5A6', 'knight_poop'),
+    wizard_poop: skinEntry('staff', '#5B2C6F', 'wizard_poop'),
+    devil_poop: skinEntry('horns', '#922B21', 'devil_poop'),
+    angel_poop: skinEntry('halo', '#FCF3CF', 'angel_poop'),
+    diamond_poop: skinEntry('crystal', '#AED6F1', 'diamond_poop'),
+    cyber_poop: skinEntry('neon', '#00F5FF', 'cyber_poop'),
+    pixel_poop: skinEntry('pixel', '#E74C3C', 'pixel_poop'),
+    glitch_poop: skinEntry('glitch', '#1ABC9C', 'glitch_poop'),
+    nuclear_poop: skinEntry('glow', '#A8FF3E', 'nuclear_poop'),
+    king_poop: skinEntry('crown', '#F4D03F', 'king_poop'),
+    black_hole_poop: skinEntry('singularity', '#1C1C1C', 'black_hole_poop'),
+    holographic_poop: skinEntry('holo', '#85C1E9', 'holographic_poop'),
+    time_traveller_poop: skinEntry('chrono', '#5DADE2', 'time_traveller_poop'),
+    multiverse_poop: skinEntry('split', '#AF7AC5', 'multiverse_poop'),
+    void_poop: skinEntry('void', '#2C003E', 'void_poop'),
+    developer_poop: skinEntry('coffee_code', '#273746', 'developer_poop'),
+    ceo_poop: skinEntry('suit', '#1A5276', 'ceo_poop'),
+    '404_poop': skinEntry('error', '#E74C3C', '404_poop'),
+    schrodingers_poop: skinEntry('box', '#ABB2B9', 'schrodingers_poop'),
+    the_final_poop: skinEntry('final', '#F5B041', 'the_final_poop'),
+    toilet_tycoon: skinEntry('tycoon', '#C0C0C0', 'toilet_tycoon'),
   },
   animations: {
     idle: { status: 'PROCEDURAL_FINAL' },
@@ -153,12 +145,13 @@ export const ASSET_MANIFEST = {
   },
   /** Raster/illustration finals still outstanding (procedural stand-ins ship). */
   missingFinalArt: [
-    '40 procedural skin compositions without authored benchmark SVGs',
+    'chef_poop has no authored pack counterpart',
     '7 worlds still using procedural backgrounds',
+    'Extra pack skins beyond the current 46-slot roster are not yet content entries',
   ],
   /** Explicit missing slots reserved for future art pipeline. */
   missingSlots: {
-    remaining_skin_compositions: { status: 'MISSING' },
+    chef_authored_skin: { status: 'MISSING' },
     remaining_world_illustrations: { status: 'MISSING' },
   },
 } as const
