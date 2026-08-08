@@ -2,6 +2,17 @@ name: Android Instrumented Smoke
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'src/native/**'
+      - 'src/services/ads.ts'
+      - 'src/services/consent.ts'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android-instrumented.yml'
   schedule:
     - cron: '17 3 * * *'
 
