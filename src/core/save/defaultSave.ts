@@ -18,6 +18,8 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
     flushPower: 0,
     royalFlushLevels: {},
     gtp: 0,
+    removeAds: false,
+    ownedIapProducts: [],
     ownedSkins: ['classic_poop'],
     equippedSkinId: 'classic_poop',
     unlockedWorlds: ['home_bathroom'],

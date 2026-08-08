@@ -506,6 +506,14 @@ export const SKINS_VISUAL: Record<string, SkinVisualDef> = {
     headwear: 'crown',
     faceStyle: 'royal',
   }),
+  toilet_tycoon: base({
+    bodyShape: 'swirl',
+    texture: 'smooth',
+    aura: 'money',
+    headwear: 'ceo_hat',
+    accessories: ['tie', 'money'],
+    faceStyle: 'royal',
+  }),
 }
 
 export function getSkinVisual(skinId: string): SkinVisualDef {

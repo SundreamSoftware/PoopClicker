@@ -451,6 +451,16 @@ export const SKINS: SkinDef[] = [
     animationVariant: 'final',
     vfx: 'finale',
   },
+  {
+    id: 'toilet_tycoon',
+    name: 'Toilet Tycoon',
+    description: 'Platinum-plated porcelain empire.',
+    rarity: 'legendary',
+    unlock: { type: 'flush', count: 9999 },
+    asset: 'skins/toilet_tycoon',
+    animationVariant: 'tycoon',
+    vfx: 'money',
+  },
 ]
 
 export const SKIN_BY_ID = Object.fromEntries(SKINS.map((s) => [s.id, s]))

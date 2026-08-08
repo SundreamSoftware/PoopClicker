@@ -93,6 +93,10 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     flushPower: asNumber(raw.flushPower),
     royalFlushLevels: (raw.royalFlushLevels as Record<string, number>) ?? {},
     gtp: asNumber(raw.gtp),
+    removeAds: asBool(raw.removeAds),
+    ownedIapProducts: Array.isArray(raw.ownedIapProducts)
+      ? raw.ownedIapProducts.map(String)
+      : [],
     ownedSkins: Array.isArray(raw.ownedSkins)
       ? Array.from(new Set(['classic_poop', ...raw.ownedSkins.map(String)]))
       : ['classic_poop'],

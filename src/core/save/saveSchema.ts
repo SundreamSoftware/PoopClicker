@@ -40,6 +40,8 @@ export interface PlayerSaveV2 {
   flushPower: number
   royalFlushLevels: Record<string, number>
   gtp: number
+  removeAds: boolean
+  ownedIapProducts: string[]
   ownedSkins: string[]
   equippedSkinId: string
   unlockedWorlds: string[]
