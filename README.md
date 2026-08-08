@@ -15,6 +15,18 @@ npm install
 npm run dev
 ```
 
+## Android APK
+
+Debug APK for device testing:
+
+- [`artifacts/PoopClicker-debug.apk`](artifacts/PoopClicker-debug.apk)
+
+```bash
+adb install -r artifacts/PoopClicker-debug.apk
+```
+
+Rebuild: `npm run cap:apk` (requires Android SDK). See [docs/ANDROID.md](docs/ANDROID.md).
+
 ## Validate
 
 ```bash
@@ -25,6 +37,7 @@ npm run ci
 
 - [Progression & economy](docs/PROGRESSION.md)
 - [Testing](docs/TESTING.md)
+- [Android APK](docs/ANDROID.md)
 
 ## Note on assets
 

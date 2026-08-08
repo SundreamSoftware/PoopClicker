@@ -14,6 +14,20 @@ coverage
 *.local
 .DS_Store
 
+# Android / Capacitor local build outputs
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+*.aab
+*.keystore
+android/app/build/
+android/build/
+android/.gradle/
+# Keep the distributable debug APK in-repo for testers
+!artifacts/
+!artifacts/**/*.apk
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

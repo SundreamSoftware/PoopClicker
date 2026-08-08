@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { ASSET_MANIFEST } from '../content/assetManifest'
 import { formatDuration, formatMultiplier, formatNumber } from '../core/numbers/formatNumber'
 import { ECONOMY } from '../core/economy/formulas'
+import { tapHaptic } from '../native/haptics'
 import { GameProvider } from '../state/GameContext'
 import { useFloatingNumbers } from '../state/useFloatingNumbers'
 import { useGameContext } from '../state/useGameContext'
@@ -43,9 +44,7 @@ function GameScreen() {
     push(`+${formatNumber(result.gained)}`, result.crit)
     setSquish(true)
     window.setTimeout(() => setSquish(false), 80)
-    if (snap.save.settings.haptics && 'vibrate' in navigator) {
-      navigator.vibrate(result.crit ? 20 : 8)
-    }
+    if (snap.save.settings.haptics) void tapHaptic(result.crit)
   }
 
   return (
