@@ -81,6 +81,7 @@ export interface PlayerSaveV2 {
   totalPlayTimeMs: number
   officeSessionMs: number
   buyMultiplierIndex: number
+  sessionsCount: number
   settings: {
     reducedMotion: boolean
     haptics: boolean

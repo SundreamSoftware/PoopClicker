@@ -160,6 +160,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     totalPlayTimeMs: asNumber(raw.totalPlayTimeMs),
     officeSessionMs: asNumber(raw.officeSessionMs),
     buyMultiplierIndex: asNumber(raw.buyMultiplierIndex),
+    sessionsCount: asNumber(raw.sessionsCount),
     settings: {
       reducedMotion: asBool(settings.reducedMotion),
       haptics: asBool(settings.haptics, true),

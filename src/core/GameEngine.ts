@@ -1,6 +1,6 @@
 import { GENERATOR_BY_ID } from '../content/generators'
 import { UPGRADES, UPGRADE_BY_ID } from '../content/upgrades'
-import { EVENTS, EVENT_BY_ID } from '../content/events'
+import { IAP_BY_ID } from '../content/iapProducts'
 import { ROYAL_FLUSH_BY_ID } from '../content/royalFlush'
 import { WORLDS } from '../content/worlds'
 import {
@@ -16,20 +16,43 @@ import { deserializeSave, migrateSave, serializeSave } from './save/migrateSave'
 import type { PlayerSaveV2 } from './save/saveSchema'
 import { FixedClock, SystemClock, TimeService, type Clock } from './time/TimeService'
 import type { ClaimResult, NextGoal, OfflineReward, TapSpeedState } from './types/gameTypes'
+import type { ActiveEventRuntime } from './types/eventRuntime'
+import { scheduleNextRandomEventAt } from './types/eventRuntime'
 import { claimAchievement, syncAchievements } from './systems/achievements'
+import { decideAutoBuy } from './systems/autoBuy'
+import {
+  canStartDailyDump,
+  createIdleDailyDumpRuntime,
+  startDailyDumpRuntime,
+  tapDailyDump,
+  tickDailyDump,
+  type DailyDumpRuntime,
+} from './systems/dailyDump'
 import {
   claimChallenge,
   claimDailyChest,
   ensureDailyState,
   generateBathroomBreakCharges,
-  generateDailyChallenges,
   processStreak,
   progressChallenge,
+  rerollChallengeAt,
 } from './systems/daily'
+import {
+  afterEventSchedule,
+  bossTap,
+  catchTarget,
+  computeEventRewards,
+  createEventRuntime,
+  evaluateEventCompletion,
+  pickScheduledEvent,
+  tickEventRuntime,
+  totalEventRewardMultiplier,
+} from './systems/eventSystem'
 import { buildFlushPreview, canFlush, performFlush } from './systems/flush'
 import { computeProduction, resolveTapSpeedState } from './systems/production'
 import { equipSkin, grantEligibleSkins, purchaseSkin } from './systems/skins'
 import type { AnalyticsSink } from '../services/analytics'
+import { applyIapGrant as applyIapGrantToSave } from '../services/billing'
 
 export interface TapResult {
   gained: LargeNumber
@@ -48,6 +71,9 @@ export interface EngineSnapshot {
   nextGoals: NextGoal[]
   flushPreview: ReturnType<typeof buildFlushPreview>
   canFlush: boolean
+  eventRuntime: ActiveEventRuntime | null
+  dailyDump: DailyDumpRuntime
+  frenzyActive: boolean
 }
 
 type Listener = () => void
@@ -69,7 +95,12 @@ export class GameEngine {
   private readonly analytics: AnalyticsSink
   private readonly storageKey: string
   private storage: Storage | null
+  private eventRuntime: ActiveEventRuntime | null = null
+  private dailyDumpRuntime = createIdleDailyDumpRuntime()
+  private lastAutoBuyAt = 0
+  private frenzyStartedAt = 0
   private frenzyActiveUntil = 0
+  private firstTapTracked = false
   private lastPersistAt = 0
   private cachedSnapshot: EngineSnapshot | null = null
   private uiVersion = 0
@@ -130,6 +161,14 @@ export class GameEngine {
   }
 
   private bootstrap(now: number): void {
+    if (this.save.nextRandomEventAt === 0) {
+      this.save = {
+        ...this.save,
+        nextRandomEventAt: scheduleNextRandomEventAt(now, 0, this.save.flushCount),
+      }
+    }
+    this.save = { ...this.save, sessionsCount: this.save.sessionsCount + 1 }
+
     const away = Math.max(0, now - this.save.lastActiveTimestamp)
     this.absenceMs = away
     this.save = generateBathroomBreakCharges(
@@ -149,8 +188,26 @@ export class GameEngine {
       }
     }
 
+    if (this.save.activeEvent && !this.eventRuntime) {
+      const hydrated = createEventRuntime(
+        this.save.activeEvent.defId,
+        this.save.activeEvent.startedAt,
+        this.save.flushCount,
+      )
+      if (hydrated) {
+        this.eventRuntime = {
+          ...hydrated,
+          taps: this.save.activeEvent.taps,
+          tapTarget: this.save.activeEvent.tapTarget,
+          completed: this.save.activeEvent.completed,
+          failed: this.save.activeEvent.failed,
+          rewardClaimed: this.save.activeEvent.rewardClaimed,
+          endsAt: this.save.activeEvent.endsAt,
+        }
+      }
+    }
+
     this.syncMeta(now)
-    this.scheduleGolden(now, production.goldenChanceBonus)
   }
 
   getSnapshot(): EngineSnapshot {
@@ -163,6 +220,7 @@ export class GameEngine {
   private buildSnapshot(): EngineSnapshot {
     const now = this.time.now()
     const production = computeProduction(this.save, this.combo, now)
+    const frenzyActive = now < this.frenzyActiveUntil
     return {
       save: this.save,
       production,
@@ -173,6 +231,9 @@ export class GameEngine {
       nextGoals: this.computeNextGoals(production),
       flushPreview: buildFlushPreview(this.save, now),
       canFlush: canFlush(this.save),
+      eventRuntime: this.eventRuntime,
+      dailyDump: this.dailyDumpRuntime,
+      frenzyActive,
     }
   }
 
@@ -207,7 +268,21 @@ export class GameEngine {
       activeBoosts: this.save.activeBoosts.filter((b) => b.expiresAt > now),
     }
 
-    this.processScheduledEvents(now)
+    this.dailyDumpRuntime = tickDailyDump(this.dailyDumpRuntime, now, dt)
+
+    if (this.save.autoBuyUnlocked && this.save.autoBuyEnabled && now - this.lastAutoBuyAt >= 1500) {
+      this.lastAutoBuyAt = now
+      const decision = decideAutoBuy(this.save)
+      if (decision) {
+        if (decision.kind === 'generator') {
+          this.buyGenerator(decision.id, decision.count)
+        } else {
+          this.buyUpgrade(decision.id)
+        }
+      }
+    }
+
+    this.processScheduledEvents(now, dt)
     this.syncMeta(now)
     this.maybePersist(now)
     // Invalidate cache so next forced read is fresh; notify React at ~10Hz.
@@ -228,15 +303,15 @@ export class GameEngine {
       this.save = progressChallenge(this.save, 'crit_taps', 1)
     }
 
-    if (this.save.activeEvent) {
-      this.save = {
-        ...this.save,
-        activeEvent: {
-          ...this.save.activeEvent,
-          taps: this.save.activeEvent.taps + 1,
-        },
+    if (
+      this.eventRuntime &&
+      (this.eventRuntime.type === 'clogged_toilet' || this.eventRuntime.type === 'mega_clog')
+    ) {
+      this.eventRuntime = bossTap(this.eventRuntime)
+      this.syncActiveEventFromRuntime()
+      if (this.eventRuntime.completed && !this.eventRuntime.rewardClaimed) {
+        this.grantEventSuccess()
       }
-      this.evaluateActiveEvent(now)
     }
 
     this.creditPP(gained, 'tap')
@@ -251,13 +326,24 @@ export class GameEngine {
     this.save = progressChallenge(this.save, 'cps', this.rollingCps)
     this.save = progressChallenge(this.save, 'combo', this.combo)
 
+    const wasFrenzy = now < this.frenzyActiveUntil
     if (this.rollingCps >= production.frenzyThreshold) {
+      if (!wasFrenzy) {
+        this.frenzyStartedAt = now
+        this.analytics.track('frenzy_started', {})
+      }
       this.frenzyActiveUntil = Math.max(
         this.frenzyActiveUntil,
         now + (8_000 + production.frenzyDurationBonus * 1000),
       )
       this.save = progressChallenge(this.save, 'frenzy', 1)
     }
+
+    if (!this.firstTapTracked) {
+      this.firstTapTracked = true
+      this.analytics.track('first_tap', {})
+    }
+    this.analytics.track('tap', {})
 
     this.tapState = resolveTapSpeedState(this.rollingCps, this.tapState, production.frenzyThreshold)
     this.syncMeta(now)
@@ -469,7 +555,7 @@ export class GameEngine {
   }
 
   claimDailyChallenge(index: number): ClaimResult {
-    const result = claimChallenge(this.save, index)
+    const result = claimChallenge(this.save, index, this.time.now())
     this.save = result.save
     if (result.ok) {
       this.analytics.track('daily_challenge_claim', { index, gtp: result.gtp })
@@ -495,15 +581,8 @@ export class GameEngine {
     if (!fromRewardedAd) return { ok: false, reason: 'ad_required' }
     if (this.save.dailyRerollsUsed >= 1) return { ok: false, reason: 'limit' }
     const production = this.getProduction()
-    const fresh = generateDailyChallenges(this.save, this.time.now(), production.pps)
-    const replacement = fresh[index]
-    if (!replacement) return { ok: false, reason: 'missing' }
-    const dailyChallenges = this.save.dailyChallenges.map((c, i) => (i === index ? replacement : c))
-    this.save = {
-      ...this.save,
-      dailyChallenges,
-      dailyRerollsUsed: this.save.dailyRerollsUsed + 1,
-    }
+    this.save = rerollChallengeAt(this.save, index, this.time.now(), production.pps)
+    this.save = { ...this.save, dailyRerollsUsed: this.save.dailyRerollsUsed + 1 }
     this.analytics.track('rewarded_ad_complete', { placement: 'daily_reroll' })
     this.persistImmediate()
     this.emit()
@@ -608,18 +687,16 @@ export class GameEngine {
   }
 
   startDailyDump(): ClaimResult {
-    const today = this.time.todayKey()
-    if (
-      this.save.dailyDumpState.lastPlayedDate === today &&
-      this.save.dailyDumpState.rewardClaimed
-    ) {
+    const now = this.time.now()
+    if (!canStartDailyDump(this.save, now)) {
       return { ok: false, reason: 'already_played' }
     }
+    this.dailyDumpRuntime = startDailyDumpRuntime(now)
     this.save = {
       ...this.save,
       dailyDumpState: {
         ...this.save.dailyDumpState,
-        lastPlayedDate: today,
+        lastPlayedDate: this.time.todayKey(),
         lastScore: 0,
         lastTier: 'none',
         rewardClaimed: false,
@@ -630,256 +707,355 @@ export class GameEngine {
     return { ok: true }
   }
 
-  completeDailyDump(score: number): ClaimResult {
-    const today = this.time.todayKey()
-    if (this.save.dailyDumpState.lastPlayedDate !== today)
-      return { ok: false, reason: 'not_started' }
-    if (this.save.dailyDumpState.rewardClaimed) return { ok: false, reason: 'already_claimed' }
-    const tier =
-      score >= 120
-        ? 'diamond'
-        : score >= 80
-          ? 'gold'
-          : score >= 50
-            ? 'silver'
-            : score >= 25
-              ? 'bronze'
-              : 'none'
-    const gtp =
-      tier === 'diamond'
-        ? 40
-        : tier === 'gold'
-          ? 25
-          : tier === 'silver'
-            ? 15
-            : tier === 'bronze'
-              ? 8
-              : 0
+  tapDailyDumpChallenge(): void {
+    const now = this.time.now()
+    this.dailyDumpRuntime = tickDailyDump(this.dailyDumpRuntime, now)
+    if (this.dailyDumpRuntime.phase === 'running') {
+      this.dailyDumpRuntime = tapDailyDump(this.dailyDumpRuntime, now)
+    }
+    this.dirty = true
+    this.emit()
+  }
+
+  claimDailyDumpReward(): ClaimResult {
+    if (this.dailyDumpRuntime.phase !== 'finished') {
+      return { ok: false, reason: 'not_finished' }
+    }
+    if (this.save.dailyDumpState.rewardClaimed) {
+      return { ok: false, reason: 'already_claimed' }
+    }
+    const { score, rewardTier: tier, gtpReward: gtp } = this.dailyDumpRuntime
     this.save = {
       ...this.save,
       gtp: this.save.gtp + gtp,
       dailyDumpState: {
-        lastPlayedDate: today,
+        ...this.save.dailyDumpState,
         bestScore: Math.max(this.save.dailyDumpState.bestScore, score),
         lastScore: score,
         lastTier: tier,
         rewardClaimed: true,
       },
     }
+    this.dailyDumpRuntime = createIdleDailyDumpRuntime()
     this.analytics.track('daily_dump_complete', { score, tier, gtp })
     this.persistImmediate()
     this.emit()
     return { ok: true, gtp }
   }
 
-  catchGoldenPoop(): ClaimResult {
-    const event = this.save.activeEvent
-    if (!event || (event.type !== 'golden_poop' && event.type !== 'golden_rain')) {
-      return { ok: false, reason: 'inactive' }
-    }
-    if (event.rewardClaimed) return { ok: false, reason: 'already_claimed' }
-    const production = this.getProduction()
-    const reward = production.pps.mul(EVENT_BY_ID[event.defId]?.rewardPpMinutes ?? 3).mul(60)
-    const gtp = Math.floor(
-      (EVENT_BY_ID[event.defId]?.rewardGtp ?? 5) * (1 + production.eventRewardBonus),
-    )
-    this.creditPP(reward, 'reward')
-    this.goldenInSession += 1
-    this.save = {
-      ...this.save,
-      gtp: this.save.gtp + gtp,
-      goldenPoopsCaught: this.save.goldenPoopsCaught + 1,
-      eventsCompleted: this.save.eventsCompleted + 1,
-      eventCompletions: {
-        ...this.save.eventCompletions,
-        [event.defId]: (this.save.eventCompletions[event.defId] ?? 0) + 1,
-      },
-      activeEvent:
-        event.type === 'golden_rain'
-          ? { ...event, taps: event.taps + 1, rewardClaimed: event.taps + 1 >= event.tapTarget }
-          : { ...event, completed: true, rewardClaimed: true },
-      lastGoldenPoopAt: this.time.now(),
-    }
-    this.save = progressChallenge(this.save, 'golden_poops', 1)
-    this.save = progressChallenge(this.save, 'events', 1)
-    this.analytics.track('event_complete', { id: event.defId })
-    if (this.save.activeEvent?.rewardClaimed || this.save.activeEvent?.completed) {
-      this.endEvent(true)
-    }
-    this.syncMeta(this.time.now())
-    this.persistImmediate()
-    this.emit()
-    return { ok: true, gtp, pp: reward }
-  }
-
-  private endEvent(success: boolean): void {
-    const event = this.save.activeEvent
-    if (!event) return
+  catchEventTarget(targetId: string): ClaimResult {
+    if (!this.eventRuntime) return { ok: false, reason: 'inactive' }
     const now = this.time.now()
-    if (!success && (event.type === 'clogged_toilet' || event.type === 'mega_clog')) {
-      this.save = { ...this.save, clogsFailed: this.save.clogsFailed + 1 }
-      this.analytics.track('event_fail', { id: event.defId })
+    const { runtime, caught } = catchTarget(this.eventRuntime, targetId, now)
+    if (!caught) return { ok: false, reason: 'miss' }
+    this.eventRuntime = runtime
+    this.syncActiveEventFromRuntime()
+
+    if (runtime.type === 'golden_poop' || runtime.type === 'golden_rain') {
+      this.save = progressChallenge(this.save, 'golden_poops', 1)
     }
-    this.save = {
-      ...this.save,
-      activeEvent: null,
-      lastEventEndedAt: { ...this.save.lastEventEndedAt, [event.defId]: now },
+
+    if (runtime.completed && !runtime.rewardClaimed) {
+      return this.grantEventSuccess()
     }
+
+    this.dirty = true
+    this.emit()
+    return { ok: true }
   }
 
-  private evaluateActiveEvent(now: number): void {
-    const event = this.save.activeEvent
-    if (!event) return
-    if (now > event.endsAt && !event.completed) {
-      const success =
-        event.tapTarget <= 0 ||
-        event.taps >= event.tapTarget ||
-        event.type === 'burrito_rush' ||
-        event.type === 'toilet_quake' ||
-        event.type === 'mystery_flush'
-      if (success && !event.rewardClaimed) {
-        this.completeInteractiveEvent()
-      } else {
-        this.endEvent(false)
-      }
-      return
-    }
-    if (event.tapTarget > 0 && event.taps >= event.tapTarget && !event.rewardClaimed) {
-      this.completeInteractiveEvent()
-    }
-  }
-
-  private completeInteractiveEvent(): void {
-    const event = this.save.activeEvent
-    if (!event || event.rewardClaimed) return
-    const def = EVENT_BY_ID[event.defId]
-    if (!def) return
-    const production = this.getProduction()
-    const reward = production.pps.mul(def.rewardPpMinutes * 60).mul(1 + production.eventRewardBonus)
-    const gtp = Math.floor(def.rewardGtp * (1 + production.eventRewardBonus))
-    this.creditPP(reward, 'reward')
-    this.save = {
-      ...this.save,
-      gtp: this.save.gtp + gtp,
-      eventsCompleted: this.save.eventsCompleted + 1,
-      eventCompletions: {
-        ...this.save.eventCompletions,
-        [event.defId]: (this.save.eventCompletions[event.defId] ?? 0) + 1,
-      },
-      activeEvent: { ...event, completed: true, rewardClaimed: true },
-    }
-    if (event.type === 'clogged_toilet' || event.type === 'mega_clog') {
-      this.save = { ...this.save, clogsCompleted: this.save.clogsCompleted + 1 }
-      this.save = progressChallenge(this.save, 'clogs', 1)
-    }
-    this.save = progressChallenge(this.save, 'events', 1)
-    this.analytics.track('event_complete', { id: event.defId })
-    this.endEvent(true)
+  catchGoldenPoop(): ClaimResult {
+    if (!this.eventRuntime) return { ok: false, reason: 'inactive' }
+    const now = this.time.now()
+    const target = this.eventRuntime.targets.find(
+      (t) => t.kind === 'golden' && !t.caught && t.expiresAt > now,
+    )
+    if (!target) return { ok: false, reason: 'miss' }
+    return this.catchEventTarget(target.id)
   }
 
   chooseMysteryReward(option: 0 | 1 | 2): ClaimResult {
-    const event = this.save.activeEvent
-    if (!event || event.type !== 'mystery_flush' || event.rewardClaimed) {
+    const runtime = this.eventRuntime
+    if (!runtime || runtime.type !== 'mystery_flush' || runtime.rewardClaimed) {
       return { ok: false, reason: 'inactive' }
     }
+    if (!runtime.awaitingChoice && this.time.now() < runtime.endsAt) {
+      return { ok: false, reason: 'not_ready' }
+    }
+
     const production = this.getProduction()
+    const mult = totalEventRewardMultiplier(this.save, production.eventRewardBonus)
+    const now = this.time.now()
+
     if (option === 0) {
-      const pp = production.pps.mul(10 * 60)
+      const pp = production.pps.mul(10 * 60).mul(mult)
       this.creditPP(pp, 'reward')
-      this.save = { ...this.save, activeEvent: { ...event, rewardClaimed: true, completed: true } }
-      this.endEvent(true)
+      this.eventRuntime = {
+        ...runtime,
+        mysteryRevealed: true,
+        mysteryOption: option,
+        rewardClaimed: true,
+        completed: true,
+      }
+      this.syncActiveEventFromRuntime()
+      this.recordEventCompletion()
+      this.finishEvent(true)
+      this.persistImmediate()
       this.emit()
       return { ok: true, pp }
     }
     if (option === 1) {
-      this.save = {
-        ...this.save,
-        gtp: this.save.gtp + 25,
-        activeEvent: { ...event, rewardClaimed: true, completed: true },
+      const gtp = Math.floor(25 * mult)
+      this.save = { ...this.save, gtp: this.save.gtp + gtp }
+      this.eventRuntime = {
+        ...runtime,
+        mysteryRevealed: true,
+        mysteryOption: option,
+        rewardClaimed: true,
+        completed: true,
       }
-      this.endEvent(true)
+      this.syncActiveEventFromRuntime()
+      this.recordEventCompletion()
+      this.finishEvent(true)
+      this.persistImmediate()
       this.emit()
-      return { ok: true, gtp: 25 }
+      return { ok: true, gtp }
     }
+
     this.save = {
       ...this.save,
       activeBoosts: [
         ...this.save.activeBoosts,
         {
-          id: `mystery_${this.time.now()}`,
+          id: `mystery_${now}`,
           label: 'Mystery Boost',
           tapMultiplier: 3,
           idleMultiplier: 2,
-          expiresAt: this.time.now() + 10 * 60_000,
+          expiresAt: now + 10 * 60_000,
         },
       ],
-      activeEvent: { ...event, rewardClaimed: true, completed: true },
     }
-    this.endEvent(true)
+    this.eventRuntime = {
+      ...runtime,
+      mysteryRevealed: true,
+      mysteryOption: option,
+      rewardClaimed: true,
+      completed: true,
+    }
+    this.syncActiveEventFromRuntime()
+    this.recordEventCompletion()
+    this.finishEvent(true)
+    this.persistImmediate()
     this.emit()
     return { ok: true }
   }
 
-  private processScheduledEvents(now: number): void {
-    if (this.save.activeEvent) {
-      this.evaluateActiveEvent(now)
-      return
-    }
-    if (now >= this.save.nextGoldenPoopAt) {
-      this.spawnEvent('golden_poop')
-      return
-    }
-    // Occasional random events
-    if (Math.random() < 0.002) {
-      const candidates = EVENTS.filter(
-        (e) =>
-          e.type !== 'golden_poop' &&
-          this.save.flushCount >= e.minFlushCount &&
-          now - (this.save.lastEventEndedAt[e.id] ?? 0) >= e.cooldownMs,
-      )
-      if (candidates.length > 0) {
-        const pick = candidates[Math.floor(Math.random() * candidates.length)]
-        this.spawnEvent(pick.id)
-      }
-    }
+  setAutoBuyEnabled(enabled: boolean): void {
+    this.save = { ...this.save, autoBuyEnabled: enabled }
+    this.persistImmediate()
+    this.emit()
   }
 
-  spawnEvent(eventId: string): boolean {
-    const def = EVENT_BY_ID[eventId]
-    if (!def) return false
-    if (this.save.activeEvent) return false
-    if (this.save.flushCount < def.minFlushCount) return false
-    const now = this.time.now()
+  updateSettings(partial: Partial<PlayerSaveV2['settings']>): void {
+    this.save = { ...this.save, settings: { ...this.save.settings, ...partial } }
+    this.persistImmediate()
+    this.emit()
+  }
+
+  applyIapGrant(productId: string): ClaimResult {
+    const def = IAP_BY_ID[productId]
+    if (!def) return { ok: false, reason: 'missing' }
+    if (def.kind !== 'consumable' && this.save.ownedIapProducts.includes(productId)) {
+      return { ok: false, reason: 'already_owned' }
+    }
+    this.save = applyIapGrantToSave(this.save, def.grants, productId)
+    this.syncMeta(this.time.now())
+    this.persistImmediate()
+    this.emit()
+    return { ok: true }
+  }
+
+  private syncActiveEventFromRuntime(): void {
+    if (!this.eventRuntime) {
+      if (this.save.activeEvent) {
+        this.save = { ...this.save, activeEvent: null }
+      }
+      return
+    }
+    const r = this.eventRuntime
     this.save = {
       ...this.save,
       activeEvent: {
-        defId: def.id,
-        type: def.type,
-        startedAt: now,
-        endsAt: now + def.durationMs,
-        taps: 0,
-        tapTarget: def.tapTarget ?? 0,
-        completed: false,
-        failed: false,
-        rewardClaimed: false,
+        defId: r.defId,
+        type: r.type,
+        startedAt: r.startedAt,
+        endsAt: r.endsAt,
+        taps: r.taps,
+        tapTarget: r.tapTarget,
+        completed: r.completed,
+        failed: r.failed,
+        rewardClaimed: r.rewardClaimed,
       },
+    }
+  }
+
+  private recordEventCompletion(): void {
+    const runtime = this.eventRuntime
+    if (!runtime) return
+    this.save = {
+      ...this.save,
+      eventsCompleted: this.save.eventsCompleted + 1,
+      eventCompletions: {
+        ...this.save.eventCompletions,
+        [runtime.defId]: (this.save.eventCompletions[runtime.defId] ?? 0) + 1,
+      },
+    }
+    this.save = progressChallenge(this.save, 'events', 1)
+    this.analytics.track('event_complete', { id: runtime.defId })
+  }
+
+  private grantEventSuccess(): ClaimResult {
+    const runtime = this.eventRuntime
+    if (!runtime || runtime.rewardClaimed) return { ok: false, reason: 'inactive' }
+
+    const production = this.getProduction()
+    const rewards = computeEventRewards(runtime.defId, this.save, production)
+    this.creditPP(rewards.pp, 'reward')
+
+    this.save = {
+      ...this.save,
+      gtp: this.save.gtp + rewards.gtp,
+      eventsCompleted: this.save.eventsCompleted + 1,
+      eventCompletions: {
+        ...this.save.eventCompletions,
+        [runtime.defId]: (this.save.eventCompletions[runtime.defId] ?? 0) + 1,
+      },
+    }
+
+    if (runtime.type === 'golden_poop' || runtime.type === 'golden_rain') {
+      this.goldenInSession += 1
+      this.save = {
+        ...this.save,
+        goldenPoopsCaught: this.save.goldenPoopsCaught + 1,
+        lastGoldenPoopAt: this.time.now(),
+      }
+    }
+    if (runtime.type === 'clogged_toilet' || runtime.type === 'mega_clog') {
+      this.save = { ...this.save, clogsCompleted: this.save.clogsCompleted + 1 }
+      this.save = progressChallenge(this.save, 'clogs', 1)
+    }
+    this.save = progressChallenge(this.save, 'events', 1)
+    this.analytics.track('event_complete', { id: runtime.defId })
+
+    this.eventRuntime = { ...runtime, completed: true, rewardClaimed: true }
+    this.syncActiveEventFromRuntime()
+    this.finishEvent(true)
+    this.syncMeta(this.time.now())
+    this.persistImmediate()
+    this.emit()
+    return { ok: true, gtp: rewards.gtp, pp: rewards.pp }
+  }
+
+  private finishEvent(success: boolean): void {
+    const runtime = this.eventRuntime
+    if (!runtime) return
+    const now = this.time.now()
+    const production = this.getProduction()
+
+    if (!success) {
+      if (runtime.type === 'clogged_toilet' || runtime.type === 'mega_clog') {
+        this.save = { ...this.save, clogsFailed: this.save.clogsFailed + 1 }
+      }
+      this.analytics.track('event_fail', { id: runtime.defId })
+    }
+
+    this.save = afterEventSchedule(
+      this.save,
+      now,
+      runtime.type,
+      production.goldenChanceBonus,
+      0,
+    )
+    this.save = {
+      ...this.save,
+      lastEventEndedAt: { ...this.save.lastEventEndedAt, [runtime.defId]: now },
+      activeEvent: null,
+    }
+    this.eventRuntime = null
+  }
+
+  private completeEventRuntime(success: boolean): void {
+    if (success) {
+      this.grantEventSuccess()
+    } else {
+      this.finishEvent(false)
+      this.syncMeta(this.time.now())
+      this.persistImmediate()
+      this.emit()
+    }
+  }
+
+  private processScheduledEvents(now: number, dt: number): void {
+    this.updateFrenzyLifecycle(now)
+
+    if (this.eventRuntime) {
+      this.eventRuntime = tickEventRuntime(this.eventRuntime, now, this.rollingCps, dt)
+      this.syncActiveEventFromRuntime()
+      const status = evaluateEventCompletion(this.eventRuntime, now)
+      if (status.awaitingChoice) {
+        this.eventRuntime = { ...this.eventRuntime, awaitingChoice: true }
+        return
+      }
+      if (status.completed && !this.eventRuntime.rewardClaimed) {
+        this.completeEventRuntime(true)
+      } else if (status.failed) {
+        this.completeEventRuntime(false)
+      }
+      return
+    }
+
+    const pick = pickScheduledEvent(this.save, now)
+    if (!pick) return
+
+    const runtime = createEventRuntime(pick.id, now, this.save.flushCount)
+    if (!runtime) return
+
+    this.eventRuntime = runtime
+    this.syncActiveEventFromRuntime()
+    this.save = {
+      ...this.save,
       tutorialFlags: { ...this.save.tutorialFlags, events: true },
     }
-    if (def.type === 'golden_poop') {
-      this.scheduleGolden(now, this.getProduction().goldenChanceBonus)
+    this.analytics.track('event_start', { id: pick.id })
+    this.dirty = true
+    this.emit(true)
+  }
+
+  spawnEvent(eventId: string): boolean {
+    if (this.eventRuntime || this.save.activeEvent) return false
+    const now = this.time.now()
+    const runtime = createEventRuntime(eventId, now, this.save.flushCount)
+    if (!runtime) return false
+    this.eventRuntime = runtime
+    this.syncActiveEventFromRuntime()
+    this.save = {
+      ...this.save,
+      tutorialFlags: { ...this.save.tutorialFlags, events: true },
     }
-    this.analytics.track('event_start', { id: def.id })
+    this.analytics.track('event_start', { id: eventId })
     this.emit()
     return true
   }
 
-  private scheduleGolden(now: number, goldenChanceBonus: number): void {
-    const shrink = Math.min(0.6, goldenChanceBonus)
-    const base = ECONOMY.goldenPoopBaseIntervalMs * (1 - shrink)
-    const jitter = (Math.random() * 2 - 1) * ECONOMY.goldenPoopIntervalJitterMs
-    this.save = {
-      ...this.save,
-      nextGoldenPoopAt: now + Math.max(60_000, base + jitter),
+  private updateFrenzyLifecycle(now: number): void {
+    if (this.frenzyActiveUntil > 0 && now >= this.frenzyActiveUntil && this.frenzyStartedAt > 0) {
+      const duration = this.frenzyActiveUntil - this.frenzyStartedAt
+      if (duration >= 3_000) {
+        this.save = progressChallenge(this.save, 'frenzy_complete', 1)
+        this.analytics.track('frenzy_completed', { durationMs: duration })
+      }
+      this.frenzyStartedAt = 0
+      this.frenzyActiveUntil = 0
     }
   }
 
@@ -977,7 +1153,13 @@ export class GameEngine {
   }
 
   background(): void {
-    this.save = { ...this.save, lastActiveTimestamp: this.time.now() }
+    const now = this.time.now()
+    if (this.dailyDumpRuntime.phase !== 'idle') {
+      const dt = Math.max(0, now - this.lastTickAt)
+      this.dailyDumpRuntime = tickDailyDump(this.dailyDumpRuntime, now, dt)
+    }
+    this.save = { ...this.save, lastActiveTimestamp: now }
+    this.syncActiveEventFromRuntime()
     this.persistImmediate()
   }
 
@@ -989,6 +1171,7 @@ export class GameEngine {
 
   persistImmediate(): void {
     const now = this.time.now()
+    this.syncActiveEventFromRuntime()
     this.save = { ...this.save, lastSaveTimestamp: now, lastActiveTimestamp: now }
     this.storage?.setItem(this.storageKey, serializeSave(this.save))
     this.lastPersistAt = now

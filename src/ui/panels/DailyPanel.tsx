@@ -1,11 +1,22 @@
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 
-export function DailyPanel() {
+export interface DailyPanelProps {
+  onOpenDailyDump?: () => void
+}
+
+export function DailyPanel({ onOpenDailyDump }: DailyPanelProps) {
   const { engine, ads } = useGameContext()
   const snap = useGameSnapshot()
   const completed = snap.save.dailyChallenges.filter((c) => c.completed).length
   const claimed = snap.save.dailyChallenges.filter((c) => c.claimed).length
+  const dump = snap.save.dailyDumpState
+  const dumpStatus =
+    dump.rewardClaimed && dump.lastPlayedDate
+      ? `Claimed · ${dump.lastTier} (${dump.lastScore} pts)`
+      : dump.lastPlayedDate && !dump.rewardClaimed
+        ? 'In progress — finish in modal'
+        : 'Ready to play'
 
   return (
     <div className="panel">
@@ -77,20 +88,21 @@ export function DailyPanel() {
 
       <div className="goal-card" style={{ marginTop: 12 }}>
         <div className="goal-title">DAILY DUMP</div>
-        <div className="goal-sub">60s tap trial · local rewards</div>
+        <div className="goal-sub">60s tap trial · {dumpStatus}</div>
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-          <button className="ghost-btn" onClick={() => engine.startDailyDump()}>
-            Start
-          </button>
           <button
             className="primary-btn"
-            onClick={() => engine.completeDailyDump(Math.floor(40 + Math.random() * 100))}
+            onClick={() => {
+              const result = engine.startDailyDump()
+              if (result.ok) onOpenDailyDump?.()
+            }}
           >
-            Finish (demo score)
+            Start
           </button>
         </div>
         <div className="meta-line">
-          Best {snap.save.dailyDumpState.bestScore} · Last {snap.save.dailyDumpState.lastTier}
+          Best {dump.bestScore} · Last tier {dump.lastTier}
+          {dump.lastScore > 0 ? ` · ${dump.lastScore} pts` : ''}
         </div>
       </div>
     </div>

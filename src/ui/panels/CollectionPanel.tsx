@@ -163,6 +163,30 @@ export function CollectionPanel() {
             </div>
           )
         })}
+
+      <div className="goal-card" style={{ marginTop: 16 }}>
+        <div className="goal-title">SETTINGS</div>
+        <div className="meta-line" style={{ marginBottom: 8 }}>
+          Audio, haptics, and motion preferences
+        </div>
+        {(
+          [
+            ['sfx', 'Sound effects'],
+            ['music', 'Music'],
+            ['haptics', 'Haptics'],
+            ['reducedMotion', 'Reduced motion'],
+          ] as const
+        ).map(([key, label]) => (
+          <label key={key} className="list-row" style={{ cursor: 'pointer' }}>
+            <span>{label}</span>
+            <input
+              type="checkbox"
+              checked={snap.save.settings[key]}
+              onChange={(e) => engine.updateSettings({ [key]: e.target.checked })}
+            />
+          </label>
+        ))}
+      </div>
     </div>
   )
 }

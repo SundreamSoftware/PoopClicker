@@ -72,6 +72,7 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
     totalPlayTimeMs: 0,
     officeSessionMs: 0,
     buyMultiplierIndex: 0,
+    sessionsCount: 0,
     settings: {
       reducedMotion: false,
       haptics: true,
