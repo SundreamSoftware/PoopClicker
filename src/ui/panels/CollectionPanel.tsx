@@ -7,14 +7,16 @@ import { SKINS } from '../../content/skins'
 import { WORLDS } from '../../content/worlds'
 import { collectionPercent } from '../../core/systems/achievements'
 import { getSkinStatus, isSkinUnlockRequirementMet } from '../../core/systems/skins'
+import { cancelNotificationReminders } from '../../services/notifications'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 import { maybeShowInterstitial } from '../monetizationHelpers'
 
 export function CollectionPanel() {
-  const { engine, ads } = useGameContext()
+  const { engine, ads, consent, notifications } = useGameContext()
   const snap = useGameSnapshot()
   const [tab, setTab] = useState<'overview' | 'skins' | 'worlds'>('overview')
+  const [privacyStatus, setPrivacyStatus] = useState<string | null>(null)
 
   const stats = useMemo(() => {
     const skins = snap.save.ownedSkins.length
@@ -184,6 +186,7 @@ export function CollectionPanel() {
             ['music', 'Music'],
             ['haptics', 'Haptics'],
             ['reducedMotion', 'Reduced motion'],
+            ['notifications', 'Notifications'],
           ] as const
         ).map(([key, label]) => (
           <label key={key} className="list-row" style={{ cursor: 'pointer' }}>
@@ -191,7 +194,12 @@ export function CollectionPanel() {
             <input
               type="checkbox"
               checked={snap.save.settings[key]}
-              onChange={(e) => engine.updateSettings({ [key]: e.target.checked })}
+              onChange={(e) => {
+                engine.updateSettings({ [key]: e.target.checked })
+                if (key === 'notifications' && !e.target.checked) {
+                  cancelNotificationReminders(notifications)
+                }
+              }}
             />
           </label>
         ))}
@@ -205,6 +213,25 @@ export function CollectionPanel() {
             />
           </label>
         )}
+        <div className="list-row">
+          <div>
+            <span>Privacy choices</span>
+            {privacyStatus && <div className="meta-line">{privacyStatus}</div>}
+          </div>
+          <button
+            className="ghost-btn"
+            onClick={async () => {
+              const outcome = await consent.showPrivacyOptions()
+              setPrivacyStatus(
+                outcome === 'unavailable'
+                  ? 'Privacy form is not required or unavailable.'
+                  : 'Privacy choices updated.',
+              )
+            }}
+          >
+            Manage
+          </button>
+        </div>
       </div>
     </div>
   )

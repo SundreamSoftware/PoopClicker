@@ -29,26 +29,26 @@ Debug APK: [Release v1.0.0](https://github.com/SundreamSoftware/PoopClicker/rele
 
 ### P1 — quality / retention before wide launch
 
-| ID  | Item                                      | Why                                                       | Action                                                                      |
-| --- | ----------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------- |
-| N10 | Physical device QA matrix                 | Web smoke ≠ device game feel                              | Install release APK; test taps, events, Daily Dump, flush, ads, IAP restore |
-| N11 | Instrumented Android tests on emulator CI | Package smoke exists but not run in PR CI                 | Nightly job: emulator + `connectedDebugAndroidTest`                         |
-| N12 | Store listing assets                      | Need screenshots, feature graphic, short/long description | Produce phone screenshots from device                                       |
-| N13 | Content rating / target API checklist     | Play policy                                               | Complete questionnaire; verify `targetSdk`                                  |
-| N14 | Offline + background lifecycle on device  | Battery/OEM killers                                       | Kill app mid-event / mid-Daily Dump; verify save                            |
-| N15 | Notification permission UX on Android 13+ | Prompt timing already deferred in code                    | Verify POST_NOTIFICATIONS flow on API 33+                                   |
+| ID  | Item                                      | Why                                                        | Action                                                                      |
+| --- | ----------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
+| N10 | Physical device QA matrix                 | Web smoke ≠ device game feel                               | Install release APK; test taps, events, Daily Dump, flush, ads, IAP restore |
+| N11 | Instrumented Android tests on emulator CI | Implemented as scheduled/manual `android-instrumented.yml` | Monitor scheduled runs and keep launch/WebView smoke green                  |
+| N12 | Store listing assets                      | Need screenshots, feature graphic, short/long description  | Produce phone screenshots from device                                       |
+| N13 | Content rating / target API checklist     | Play policy                                                | Complete questionnaire; verify `targetSdk`                                  |
+| N14 | Offline + background lifecycle on device  | Battery/OEM killers                                        | Kill app mid-event / mid-Daily Dump; verify save                            |
+| N15 | Notification permission UX on Android 13+ | Prompt timing already deferred in code                     | Verify POST_NOTIFICATIONS flow on API 33+                                   |
 
 ### P2 — meaningful polish
 
-| ID  | Item                                                                                              |
-| --- | ------------------------------------------------------------------------------------------------- |
-| N20 | FINAL raster art for hero skins (currently `PROCEDURAL_FINAL`)                                    |
-| N21 | Auto-buy preference weights (generators vs upgrades)                                              |
-| N22 | Browser E2E (Playwright) in addition to engine journey tests                                      |
-| N23 | Main-branch CI on push (today CI is PR + manual only)                                             |
-| N24 | Performance pass on mid-tier Android during TP Storm / Golden Rain                                |
-| N25 | Expand Settings: Privacy/consent reopen, Restore purchases (exists in Shop), Notifications toggle |
-| N26 | Close/delete obsolete branch `cursor/monetization-architecture-e89a` (superseded)                 |
+| ID  | Item                                                                                 |
+| --- | ------------------------------------------------------------------------------------ |
+| N20 | FINAL raster art for hero skins (currently `PROCEDURAL_FINAL`)                       |
+| N21 | Auto-buy preference weights (generators vs upgrades)                                 |
+| N22 | Browser E2E (Playwright) in addition to engine journey tests                         |
+| N23 | Main-branch CI on push — **implemented**                                             |
+| N24 | Performance pass on mid-tier Android during TP Storm / Golden Rain                   |
+| N25 | Settings: Privacy/consent, Restore purchases, Notifications toggle — **implemented** |
+| N26 | Close/delete obsolete branch `cursor/monetization-architecture-e89a` (superseded)    |
 
 ### P3 — optional
 

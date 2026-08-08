@@ -8,6 +8,7 @@ import {
 /** Prompt for notification permission once after a positive retention moment. */
 export async function maybePromptNotifications(): Promise<void> {
   const save = engine.getSnapshot().save
+  if (!save.settings.notifications) return
   if (!shouldPromptForNotifications(save)) return
 
   engine.markNotificationPromptShown()

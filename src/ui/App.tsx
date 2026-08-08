@@ -12,6 +12,7 @@ import AudioManager from '../audio/AudioManager'
 import { maybePromptNotifications } from './notificationPrompt'
 import { PoopCharacter, resolveFaceFromTapState } from './character/PoopCharacter'
 import { DailyDumpModal } from './daily/DailyDumpModal'
+import { ErrorBoundary } from './ErrorBoundary'
 import { EventOverlay } from './events/EventOverlay'
 import { AchievementsPanel } from './panels/AchievementsPanel'
 import { CollectionPanel } from './panels/CollectionPanel'
@@ -245,8 +246,10 @@ function GameScreen() {
 
 export default function App() {
   return (
-    <GameProvider>
-      <GameScreen />
-    </GameProvider>
+    <ErrorBoundary>
+      <GameProvider>
+        <GameScreen />
+      </GameProvider>
+    </ErrorBoundary>
   )
 }

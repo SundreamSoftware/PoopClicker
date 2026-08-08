@@ -3,6 +3,8 @@ package com.sundreamsoftware.poopclicker;
 import static org.junit.Assert.*;
 
 import android.content.Context;
+import android.webkit.WebView;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
@@ -21,5 +23,18 @@ public class ExampleInstrumentedTest {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         assertEquals("com.sundreamsoftware.poopclicker", appContext.getPackageName());
+    }
+
+    @Test
+    public void mainActivityLaunchesWithGameWebView() {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                assertNotNull("Capacitor bridge must initialize", activity.getBridge());
+                WebView webView = activity.getBridge().getWebView();
+                assertNotNull("Game WebView must exist", webView);
+                assertTrue("Game WebView must be visible", webView.isShown());
+                assertTrue("JavaScript must be enabled", webView.getSettings().getJavaScriptEnabled());
+            });
+        }
     }
 }

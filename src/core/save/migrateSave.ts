@@ -165,6 +165,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
       haptics: asBool(settings.haptics, true),
       sfx: asBool(settings.sfx, true),
       music: asBool(settings.music, true),
+      notifications: asBool(settings.notifications, true),
     },
   }
 }

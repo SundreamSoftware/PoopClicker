@@ -80,6 +80,7 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
       haptics: true,
       sfx: true,
       music: true,
+      notifications: true,
     },
   }
 }
