@@ -74,6 +74,10 @@ export interface PlayerSaveV2 {
   nextRandomEventAt: number
   autoBuyUnlocked: boolean
   autoBuyEnabled: boolean
+  autoBuyPreferences: {
+    generators: boolean
+    upgrades: boolean
+  }
   permanentProductionBonus: number
   tutorialFlags: Record<string, boolean>
   lastSaveTimestamp: number

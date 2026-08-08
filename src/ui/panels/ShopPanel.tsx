@@ -79,14 +79,33 @@ export function ShopPanel() {
       <h2>Shop</h2>
 
       {snap.save.autoBuyUnlocked && (
-        <label className="list-row" style={{ cursor: 'pointer', marginBottom: 8 }}>
-          <span>Auto-Buy (best affordable upgrade/generator)</span>
-          <input
-            type="checkbox"
-            checked={snap.save.autoBuyEnabled}
-            onChange={(e) => engine.setAutoBuyEnabled(e.target.checked)}
-          />
-        </label>
+        <div className="goal-card" style={{ marginBottom: 8 }}>
+          <label className="list-row" style={{ cursor: 'pointer' }}>
+            <strong>Auto-Buy</strong>
+            <input
+              type="checkbox"
+              checked={snap.save.autoBuyEnabled}
+              onChange={(e) => engine.setAutoBuyEnabled(e.target.checked)}
+            />
+          </label>
+          <div className="meta-line">One predictable purchase every 1.5 seconds.</div>
+          <label className="list-row" style={{ cursor: 'pointer' }}>
+            <span>Generators</span>
+            <input
+              type="checkbox"
+              checked={snap.save.autoBuyPreferences.generators}
+              onChange={(e) => engine.setAutoBuyPreferences({ generators: e.target.checked })}
+            />
+          </label>
+          <label className="list-row" style={{ cursor: 'pointer' }}>
+            <span>Upgrades</span>
+            <input
+              type="checkbox"
+              checked={snap.save.autoBuyPreferences.upgrades}
+              onChange={(e) => engine.setAutoBuyPreferences({ upgrades: e.target.checked })}
+            />
+          </label>
+        </div>
       )}
 
       <div className="tabs">

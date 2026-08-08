@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint src tests",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\" \"tests/**/*.{ts,tsx}\" \"docs/**/*.md\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,md}\" \"tests/**/*.{ts,tsx}\" \"docs/**/*.md\"",
+    "lint": "oxlint src tests e2e playwright.config.ts",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\" \"tests/**/*.{ts,tsx}\" \"e2e/**/*.{ts,tsx}\" \"docs/**/*.md\" \"playwright.config.ts\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,md}\" \"tests/**/*.{ts,tsx}\" \"e2e/**/*.{ts,tsx}\" \"docs/**/*.md\" \"playwright.config.ts\"",
     "typecheck": "tsc -b --pretty false && tsc -p tsconfig.tests.json --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -18,7 +18,9 @@
     "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
     "preview": "vite preview",
     "cap:sync": "npm run build && npx cap sync android",
-    "cap:apk": "npm run cap:sync && cd android && ./gradlew assembleDebug"
+    "cap:apk": "npm run cap:sync && cd android && ./gradlew assembleDebug",
+    "e2e": "PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers playwright test",
+    "e2e:install": "PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers playwright install chromium"
   },
   "dependencies": {
     "@capacitor-community/admob": "^8.0.0",
@@ -36,6 +38,7 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

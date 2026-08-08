@@ -58,6 +58,10 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
     nextRandomEventAt: now + 270_000,
     autoBuyUnlocked: false,
     autoBuyEnabled: false,
+    autoBuyPreferences: {
+      generators: true,
+      upgrades: true,
+    },
     permanentProductionBonus: 0,
     tutorialFlags: {
       core: true,

@@ -878,6 +878,15 @@ export class GameEngine {
     this.emit()
   }
 
+  setAutoBuyPreferences(partial: Partial<PlayerSaveV2['autoBuyPreferences']>): void {
+    this.save = {
+      ...this.save,
+      autoBuyPreferences: { ...this.save.autoBuyPreferences, ...partial },
+    }
+    this.persistImmediate()
+    this.emit()
+  }
+
   updateSettings(partial: Partial<PlayerSaveV2['settings']>): void {
     this.save = { ...this.save, settings: { ...this.save.settings, ...partial } }
     this.persistImmediate()
