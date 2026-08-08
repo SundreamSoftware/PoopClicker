@@ -9,9 +9,10 @@ import { collectionPercent } from '../../core/systems/achievements'
 import { getSkinStatus, isSkinUnlockRequirementMet } from '../../core/systems/skins'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
+import { maybeShowInterstitial } from '../monetizationHelpers'
 
 export function CollectionPanel() {
-  const { engine } = useGameContext()
+  const { engine, ads } = useGameContext()
   const snap = useGameSnapshot()
   const [tab, setTab] = useState<'overview' | 'skins' | 'worlds'>('overview')
 
@@ -156,7 +157,15 @@ export function CollectionPanel() {
               <button
                 className="primary-btn"
                 disabled={!unlocked || snap.save.currentWorldId === world.id}
-                onClick={() => engine.setWorld(world.id)}
+                onClick={async () => {
+                  const result = engine.setWorld(world.id)
+                  if (!result.ok) return
+                  await maybeShowInterstitial(ads, 'world_change', {
+                    eventActive: Boolean(snap.eventRuntime),
+                    frenzyActive: snap.frenzyActive,
+                    removeAds: snap.save.removeAds,
+                  })
+                }}
               >
                 {snap.save.currentWorldId === world.id ? 'Current' : unlocked ? 'Enter' : 'Locked'}
               </button>
@@ -186,6 +195,16 @@ export function CollectionPanel() {
             />
           </label>
         ))}
+        {snap.save.autoBuyUnlocked && (
+          <label className="list-row" style={{ cursor: 'pointer' }}>
+            <span>Auto-Buy</span>
+            <input
+              type="checkbox"
+              checked={snap.save.autoBuyEnabled}
+              onChange={(e) => engine.setAutoBuyEnabled(e.target.checked)}
+            />
+          </label>
+        )}
       </div>
     </div>
   )

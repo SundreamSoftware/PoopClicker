@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { GENERATORS } from '../../content/generators'
 import { UPGRADES } from '../../content/upgrades'
 import {
@@ -9,13 +9,19 @@ import {
 } from '../../core/economy/formulas'
 import { LargeNumber } from '../../core/numbers/LargeNumber'
 import { formatNumber } from '../../core/numbers/formatNumber'
+import type { StoreProduct } from '../../services/billing'
+import AudioManager from '../../audio/AudioManager'
+import { billing } from '../../state/gameSingleton'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 
 export function ShopPanel() {
   const { engine } = useGameContext()
   const snap = useGameSnapshot()
-  const [section, setSection] = useState<'generators' | 'upgrades'>('generators')
+  const [section, setSection] = useState<'generators' | 'upgrades' | 'iap'>('generators')
+  const [products, setProducts] = useState<StoreProduct[]>([])
+  const [iapLoading, setIapLoading] = useState(false)
+  const [iapBusy, setIapBusy] = useState<string | null>(null)
   const balance = LargeNumber.deserialize(snap.save.currentPP)
   const multLabel =
     snap.save.buyMultiplierIndex >= ECONOMY.buyMultipliers.length
@@ -28,9 +34,61 @@ export function ShopPanel() {
     [snap.save.flushCount],
   )
 
+  useEffect(() => {
+    if (section !== 'iap') return
+    setIapLoading(true)
+    void billing
+      .loadProducts()
+      .then(setProducts)
+      .finally(() => setIapLoading(false))
+  }, [section])
+
+  const playPurchaseSfx = (kind: 'generator' | 'upgrade') => {
+    if (!snap.save.settings.sfx) return
+    AudioManager.play(kind === 'generator' ? 'generator_purchase' : 'upgrade')
+  }
+
+  const handlePurchase = async (productId: string) => {
+    setIapBusy(productId)
+    try {
+      const result = await billing.purchase(productId)
+      if (result.ok && result.productId) {
+        engine.applyIapGrant(result.productId)
+      }
+    } finally {
+      setIapBusy(null)
+    }
+  }
+
+  const handleRestore = async () => {
+    setIapBusy('restore')
+    try {
+      const results = await billing.restore()
+      for (const result of results) {
+        if (result.ok && result.productId) {
+          engine.applyIapGrant(result.productId)
+        }
+      }
+    } finally {
+      setIapBusy(null)
+    }
+  }
+
   return (
     <div className="panel">
       <h2>Shop</h2>
+
+      {snap.save.autoBuyUnlocked && (
+        <label className="list-row" style={{ cursor: 'pointer', marginBottom: 8 }}>
+          <span>Auto-Buy (best affordable upgrade/generator)</span>
+          <input
+            type="checkbox"
+            checked={snap.save.autoBuyEnabled}
+            onChange={(e) => engine.setAutoBuyEnabled(e.target.checked)}
+          />
+        </label>
+      )}
+
       <div className="tabs">
         <button
           className={section === 'generators' ? 'active' : ''}
@@ -43,6 +101,9 @@ export function ShopPanel() {
           onClick={() => setSection('upgrades')}
         >
           Upgrades
+        </button>
+        <button className={section === 'iap' ? 'active' : ''} onClick={() => setSection('iap')}>
+          Store
         </button>
         <button
           onClick={() => engine.setBuyMultiplierIndex((snap.save.buyMultiplierIndex + 1) % 4)}
@@ -85,7 +146,10 @@ export function ShopPanel() {
               <button
                 className="primary-btn"
                 disabled={locked || balance.lt(cost)}
-                onClick={() => engine.buyGenerator(gen.id)}
+                onClick={() => {
+                  const result = engine.buyGenerator(gen.id)
+                  if (result.ok) playPurchaseSfx('generator')
+                }}
               >
                 {locked ? `Flush ${gen.unlockFlushCount}` : formatNumber(cost)}
               </button>
@@ -113,13 +177,62 @@ export function ShopPanel() {
               <button
                 className="primary-btn"
                 disabled={locked || level >= up.maxLevel || balance.lt(cost)}
-                onClick={() => engine.buyUpgrade(up.id)}
+                onClick={() => {
+                  const result = engine.buyUpgrade(up.id)
+                  if (result.ok) playPurchaseSfx('upgrade')
+                }}
               >
                 {level >= up.maxLevel ? 'MAX' : locked ? 'Locked' : formatNumber(cost)}
               </button>
             </div>
           )
         })}
+
+      {section === 'iap' && (
+        <>
+          <div className="list-row">
+            <span>Remove Ads</span>
+            <strong>{snap.save.removeAds ? 'Active' : 'Not owned'}</strong>
+          </div>
+          {iapLoading && <p className="meta-line">Loading products…</p>}
+          {!iapLoading &&
+            products.map((product) => {
+              const owned =
+                product.kind !== 'consumable' &&
+                snap.save.ownedIapProducts.includes(product.id)
+              return (
+                <div className="list-row" key={product.id}>
+                  <div>
+                    <strong>{product.title}</strong>
+                    <div className="meta-line">{product.description}</div>
+                    <div className="meta-line">{product.priceString}</div>
+                  </div>
+                  <button
+                    className="primary-btn"
+                    disabled={owned || iapBusy !== null}
+                    onClick={() => void handlePurchase(product.id)}
+                  >
+                    {iapBusy === product.id
+                      ? '…'
+                      : owned
+                        ? 'Owned'
+                        : product.kind === 'consumable'
+                          ? 'Buy'
+                          : 'Purchase'}
+                  </button>
+                </div>
+              )
+            })}
+          <button
+            className="ghost-btn"
+            style={{ marginTop: 12 }}
+            disabled={iapBusy !== null}
+            onClick={() => void handleRestore()}
+          >
+            {iapBusy === 'restore' ? 'Restoring…' : 'Restore Purchases'}
+          </button>
+        </>
+      )}
     </div>
   )
 }

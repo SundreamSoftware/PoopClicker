@@ -1,13 +1,36 @@
 import { ROYAL_FLUSH_NODES } from '../../content/royalFlush'
 import { formatMultiplier, formatNumber, formatPercent } from '../../core/numbers/formatNumber'
+import AudioManager from '../../audio/AudioManager'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
+import { maybeShowInterstitial } from '../monetizationHelpers'
 
 export function FlushPanel({ onClose }: { onClose: () => void }) {
-  const { engine } = useGameContext()
+  const { engine, ads } = useGameContext()
   const snap = useGameSnapshot()
   const preview = snap.flushPreview
   const royalUnlocked = snap.save.flushCount >= 1
+
+  const confirmFlush = async () => {
+    if (
+      !window.confirm(
+        'Flush resets run progress (upgrades/generators/PP). Meta progress stays. Continue?',
+      )
+    ) {
+      return
+    }
+    const result = engine.flush()
+    if (!result.ok) return
+    if (snap.save.settings.sfx) {
+      AudioManager.play('flush')
+    }
+    onClose()
+    await maybeShowInterstitial(ads, 'flush', {
+      eventActive: Boolean(snap.eventRuntime),
+      frenzyActive: snap.frenzyActive,
+      removeAds: snap.save.removeAds,
+    })
+  }
 
   return (
     <div className="panel">
@@ -34,20 +57,7 @@ export function FlushPanel({ onClose }: { onClose: () => void }) {
           {formatPercent(preview.nextIdleBonusPercent)} Idle
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <button
-            className="primary-btn"
-            disabled={!snap.canFlush}
-            onClick={() => {
-              if (
-                window.confirm(
-                  'Flush resets run progress (upgrades/generators/PP). Meta progress stays. Continue?',
-                )
-              ) {
-                engine.flush()
-                onClose()
-              }
-            }}
-          >
+          <button className="primary-btn" disabled={!snap.canFlush} onClick={() => void confirmFlush()}>
             CONFIRM FLUSH
           </button>
           <button className="ghost-btn" onClick={onClose}>

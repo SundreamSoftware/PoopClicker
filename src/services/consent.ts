@@ -3,13 +3,19 @@ import { Capacitor } from '@capacitor/core'
 export type ConsentOutcome = 'required' | 'not_required' | 'unavailable' | 'error'
 
 export interface ConsentService {
+  init(): Promise<ConsentOutcome>
+  /** @deprecated alias of init */
   ensureConsent(): Promise<ConsentOutcome>
 }
 
 /** Always reports consent not required — used on web/tests and as safe fallback. */
 export class StubConsentService implements ConsentService {
-  async ensureConsent(): Promise<ConsentOutcome> {
+  async init(): Promise<ConsentOutcome> {
     return 'not_required'
+  }
+
+  async ensureConsent(): Promise<ConsentOutcome> {
+    return this.init()
   }
 }
 
@@ -18,6 +24,10 @@ export class StubConsentService implements ConsentService {
  * Never throws; never hard-blocks the app.
  */
 export class CapacitorUmpConsentService implements ConsentService {
+  async init(): Promise<ConsentOutcome> {
+    return this.ensureConsent()
+  }
+
   async ensureConsent(): Promise<ConsentOutcome> {
     try {
       const mod = await import('@capacitor-community/admob')

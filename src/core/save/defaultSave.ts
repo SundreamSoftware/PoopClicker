@@ -66,6 +66,7 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
       daily: false,
       flush: false,
       collection: false,
+      notificationPromptShown: false,
     },
     lastSaveTimestamp: now,
     lastActiveTimestamp: now,
@@ -73,6 +74,7 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
     officeSessionMs: 0,
     buyMultiplierIndex: 0,
     sessionsCount: 0,
+    bathroomBreakClaimsTotal: 0,
     settings: {
       reducedMotion: false,
       haptics: true,

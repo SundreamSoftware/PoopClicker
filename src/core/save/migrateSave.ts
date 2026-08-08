@@ -161,6 +161,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     officeSessionMs: asNumber(raw.officeSessionMs),
     buyMultiplierIndex: asNumber(raw.buyMultiplierIndex),
     sessionsCount: asNumber(raw.sessionsCount),
+    bathroomBreakClaimsTotal: asNumber(raw.bathroomBreakClaimsTotal),
     settings: {
       reducedMotion: asBool(settings.reducedMotion),
       haptics: asBool(settings.haptics, true),

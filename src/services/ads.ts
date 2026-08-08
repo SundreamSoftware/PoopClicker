@@ -24,6 +24,7 @@ export interface AdService {
   init(): Promise<void>
   showRewarded(placement: RewardedPlacement): Promise<AdResult>
   showInterstitial(context: 'flush' | 'shop' | 'world_change'): Promise<AdResult>
+  getLastRewardedAt?(): number
 }
 
 /**
@@ -32,6 +33,7 @@ export interface AdService {
  */
 export class StubAdService implements AdService {
   private lastInterstitialAt = 0
+  private lastRewardedAt = 0
   private inFlight = false
   private ready = true
   failNext = false
@@ -51,10 +53,15 @@ export class StubAdService implements AdService {
         this.failNext = false
         return { ok: false, reason: 'load_failure' }
       }
+      this.lastRewardedAt = Date.now()
       return { ok: true, reason: 'completed' }
     } finally {
       this.inFlight = false
     }
+  }
+
+  getLastRewardedAt(): number {
+    return this.lastRewardedAt
   }
 
   async showInterstitial(context: 'flush' | 'shop' | 'world_change'): Promise<AdResult> {
@@ -209,6 +216,10 @@ export function canShowInterstitial(opts: {
     return false
   }
   return true
+}
+
+export function getAdLastRewardedAt(ads: AdService): number {
+  return ads.getLastRewardedAt?.() ?? 0
 }
 
 function isNativeAndroid(): boolean {

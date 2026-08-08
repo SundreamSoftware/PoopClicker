@@ -82,6 +82,7 @@ export interface PlayerSaveV2 {
   officeSessionMs: number
   buyMultiplierIndex: number
   sessionsCount: number
+  bathroomBreakClaimsTotal: number
   settings: {
     reducedMotion: boolean
     haptics: boolean

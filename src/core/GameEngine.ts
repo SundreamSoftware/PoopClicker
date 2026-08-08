@@ -595,6 +595,7 @@ export class GameEngine {
     this.save = {
       ...this.save,
       bathroomBreakCharges: this.save.bathroomBreakCharges - 1,
+      bathroomBreakClaimsTotal: this.save.bathroomBreakClaimsTotal + 1,
     }
     if (choice === 'pp') {
       const amount = this.getProduction().pps.mul(15 * 60)
@@ -858,6 +859,15 @@ export class GameEngine {
 
   updateSettings(partial: Partial<PlayerSaveV2['settings']>): void {
     this.save = { ...this.save, settings: { ...this.save.settings, ...partial } }
+    this.persistImmediate()
+    this.emit()
+  }
+
+  markNotificationPromptShown(): void {
+    this.save = {
+      ...this.save,
+      tutorialFlags: { ...this.save.tutorialFlags, notificationPromptShown: true },
+    }
     this.persistImmediate()
     this.emit()
   }

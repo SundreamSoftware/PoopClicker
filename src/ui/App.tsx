@@ -3,11 +3,13 @@ import { formatDuration, formatMultiplier, formatNumber } from '../core/numbers/
 import { ECONOMY } from '../core/economy/formulas'
 import { tapHaptic } from '../native/haptics'
 import { GameProvider } from '../state/GameContext'
+import { useAudioSync } from '../state/useAudioSync'
 import { useFloatingNumbers } from '../state/useFloatingNumbers'
 import { useGameContext } from '../state/useGameContext'
 import { useGameLoop } from '../state/useGameLoop'
 import { useGameSnapshot } from '../state/useGameSnapshot'
 import AudioManager from '../audio/AudioManager'
+import { maybePromptNotifications } from './notificationPrompt'
 import { PoopCharacter, resolveFaceFromTapState } from './character/PoopCharacter'
 import { DailyDumpModal } from './daily/DailyDumpModal'
 import { EventOverlay } from './events/EventOverlay'
@@ -23,6 +25,7 @@ type Tab = 'play' | 'shop' | 'daily' | 'achieve' | 'collection' | 'flush'
 
 function GameScreen() {
   useGameLoop()
+  useAudioSync()
   const { engine, ads } = useGameContext()
   const snap = useGameSnapshot()
   const { items, push } = useFloatingNumbers()
@@ -106,10 +109,22 @@ function GameScreen() {
             Charges: {snap.save.bathroomBreakCharges}/{ECONOMY.bathroomBreakMaxCharges}
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button className="primary-btn" onClick={() => engine.claimBathroomBreak('pp')}>
+            <button
+              className="primary-btn"
+              onClick={async () => {
+                const result = engine.claimBathroomBreak('pp')
+                if (result.ok) void maybePromptNotifications()
+              }}
+            >
               +15 min PP
             </button>
-            <button className="ghost-btn" onClick={() => engine.claimBathroomBreak('tap_boost')}>
+            <button
+              className="ghost-btn"
+              onClick={async () => {
+                const result = engine.claimBathroomBreak('tap_boost')
+                if (result.ok) void maybePromptNotifications()
+              }}
+            >
               x2 Tap 10m
             </button>
           </div>
@@ -168,7 +183,13 @@ function GameScreen() {
             >
               {snap.canFlush ? 'FLUSH' : 'Flush locked'}
             </button>
-            <button className="ghost-btn" onClick={() => engine.claimStreak()}>
+            <button
+              className="ghost-btn"
+              onClick={async () => {
+                const result = engine.claimStreak()
+                if (result.ok) void maybePromptNotifications()
+              }}
+            >
               Streak Day {snap.save.dailyStreak || 0}
             </button>
           </div>

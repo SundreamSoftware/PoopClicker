@@ -16,4 +16,7 @@ export const consent = createConsentService()
 export const billing = createBillingService()
 export const notifications = createNotificationScheduler()
 
+/** Session start for interstitial age gating. */
+export const sessionStartMs = Date.now()
+
 export { createAdService, createBillingService, createConsentService }

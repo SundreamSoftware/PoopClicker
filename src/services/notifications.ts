@@ -1,4 +1,6 @@
 import { Capacitor } from '@capacitor/core'
+import { ECONOMY } from '../core/economy/formulas'
+import type { PlayerSaveV2 } from '../core/save/saveSchema'
 
 /**
  * Notification hooks. Full OS permission UX is intentionally deferred:
@@ -128,11 +130,46 @@ export function scheduleStreakReminder(
  * Soft prompt gate: wait until the player has some sessions and bathroom claims
  * so we never ask in the first seconds of play.
  */
-export function shouldPromptForNotifications(
-  sessionsCount: number,
-  bathroomClaims: number,
-): boolean {
-  return sessionsCount >= 3 && bathroomClaims >= 1
+export function shouldPromptForNotifications(save: {
+  sessionsCount: number
+  bathroomBreakClaimsTotal: number
+  tutorialFlags: Record<string, boolean>
+}): boolean {
+  if (save.tutorialFlags.notificationPromptShown) return false
+  return save.sessionsCount >= 3 && save.bathroomBreakClaimsTotal >= 1
+}
+
+export async function requestNotificationPermission(): Promise<boolean> {
+  const isTest =
+    typeof import.meta !== 'undefined' &&
+    (import.meta.env?.MODE === 'test' || import.meta.env?.VITEST === 'true')
+  if (isTest || !Capacitor.isNativePlatform()) return false
+
+  try {
+    const mod = await import('@capacitor/local-notifications')
+    const plugin = mod.LocalNotifications as LocalNotificationsLike
+    const result = await plugin.requestPermissions?.()
+    return result?.display === 'granted'
+  } catch {
+    return false
+  }
+}
+
+export function scheduleNotificationReminders(
+  scheduler: NotificationScheduler,
+  save: PlayerSaveV2,
+  now: number,
+): void {
+  if (save.bathroomBreakCharges < ECONOMY.bathroomBreakMaxCharges) {
+    const fireAt = save.lastBathroomBreakGeneration + ECONOMY.bathroomBreakIntervalMs
+    if (fireAt > now) scheduleBathroomBreak(scheduler, fireAt)
+  }
+
+  const utc = new Date(now)
+  const nextMidnightUtc = Date.UTC(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate() + 1)
+  if (nextMidnightUtc > now) {
+    scheduleStreakReminder(scheduler, nextMidnightUtc)
+  }
 }
 
 export function createNotificationScheduler(): NotificationScheduler {
