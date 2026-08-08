@@ -44,8 +44,8 @@ Fixed debug APK: [Release v1.0.1](https://github.com/SundreamSoftware/PoopClicke
 | ID  | Item                                                                                 |
 | --- | ------------------------------------------------------------------------------------ |
 | N20 | FINAL raster art for hero skins (currently `PROCEDURAL_FINAL`)                       |
-| N21 | Auto-buy preference weights (generators vs upgrades)                                 |
-| N22 | Browser E2E (Playwright) in addition to engine journey tests                         |
+| N21 | Auto-buy generator/upgrade category preferences — **implemented**                    |
+| N22 | Browser E2E (Playwright) in addition to engine journey tests — **implemented**       |
 | N23 | Main-branch CI on push — **implemented**                                             |
 | N24 | Performance pass on mid-tier Android during TP Storm / Golden Rain                   |
 | N25 | Settings: Privacy/consent, Restore purchases, Notifications toggle — **implemented** |

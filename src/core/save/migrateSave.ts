@@ -70,6 +70,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
   const base = createDefaultSave(now)
   const settings = asRecord(raw.settings)
   const dump = asRecord(raw.dailyDumpState)
+  const autoBuyPreferences = asRecord(raw.autoBuyPreferences)
 
   return {
     ...base,
@@ -148,6 +149,10 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     nextRandomEventAt: asNumber(raw.nextRandomEventAt, now + 270_000),
     autoBuyUnlocked: asBool(raw.autoBuyUnlocked),
     autoBuyEnabled: asBool(raw.autoBuyEnabled),
+    autoBuyPreferences: {
+      generators: asBool(autoBuyPreferences.generators, true),
+      upgrades: asBool(autoBuyPreferences.upgrades, true),
+    },
     permanentProductionBonus: asNumber(raw.permanentProductionBonus),
     tutorialFlags: {
       ...base.tutorialFlags,

@@ -44,4 +44,28 @@ describe('autoBuy', () => {
     expect(decision?.kind).toBe('upgrade')
     expect(decision?.id).toBe('more_fiber')
   })
+
+  it('respects generator preference and buys an upgrade instead', () => {
+    const save = {
+      ...createDefaultSave(),
+      autoBuyUnlocked: true,
+      autoBuyEnabled: true,
+      autoBuyPreferences: { generators: false, upgrades: true },
+      currentPP: LargeNumber.from(100).serialize(),
+    }
+
+    expect(decideAutoBuy(save)?.kind).toBe('upgrade')
+  })
+
+  it('does nothing when both categories are disabled', () => {
+    const save = {
+      ...createDefaultSave(),
+      autoBuyUnlocked: true,
+      autoBuyEnabled: true,
+      autoBuyPreferences: { generators: false, upgrades: false },
+      currentPP: LargeNumber.from(10_000).serialize(),
+    }
+
+    expect(decideAutoBuy(save)).toBeNull()
+  })
 })
