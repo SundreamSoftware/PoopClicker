@@ -1,6 +1,6 @@
 import type { ActiveBoost, ActiveEvent, DailyChallengeInstance } from '../types/gameTypes'
 
-export const SAVE_SCHEMA_VERSION = 2
+export const SAVE_SCHEMA_VERSION = 3
 
 export interface SerializedLargeNumber {
   m: number
@@ -40,6 +40,8 @@ export interface PlayerSaveV2 {
   flushPower: number
   royalFlushLevels: Record<string, number>
   gtp: number
+  removeAds: boolean
+  ownedIapProducts: string[]
   ownedSkins: string[]
   equippedSkinId: string
   unlockedWorlds: string[]
@@ -69,7 +71,9 @@ export interface PlayerSaveV2 {
   lastEventEndedAt: Record<string, number>
   lastGoldenPoopAt: number
   nextGoldenPoopAt: number
+  nextRandomEventAt: number
   autoBuyUnlocked: boolean
+  autoBuyEnabled: boolean
   permanentProductionBonus: number
   tutorialFlags: Record<string, boolean>
   lastSaveTimestamp: number
@@ -81,6 +85,7 @@ export interface PlayerSaveV2 {
     reducedMotion: boolean
     haptics: boolean
     sfx: boolean
+    music: boolean
   }
 }
 

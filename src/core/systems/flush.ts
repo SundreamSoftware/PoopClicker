@@ -4,6 +4,7 @@ import { ECONOMY, flushPowerGain, flushPowerMultiplier } from '../economy/formul
 import { LargeNumber } from '../numbers/LargeNumber'
 import type { PlayerSaveV2 } from '../save/saveSchema'
 import { toUtcDateKey } from '../time/TimeService'
+import { computeProduction } from './production'
 
 export interface FlushPreview {
   runPPEarned: LargeNumber
@@ -13,6 +14,12 @@ export interface FlushPreview {
   newGlobalMultiplier: number
   nextTapBonusPercent: number
   nextIdleBonusPercent: number
+}
+
+export function milestoneEventBonus(save: PlayerSaveV2): number {
+  return FLUSH_MILESTONES.filter(
+    (m) => save.flushCount >= m.flushCount && m.eventBonusPercent != null,
+  ).reduce((max, m) => Math.max(max, m.eventBonusPercent ?? 0), 0)
 }
 
 export function buildFlushPreview(save: PlayerSaveV2, now: number): FlushPreview {
@@ -103,7 +110,6 @@ export function performFlush(
 
   next = applyFlushMilestones(next, next.flushCount)
 
-  // Start-of-run bonuses from milestones
   const startBonusMinutes = FLUSH_MILESTONES.filter(
     (m) => next.flushCount >= m.flushCount && m.startBonusPpMinutes,
   ).reduce((max, m) => Math.max(max, m.startBonusPpMinutes ?? 0), 0)
@@ -116,14 +122,13 @@ export function performFlush(
   }
 
   if (startBonusMinutes > 0) {
-    // Temporary marker; GameEngine converts using post-flush PPS after production recalc.
+    const production = computeProduction(next, 0, now)
+    const bonus = production.pps.mul(startBonusMinutes * 60)
     next = {
       ...next,
-      currentPP: LargeNumber.from(100 * startBonusMinutes).serialize(),
-      runPPEarned: LargeNumber.from(100 * startBonusMinutes).serialize(),
-      lifetimePPEarned: LargeNumber.deserialize(save.lifetimePPEarned)
-        .add(100 * startBonusMinutes)
-        .serialize(),
+      currentPP: bonus.serialize(),
+      runPPEarned: bonus.serialize(),
+      lifetimePPEarned: LargeNumber.deserialize(save.lifetimePPEarned).add(bonus).serialize(),
     }
   }
 

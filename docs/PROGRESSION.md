@@ -67,17 +67,17 @@ See `npm run validate:content`. Targets include ~30 tap upgrades, 10+ combo, 10+
 
 ## Save schema
 
-`schemaVersion: 2` — see `src/core/save/saveSchema.ts` and `migrateSave.ts`.
+`schemaVersion: 3` — see `src/core/save/saveSchema.ts` and `migrateSave.ts`.
 
 Persistence batches about every 2s during play and immediately on purchases / flush / claims / background.
 
 ## Ads
 
-`StubAdService` supports rewarded placements and interstitial frequency caps. Interstitials are blocked during events/frenzy and for the first 30s of a session.
+See [MONETIZATION.md](MONETIZATION.md). Stubs on web/tests; AdMob test IDs in DEV on native. Interstitials respect removeAds, session age, events/frenzy, and rewarded cooldown.
 
 ## Analytics
 
-High-frequency taps are aggregated; feature events (`flush`, `daily_*`, `achievement_*`, `skin_*`, `event_*`, …) are tracked via `AnalyticsSink`.
+See [ANALYTICS.md](ANALYTICS.md). High-frequency taps are aggregated; feature events tracked via `AnalyticsSink` / Firebase on native.
 
 ## Assets
 
@@ -85,4 +85,4 @@ Procedural/CSS skin variants are wired through `ASSET_MANIFEST`. Final illustrat
 
 ## Notifications
 
-Scheduler hooks exist (`src/services/notifications.ts`). Full OS permission UX is intentionally not prompted on first launch.
+Scheduler hooks exist (`src/services/notifications.ts`). Full OS permission UX is intentionally not prompted on first launch (`shouldPromptForNotifications`).

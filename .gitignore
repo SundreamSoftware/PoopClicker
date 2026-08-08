@@ -24,9 +24,11 @@ android/local.properties
 android/app/build/
 android/build/
 android/.gradle/
-# Keep the distributable debug APK in-repo for testers
-!artifacts/
-!artifacts/**/*.apk
+
+# Built APKs are CI artifacts — do not commit binaries
+artifacts/
+artifacts/*.apk
+*.apk
 
 # Editor directories and files
 .vscode/*

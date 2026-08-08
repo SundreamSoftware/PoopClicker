@@ -18,3 +18,5 @@ export type {
   SkinAura,
   FaceStyle,
 } from './skinsVisual'
+export { IAP_PRODUCTS, IAP_BY_ID, IAP_BY_STORE_ID } from './iapProducts'
+export type { IapProductDef, IapGrant } from './iapProducts'

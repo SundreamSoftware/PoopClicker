@@ -18,6 +18,8 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
     flushPower: 0,
     royalFlushLevels: {},
     gtp: 0,
+    removeAds: false,
+    ownedIapProducts: [],
     ownedSkins: ['classic_poop'],
     equippedSkinId: 'classic_poop',
     unlockedWorlds: ['home_bathroom'],
@@ -53,7 +55,9 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
     lastEventEndedAt: {},
     lastGoldenPoopAt: 0,
     nextGoldenPoopAt: now + 180_000,
+    nextRandomEventAt: now + 270_000,
     autoBuyUnlocked: false,
+    autoBuyEnabled: false,
     permanentProductionBonus: 0,
     tutorialFlags: {
       core: true,
@@ -72,6 +76,7 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
       reducedMotion: false,
       haptics: true,
       sfx: true,
+      music: true,
     },
   }
 }

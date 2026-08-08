@@ -54,6 +54,7 @@ export const ASSET_MANIFEST = {
     '404_poop': { variant: 'error', color: '#E74C3C', status: 'PROCEDURAL_FINAL' },
     schrodingers_poop: { variant: 'box', color: '#ABB2B9', status: 'PROCEDURAL_FINAL' },
     the_final_poop: { variant: 'final', color: '#F5B041', status: 'PROCEDURAL_FINAL' },
+    toilet_tycoon: { variant: 'tycoon', color: '#C0C0C0', status: 'PROCEDURAL_FINAL' },
   },
   animations: {
     idle: { status: 'PROCEDURAL_FINAL' },

@@ -1,8 +1,8 @@
 import { createContext } from 'react'
 import type { GameEngine } from '../core/GameEngine'
-import type { StubAdService } from '../services/ads'
+import type { AdService } from '../services/ads'
 
 export const GameContext = createContext<{
   engine: GameEngine
-  ads: StubAdService
+  ads: AdService
 } | null>(null)

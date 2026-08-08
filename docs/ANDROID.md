@@ -2,19 +2,12 @@
 
 Poop Clicker is packaged with **Capacitor** as a native Android WebView shell.
 
-## Debug APK (sideload testing)
+## Debug APK
 
-Built artifact:
+Debug APKs are **CI artifacts**, not committed binaries.
 
-- `artifacts/PoopClicker-debug.apk`
-
-Install on a device/emulator:
-
-```bash
-adb install -r artifacts/PoopClicker-debug.apk
-```
-
-Or copy the file to the phone and open it (enable **Install unknown apps** for your file manager).
+- GitHub Actions **CI** workflow builds `assembleDebug` and uploads the APK.
+- Download from the workflow run’s Artifacts section (`PoopClicker-debug`).
 
 Package id: `com.sundreamsoftware.poopclicker`
 
@@ -30,9 +23,11 @@ echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 npm install
 npm run cap:apk
 # output: android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ## Notes
 
-- This is a **debug** APK (not Play Store release-signed).
-- For a release AAB/APK, configure a keystore and run `./gradlew assembleRelease` / `bundleRelease`.
+- Debug APKs are not Play Store release-signed.
+- For release AAB/APK, use the `Android Release Build` workflow or configure a keystore locally. See [RELEASE.md](RELEASE.md).
+- Production AdMob / billing / Firebase need Play Console + Firebase project secrets; CI debug builds use test IDs / stubs. See [MONETIZATION.md](MONETIZATION.md).

@@ -47,6 +47,8 @@ export function isSkinUnlockRequirementMet(save: PlayerSaveV2, skinId: string): 
       return collectionPercent(save) >= unlock.percent
     case 'event':
       return (save.eventCompletions[unlock.eventId] ?? 0) >= unlock.count
+    case 'iap':
+      return save.ownedIapProducts.includes(unlock.productId) || save.ownedSkins.includes(skinId)
     default:
       return false
   }

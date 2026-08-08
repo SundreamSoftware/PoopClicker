@@ -7,6 +7,7 @@ import type {
   ChallengeTemplate,
   DailyChallengeInstance,
 } from '../types/gameTypes'
+import { computeProduction } from './production'
 
 function hashSeed(input: string): number {
   let h = 2166136261
@@ -26,7 +27,12 @@ function mulberry32(seed: number): () => number {
   }
 }
 
-function scaleTarget(template: ChallengeTemplate, save: PlayerSaveV2, pps: LargeNumber): number {
+function scaleTarget(
+  template: ChallengeTemplate,
+  save: PlayerSaveV2,
+  pps: LargeNumber,
+  critChance: number,
+): number {
   const ppsNum = Math.max(1, pps.toNumber())
   const totalGenLevels = Object.values(save.generators).reduce((a, b) => a + b, 0)
   switch (template.scaling) {
@@ -35,11 +41,17 @@ function scaleTarget(template: ChallengeTemplate, save: PlayerSaveV2, pps: Large
         template.baseTarget,
         Math.floor(ppsNum * 60 * (template.metric === 'spend_pp' ? 2 : 1.5)),
       )
-    case 'taps':
-      return Math.max(
+    case 'taps': {
+      const expectedTaps = Math.max(
         template.baseTarget,
         150 + save.flushCount * 40 + Math.floor(save.highestCPS * 20),
       )
+      if (template.metric === 'crit_taps') {
+        const expectedCrits = expectedTaps * critChance
+        return Math.max(template.baseTarget, Math.ceil(expectedCrits))
+      }
+      return expectedTaps
+    }
     case 'generators':
       return Math.max(template.baseTarget, 3 + Math.floor(totalGenLevels / 20) + save.flushCount)
     case 'flush':
@@ -62,27 +74,39 @@ function pickByCategory(
   category: ChallengeCategory,
   rng: () => number,
   used: Set<string>,
+  excludeTemplateIds: Set<string>,
 ): ChallengeTemplate {
-  const pool = CHALLENGE_TEMPLATES.filter((t) => t.category === category && !used.has(t.id))
-  const list = pool.length > 0 ? pool : CHALLENGE_TEMPLATES.filter((t) => t.category === category)
-  return list[Math.floor(rng() * list.length)] ?? CHALLENGE_TEMPLATES[0]
+  const pool = CHALLENGE_TEMPLATES.filter(
+    (t) => t.category === category && !used.has(t.id) && !excludeTemplateIds.has(t.id),
+  )
+  const list =
+    pool.length > 0
+      ? pool
+      : CHALLENGE_TEMPLATES.filter(
+          (t) => t.category === category && !excludeTemplateIds.has(t.id),
+        )
+  const fallback = CHALLENGE_TEMPLATES.filter((t) => t.category === category)
+  return list[Math.floor(rng() * list.length)] ?? fallback[0] ?? CHALLENGE_TEMPLATES[0]
 }
 
 export function generateDailyChallenges(
   save: PlayerSaveV2,
   now: number,
   pps: LargeNumber,
+  excludeTemplateIds: string[] = [],
 ): DailyChallengeInstance[] {
   const dateKey = toUtcDateKey(now)
   const rng = mulberry32(hashSeed(`${dateKey}:${save.flushCount}:${Math.floor(pps.toNumber())}`))
   const used = new Set<string>()
+  const excluded = new Set(excludeTemplateIds)
   const categories: ChallengeCategory[] = ['activity', 'economy', 'event']
   const rewards = [8, 10, 18]
+  const critChance = computeProduction(save, 0, now).critChance
 
   return categories.map((category, index) => {
-    const template = pickByCategory(category, rng, used)
+    const template = pickByCategory(category, rng, used, excluded)
     used.add(template.id)
-    const target = scaleTarget(template, save, pps)
+    const target = scaleTarget(template, save, pps, critChance)
     return {
       templateId: template.id,
       category,
@@ -97,6 +121,26 @@ export function generateDailyChallenges(
       rewardBoostMinutes: index === 2 ? 10 : 0,
     }
   })
+}
+
+export function rerollChallengeAt(
+  save: PlayerSaveV2,
+  index: number,
+  now: number,
+  pps: LargeNumber,
+): PlayerSaveV2 {
+  const existing = save.dailyChallenges[index]
+  if (!existing) return save
+  const excludeTemplateIds = save.dailyChallenges.map((c) => c.templateId)
+  const fresh = generateDailyChallenges(save, now, pps, excludeTemplateIds)
+  const category = existing.category
+  const replacement =
+    fresh.find((c) => c.category === category && c.templateId !== existing.templateId) ??
+    fresh.find((c) => c.category === category) ??
+    fresh[index]
+  if (!replacement) return save
+  const dailyChallenges = save.dailyChallenges.map((c, i) => (i === index ? replacement : c))
+  return { ...save, dailyChallenges }
 }
 
 export function ensureDailyState(save: PlayerSaveV2, now: number, pps: LargeNumber): PlayerSaveV2 {
@@ -120,7 +164,6 @@ export function progressChallenge(
   let changed = false
   const dailyChallenges = save.dailyChallenges.map((challenge) => {
     if (challenge.metric !== metric || challenge.completed) return challenge
-    // Peak metrics use max
     const nextProgress =
       metric === 'cps' || metric === 'combo' || metric === 'generator_level'
         ? Math.max(challenge.progress, amount)
@@ -135,6 +178,7 @@ export function progressChallenge(
 export function claimChallenge(
   save: PlayerSaveV2,
   index: number,
+  now = Date.now(),
 ): { save: PlayerSaveV2; gtp: number; ok: boolean; reason?: string } {
   const challenge = save.dailyChallenges[index]
   if (!challenge) return { save, gtp: 0, ok: false, reason: 'missing' }
@@ -151,7 +195,7 @@ export function claimChallenge(
     dailyChallengesCompletedTotal: save.dailyChallengesCompletedTotal + 1,
   }
   if (challenge.rewardBoostMinutes > 0) {
-    const expiresAt = Date.now() + challenge.rewardBoostMinutes * 60_000
+    const expiresAt = now + challenge.rewardBoostMinutes * 60_000
     next = {
       ...next,
       activeBoosts: [
@@ -226,7 +270,6 @@ export function processStreak(
       } else {
         streakBroken = true
         streak = 1
-        cycle = Math.min(cycle + 1, 5)
       }
     } else if (gap <= 0) {
       return { save, claimed: false, rewardGtp: 0, streakBroken: false, saverUsed: false }
@@ -254,7 +297,6 @@ export function processStreak(
     rewardGtp += 15
   }
 
-  // Earn a streak saver every 7 successful claims
   let lastStreakSaverEarnDate = save.lastStreakSaverEarnDate
   if (streak === 7 && save.lastStreakSaverEarnDate !== today) {
     saverCharges = Math.min(2, saverCharges + 1)

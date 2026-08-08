@@ -6,6 +6,7 @@ Absurd casual / clicker / idle game focused on retention, Flush prestige, collec
 
 - TypeScript + React 19 + Vite
 - Pure TS game engine (`src/core`) + data-driven content (`src/content`)
+- Capacitor Android shell
 - Vitest, oxlint, Prettier, GitHub Actions CI
 
 ## Quick start
@@ -17,15 +18,16 @@ npm run dev
 
 ## Android APK
 
-Debug APK for device testing:
-
-- [`artifacts/PoopClicker-debug.apk`](artifacts/PoopClicker-debug.apk)
+Debug APKs are produced by CI (see the **CI** workflow artifacts), not committed to the repo.
 
 ```bash
-adb install -r artifacts/PoopClicker-debug.apk
+# Local rebuild (requires Android SDK)
+npm run cap:apk
+# output: android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Rebuild: `npm run cap:apk` (requires Android SDK). See [docs/ANDROID.md](docs/ANDROID.md).
+See [docs/ANDROID.md](docs/ANDROID.md) and [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Validate
 
@@ -37,7 +39,10 @@ npm run ci
 
 - [Progression & economy](docs/PROGRESSION.md)
 - [Testing](docs/TESTING.md)
-- [Android APK](docs/ANDROID.md)
+- [Android](docs/ANDROID.md)
+- [Monetization](docs/MONETIZATION.md)
+- [Analytics](docs/ANALYTICS.md)
+- [Release](docs/RELEASE.md)
 
 ## Note on assets
 

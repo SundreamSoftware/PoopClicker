@@ -101,14 +101,28 @@ export class GameEngine {
   }
 
   static fromStorage(
-    storage: Storage | null = typeof localStorage !== 'undefined' ? localStorage : null,
-    clock?: Clock,
+    options: {
+      storage?: Storage | null
+      clock?: Clock
+      analytics?: AnalyticsSink
+    } = {},
   ): GameEngine {
+    const storage =
+      options.storage === undefined
+        ? typeof localStorage !== 'undefined'
+          ? localStorage
+          : null
+        : options.storage
     const key = 'poop_clicker_save_v2'
     const raw = storage?.getItem(key)
-    const now = (clock ?? new SystemClock()).now()
+    const now = (options.clock ?? new SystemClock()).now()
     const save = raw ? deserializeSave(raw, now) : createDefaultSave(now)
-    return new GameEngine({ clock, save, storage })
+    return new GameEngine({
+      clock: options.clock,
+      save,
+      storage,
+      analytics: options.analytics,
+    })
   }
 
   subscribe(listener: Listener): () => void {

@@ -118,6 +118,7 @@ export type SkinUnlockRequirement =
   | { type: 'collection'; percent: number }
   | { type: 'event'; eventId: string; count: number }
   | { type: 'milestone'; flushCount: number }
+  | { type: 'iap'; productId: string }
 
 export interface GeneratorMilestoneDef {
   level: number
