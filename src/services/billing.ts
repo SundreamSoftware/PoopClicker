@@ -86,7 +86,7 @@ export class StubBillingService implements BillingService {
   }
 
   async getCatalog(): Promise<StoreProduct[]> {
-    if (!this.ready) return IAP_PRODUCTS.map((def) => toStoreProduct(def))
+    if (!this.ready) await this.init()
     return IAP_PRODUCTS.map((def) => toStoreProduct(def))
   }
 
