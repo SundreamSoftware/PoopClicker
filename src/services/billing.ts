@@ -113,10 +113,7 @@ export class StubBillingService implements BillingService {
 
 type NativePurchasesLike = {
   isBillingSupported: () => Promise<{ isBillingSupported: boolean }>
-  getProducts: (opts: {
-    productIdentifiers: string[]
-    productType?: string
-  }) => Promise<{
+  getProducts: (opts: { productIdentifiers: string[]; productType?: string }) => Promise<{
     products: Array<{ identifier: string; title: string; description: string; priceString: string }>
   }>
   purchaseProduct: (opts: {
