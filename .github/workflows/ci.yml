@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -51,9 +53,9 @@ jobs:
       - name: Capacitor sync Android
         run: npx cap sync android
 
-      - name: Assemble debug APK
+      - name: Assemble app and instrumented test APKs
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug assembleDebugAndroidTest --no-daemon
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

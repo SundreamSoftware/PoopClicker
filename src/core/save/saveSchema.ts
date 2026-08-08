@@ -88,6 +88,7 @@ export interface PlayerSaveV2 {
     haptics: boolean
     sfx: boolean
     music: boolean
+    notifications: boolean
   }
 }
 

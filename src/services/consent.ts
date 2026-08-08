@@ -6,6 +6,7 @@ export interface ConsentService {
   init(): Promise<ConsentOutcome>
   /** @deprecated alias of init */
   ensureConsent(): Promise<ConsentOutcome>
+  showPrivacyOptions(): Promise<ConsentOutcome>
 }
 
 /** Always reports consent not required — used on web/tests and as safe fallback. */
@@ -16,6 +17,10 @@ export class StubConsentService implements ConsentService {
 
   async ensureConsent(): Promise<ConsentOutcome> {
     return this.init()
+  }
+
+  async showPrivacyOptions(): Promise<ConsentOutcome> {
+    return 'not_required'
   }
 }
 
@@ -54,6 +59,17 @@ export class CapacitorUmpConsentService implements ConsentService {
       return 'unavailable'
     } catch (err) {
       console.warn('[consent] UMP unavailable', err)
+      return 'unavailable'
+    }
+  }
+
+  async showPrivacyOptions(): Promise<ConsentOutcome> {
+    try {
+      const mod = await import('@capacitor-community/admob')
+      await mod.AdMob.showPrivacyOptionsForm()
+      return 'required'
+    } catch (err) {
+      console.warn('[consent] privacy options unavailable', err)
       return 'unavailable'
     }
   }

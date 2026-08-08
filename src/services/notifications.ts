@@ -160,6 +160,11 @@ export function scheduleNotificationReminders(
   save: PlayerSaveV2,
   now: number,
 ): void {
+  if (!save.settings.notifications) {
+    cancelNotificationReminders(scheduler)
+    return
+  }
+
   if (save.bathroomBreakCharges < ECONOMY.bathroomBreakMaxCharges) {
     const fireAt = save.lastBathroomBreakGeneration + ECONOMY.bathroomBreakIntervalMs
     if (fireAt > now) scheduleBathroomBreak(scheduler, fireAt)
@@ -170,6 +175,13 @@ export function scheduleNotificationReminders(
   if (nextMidnightUtc > now) {
     scheduleStreakReminder(scheduler, nextMidnightUtc)
   }
+}
+
+export function cancelNotificationReminders(scheduler: NotificationScheduler): void {
+  scheduler.cancel('bathroom_break_ready')
+  scheduler.cancel('daily_expiring')
+  scheduler.cancel('offline_reward')
+  scheduler.cancel('daily_streak')
 }
 
 export function createNotificationScheduler(): NotificationScheduler {

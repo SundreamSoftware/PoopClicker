@@ -22,6 +22,17 @@ allprojects {
         google()
         mavenCentral()
     }
+    configurations.configureEach {
+        resolutionStrategy {
+            // AndroidX resolves kotlin-stdlib 1.8.x while an older coroutine
+            // dependency requests the split jdk7/jdk8 1.6.21 artifacts.
+            // Keeping the whole family aligned prevents duplicate classes in
+            // connectedDebugAndroidTest.
+            force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
+        }
+    }
 }
 
 task clean(type: Delete) {

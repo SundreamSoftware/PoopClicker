@@ -2,6 +2,10 @@
 
 Poop Clicker ships as a **Capacitor** WebView shell (`com.sundreamsoftware.poopclicker`).
 
+> APKs built before the Android startup fix lacked the required AdMob application-id
+> manifest metadata and can crash before the activity opens. Use the latest release;
+> see [ANDROID_STARTUP_INCIDENT.md](ANDROID_STARTUP_INCIDENT.md).
+
 ## Debug APK (sideload)
 
 Prefer CI artifacts from the PR `validate` job (`PoopClicker-debug`) or a local rebuild. Do not commit APK binaries.
