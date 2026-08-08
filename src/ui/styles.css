@@ -143,16 +143,11 @@ button {
 }
 
 .currency-icon {
-  display: grid;
-  place-items: center;
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  color: #50300d;
-  font-size: 0.55rem;
-  font-weight: 1000;
-  background: linear-gradient(145deg, #ffe59a, #e9a63b);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
 }
 
 .pp-value {
@@ -174,9 +169,18 @@ button {
 }
 
 .currency-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   padding: 2px 5px;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.16);
+}
+
+.currency-meta img {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
 }
 
 .meta-line {
@@ -436,6 +440,17 @@ button {
   stroke-linejoin: round;
 }
 
+.nav-icon-authored {
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.88;
+}
+
+.nav-dock button.active .nav-icon-authored {
+  filter: sepia(1) saturate(5) hue-rotate(345deg) brightness(1.25);
+  opacity: 1;
+}
+
 .nav-dock button.active,
 .nav-dock button:hover {
   background: linear-gradient(180deg, rgba(255, 209, 102, 0.2), rgba(255, 209, 102, 0.08));
@@ -565,6 +580,17 @@ button:disabled {
   height: 150px;
   pointer-events: none;
   transform: translate(-50%, -50%);
+}
+
+.authored-tap-vfx {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  z-index: 8;
+  width: min(220px, 56vw);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 12px rgba(255, 209, 102, 0.45));
 }
 
 .tap-burst span {
@@ -707,6 +733,17 @@ button:disabled {
   top: 31px;
   border-bottom: 2px solid #19252b;
   border-radius: 0 0 50% 50%;
+}
+
+.skin-swatch-authored {
+  object-fit: contain;
+  padding: 1px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(205, 219, 221, 0.72));
+}
+
+.skin-swatch-authored::after {
+  display: none;
 }
 
 .skin-preview-corny_poop::before {

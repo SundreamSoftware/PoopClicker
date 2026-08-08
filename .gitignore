@@ -14,6 +14,9 @@ coverage
 .playwright-browsers/
 playwright-report/
 test-results/
+# Asset authoring tools/contact sheet are not runtime files.
+public/assets/_generator/
+public/assets/index.html
 *.local
 .DS_Store
 

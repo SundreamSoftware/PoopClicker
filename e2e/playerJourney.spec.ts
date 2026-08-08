@@ -10,6 +10,16 @@ test('launches, taps, persists currency, and navigates core panels', async ({ pa
   await expect(page.getByText('Poop Clicker', { exact: true })).toBeVisible()
   const character = page.getByRole('button', { name: /^Tap / })
   await expect(character).toBeVisible()
+  await expect(page.locator('.authored-character')).toHaveCount(1)
+  await expect(page.locator('.world-art-layer')).toHaveCount(4)
+  expect(
+    await page
+      .locator('.authored-character')
+      .evaluate((image) => (image as HTMLImageElement).naturalWidth),
+  ).toBe(512)
+  for (const layer of await page.locator('.world-art-layer').all()) {
+    expect(await layer.evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBe(1440)
+  }
 
   await character.click()
   const ppAfterTap = await page.locator('.pp-value').innerText()

@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
+import { AUTHORED_WORLD_IDS, worldLayerPath, type WorldLayer } from '../../content/assetPaths'
 import { WORLD_BY_ID } from '../../content/worlds'
 import './worlds.css'
 
@@ -27,21 +28,40 @@ export function WorldStage({ worldId, children, reducedMotion = false }: WorldSt
   const world = WORLD_BY_ID[worldId] ?? WORLD_BY_ID.home_bathroom
   const fx = WORLD_FX[worldId] ?? WORLD_FX.home_bathroom!
   const safeId = world?.id ?? 'home_bathroom'
+  const [failedWorldId, setFailedWorldId] = useState<string | null>(null)
+  const authored = AUTHORED_WORLD_IDS.has(safeId) && failedWorldId !== safeId
+  const layers: WorldLayer[] = ['background', 'midground', 'foreground', 'vfx']
 
   return (
     <section
-      className={`world-stage world-${safeId} ${reducedMotion ? 'reduced' : ''}`}
+      className={`world-stage world-${safeId} ${authored ? 'authored-world' : ''} ${reducedMotion ? 'reduced' : ''}`}
       data-world={safeId}
       aria-label={world?.name ?? 'Bathroom'}
     >
-      <div className="world-environment" aria-hidden>
-        <span className="env-light" />
-        <span className="env-wall-detail env-wall-detail-left" />
-        <span className="env-wall-detail env-wall-detail-right" />
-        <span className="env-floor" />
-        <span className="env-prop env-prop-left" />
-        <span className="env-prop env-prop-right" />
-      </div>
+      {authored ? (
+        <div className="world-art" aria-hidden>
+          {layers.map((layer) => (
+            <img
+              key={layer}
+              className={`world-art-layer world-art-${layer}`}
+              src={worldLayerPath(safeId, layer) ?? undefined}
+              alt=""
+              draggable={false}
+              loading={layer === 'background' ? 'eager' : 'lazy'}
+              onError={() => setFailedWorldId(safeId)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="world-environment" aria-hidden>
+          <span className="env-light" />
+          <span className="env-wall-detail env-wall-detail-left" />
+          <span className="env-wall-detail env-wall-detail-right" />
+          <span className="env-floor" />
+          <span className="env-prop env-prop-left" />
+          <span className="env-prop env-prop-right" />
+        </div>
+      )}
       <div className="world-label">
         <span className="world-label-dot" aria-hidden />
         {world?.name ?? 'Home Bathroom'}

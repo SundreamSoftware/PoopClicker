@@ -1,0 +1,25 @@
+.sprite-sheet-player {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  background-image: var(--sprite-url);
+  background-repeat: no-repeat;
+  background-size: calc(var(--sprite-frames) * 100%) 100%;
+  background-position: 0 0;
+  animation: playSprite var(--sprite-duration) steps(var(--sprite-frames)) 1 both;
+  pointer-events: none;
+}
+
+.sprite-sheet-player.loop {
+  animation-iteration-count: infinite;
+}
+
+.sprite-sheet-player.reduced {
+  animation: none;
+}
+
+@keyframes playSprite {
+  to {
+    background-position: 100% 0;
+  }
+}

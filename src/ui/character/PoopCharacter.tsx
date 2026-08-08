@@ -1,4 +1,9 @@
-import type { CSSProperties, PointerEventHandler } from 'react'
+import { type CSSProperties, type PointerEventHandler, useEffect, useState } from 'react'
+import {
+  resolveCharacterAuraPath,
+  resolveSkinExpressionPath,
+  resolveToiletPath,
+} from '../../content/assetPaths'
 import { ASSET_MANIFEST } from '../../content/assetManifest'
 import { SKIN_BY_ID } from '../../content/skins'
 import { getSkinVisual, type SkinAccessory, type Headwear } from '../../content/skinsVisual'
@@ -848,6 +853,58 @@ export function PoopCharacter({
   const eyes = eyeOffsets(face)
   const skinClass = `skin-${skinId.replace(/[^a-z0-9_]/gi, '_')}`
   const animVariant = skinDef?.animationVariant ?? manifest.variant
+  const authoredCharacter = resolveSkinExpressionPath(skinId, face)
+  const authoredAura = resolveCharacterAuraPath(face)
+  const authoredToilet = resolveToiletPath(
+    squish
+      ? 'bounce'
+      : tapState === 'frenzy' || tapState === 'overdrive' || tapState === 'fast'
+        ? 'shake'
+        : 'idle',
+  )
+  const [failedAsset, setFailedAsset] = useState<string | null>(null)
+
+  useEffect(() => {
+    setFailedAsset(null)
+  }, [authoredCharacter, authoredToilet])
+
+  if (authoredCharacter && failedAsset !== authoredCharacter && failedAsset !== authoredToilet) {
+    return (
+      <button
+        type="button"
+        className={`poop-stage authored-poop-stage ${reducedMotion ? 'reduced' : ''}`}
+        onPointerDown={onPointerDown}
+        aria-label={`Tap ${skinDef?.name ?? 'poop'}`}
+        data-anim={animVariant}
+      >
+        {authoredAura && (
+          <img
+            className="authored-character-aura"
+            src={authoredAura}
+            alt=""
+            draggable={false}
+            aria-hidden
+          />
+        )}
+        <img
+          className={`authored-toilet authored-toilet-${tapState}`}
+          src={authoredToilet}
+          alt=""
+          draggable={false}
+          aria-hidden
+          onError={() => setFailedAsset(authoredToilet)}
+        />
+        <img
+          className={`authored-character state-${tapState} ${squish ? 'squish' : ''} ${skinClass}`}
+          src={authoredCharacter}
+          alt=""
+          draggable={false}
+          aria-hidden
+          onError={() => setFailedAsset(authoredCharacter)}
+        />
+      </button>
+    )
+  }
 
   return (
     <button

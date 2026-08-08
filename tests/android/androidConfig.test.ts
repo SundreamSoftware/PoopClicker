@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 const manifestPath = 'android/app/src/main/AndroidManifest.xml'
@@ -26,5 +26,15 @@ describe('Android startup configuration', () => {
     expect(activity).toContain('WindowInsetsCompat.Type.navigationBars()')
     expect(activity).toContain('BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE')
     expect(activity).toContain('onWindowFocusChanged')
+  })
+
+  it('ships the authored adaptive icon and splash resources', () => {
+    expect(
+      existsSync('android/app/src/main/res/drawable-nodpi/ic_launcher_foreground_authored.png'),
+    ).toBe(true)
+    expect(
+      existsSync('android/app/src/main/res/drawable-nodpi/ic_launcher_background_authored.png'),
+    ).toBe(true)
+    expect(existsSync('android/app/src/main/res/drawable-nodpi/splash_art.webp')).toBe(true)
   })
 })

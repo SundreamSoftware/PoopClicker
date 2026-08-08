@@ -1,0 +1,10 @@
+{
+  "name": "floating_pp",
+  "frames": 8,
+  "frame_width": 256,
+  "frame_height": 256,
+  "sheet": "P3_spritesheets/floating_pp_sheet.png",
+  "sheet_webp": "P3_spritesheets/floating_pp_sheet.webp",
+  "fps_suggested": 24,
+  "loop": true
+}

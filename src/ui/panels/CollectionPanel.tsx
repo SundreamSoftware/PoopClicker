@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ACHIEVEMENTS } from '../../content/achievements'
 import { ASSET_MANIFEST } from '../../content/assetManifest'
+import { resolveSkinExpressionPath } from '../../content/assetPaths'
 import { EVENTS } from '../../content/events'
 import { GENERATORS } from '../../content/generators'
 import { SKINS } from '../../content/skins'
@@ -97,6 +98,7 @@ export function CollectionPanel() {
           const met = isSkinUnlockRequirementMet(snap.save, skin.id)
           const color =
             ASSET_MANIFEST.skins[skin.id as keyof typeof ASSET_MANIFEST.skins]?.color ?? '#8B5A2B'
+          const authoredPreview = resolveSkinExpressionPath(skin.id, 'normal')
           const unlockText =
             skin.unlock.type === 'gtp'
               ? `${skin.unlock.amount} GTP`
@@ -113,11 +115,22 @@ export function CollectionPanel() {
           return (
             <div className="list-row" key={skin.id}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <div
-                  className={`skin-swatch skin-preview-${skin.id.replace(/[^a-z0-9_-]/gi, '_')}`}
-                  style={{ ['--preview-color' as string]: color }}
-                  aria-hidden
-                />
+                {authoredPreview ? (
+                  <img
+                    className="skin-swatch skin-swatch-authored"
+                    src={authoredPreview}
+                    alt=""
+                    loading="lazy"
+                    draggable={false}
+                    aria-hidden
+                  />
+                ) : (
+                  <div
+                    className={`skin-swatch skin-preview-${skin.id.replace(/[^a-z0-9_-]/gi, '_')}`}
+                    style={{ ['--preview-color' as string]: color }}
+                    aria-hidden
+                  />
+                )}
                 <div>
                   <strong>{skin.name}</strong>{' '}
                   <span className={`badge ${skin.rarity}`}>{skin.rarity}</span>

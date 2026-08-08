@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { ActiveEventRuntime } from '../../core/types/eventRuntime'
+import { assetUrl, EVENT_ASSETS } from '../../content/assetPaths'
 import { EVENT_BY_ID } from '../../content/events'
 import { formatDuration } from '../../core/numbers/formatNumber'
 
@@ -39,20 +40,16 @@ const targetBtn = (x: number, y: number, kind: 'golden' | 'tp_roll'): CSSPropert
   left: `${x}%`,
   top: `${y}%`,
   transform: 'translate(-50%, -50%)',
-  width: kind === 'golden' ? 56 : 48,
-  height: kind === 'golden' ? 56 : 48,
-  borderRadius: kind === 'golden' ? '45% 50% 48% 52%' : 10,
+  width: kind === 'golden' ? 76 : 64,
+  height: kind === 'golden' ? 76 : 64,
+  borderRadius: '50%',
   border: 'none',
   cursor: 'pointer',
   pointerEvents: 'auto',
-  background:
-    kind === 'golden'
-      ? 'radial-gradient(circle at 30% 30%, #fff3a0, #f1c40f 45%, #b7950b)'
-      : 'linear-gradient(180deg, #f7f7f7, #d0d0d0)',
+  padding: 0,
+  background: 'transparent',
   boxShadow:
     kind === 'golden' ? '0 0 16px rgba(241, 196, 15, 0.75)' : '0 4px 10px rgba(0,0,0,0.25)',
-  fontSize: kind === 'golden' ? 22 : 18,
-  lineHeight: 1,
   zIndex: 21,
 })
 
@@ -71,13 +68,33 @@ function BossBar({
 }) {
   const progress = runtime.tapTarget > 0 ? Math.min(1, runtime.taps / runtime.tapTarget) : 0
   const phaseLabel = runtime.type === 'mega_clog' ? ` · Phase ${runtime.phase}/3` : ''
+  const artSrc =
+    runtime.type === 'mega_clog'
+      ? assetUrl(`P1_events/mega_clog/mega_clog_phase_${runtime.phase}.svg`)
+      : assetUrl(
+          `P1_events/clogged_toilet/clogged_stage_${Math.min(3, Math.floor(progress * 4))}.svg`,
+        )
   return (
     <div style={{ ...bannerStyle, pointerEvents: 'none' }}>
+      <img
+        src={artSrc}
+        alt=""
+        draggable={false}
+        style={{
+          position: 'absolute',
+          width: 74,
+          height: 74,
+          right: 8,
+          top: 4,
+          objectFit: 'contain',
+          filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))',
+        }}
+      />
       <div style={{ fontWeight: 800, letterSpacing: 0.03 }}>
         {title}
         {phaseLabel}
       </div>
-      <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>
+      <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2, paddingRight: 72 }}>
         {runtime.taps}/{runtime.tapTarget} · {formatDuration(remainingMs(runtime, now))}
       </div>
       <div
@@ -204,7 +221,28 @@ function MysteryCards({
         placeItems: 'center',
       }}
     >
-      <div style={{ width: 'min(360px, 92%)', color: '#fff', textAlign: 'center' }}>
+      <img
+        src={EVENT_ASSETS.mystery_flush}
+        alt=""
+        draggable={false}
+        style={{
+          position: 'absolute',
+          width: 'min(420px, 100%)',
+          height: '100%',
+          objectFit: 'contain',
+          opacity: 0.28,
+          pointerEvents: 'none',
+        }}
+      />
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          width: 'min(360px, 92%)',
+          color: '#fff',
+          textAlign: 'center',
+        }}
+      >
         <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 6 }}>MYSTERY FLUSH</div>
         <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 14 }}>
           Pick a door · {formatDuration(remainingMs(runtime, now))}
@@ -281,8 +319,26 @@ export function EventOverlay({
             animation: reducedMotion ? undefined : 'none',
           }}
         >
-          <div style={{ fontWeight: 800 }}>{title}</div>
-          <div style={{ fontSize: 12, opacity: 0.9, marginTop: 2 }}>
+          <img
+            src={
+              runtime.type === 'burrito_rush'
+                ? EVENT_ASSETS.burrito_rush
+                : EVENT_ASSETS.toilet_quake
+            }
+            alt=""
+            draggable={false}
+            style={{
+              position: 'absolute',
+              width: 76,
+              height: 76,
+              right: 6,
+              top: 2,
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))',
+            }}
+          />
+          <div style={{ fontWeight: 800, paddingRight: 74 }}>{title}</div>
+          <div style={{ fontSize: 12, opacity: 0.9, marginTop: 2, paddingRight: 74 }}>
             {def?.description} · {formatDuration(remainingMs(runtime, now))}
           </div>
           {onDismiss && (
@@ -348,7 +404,18 @@ export function EventOverlay({
             }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            {target.kind === 'golden' ? '★' : '🧻'}
+            <img
+              src={
+                target.kind === 'golden'
+                  ? runtime.type === 'golden_rain'
+                    ? EVENT_ASSETS.golden_rain
+                    : EVENT_ASSETS.golden_poop
+                  : EVENT_ASSETS.toilet_paper_storm
+              }
+              alt=""
+              draggable={false}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
+            />
           </button>
         ))}
       </div>

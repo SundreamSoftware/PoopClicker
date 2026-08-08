@@ -1,4 +1,5 @@
 import { type ReactNode, useState } from 'react'
+import { UI_ASSETS } from '../content/assetPaths'
 import { formatDuration, formatMultiplier, formatNumber } from '../core/numbers/formatNumber'
 import { ECONOMY } from '../core/economy/formulas'
 import { tapHaptic } from '../native/haptics'
@@ -11,6 +12,7 @@ import { useGameSnapshot } from '../state/useGameSnapshot'
 import AudioManager from '../audio/AudioManager'
 import { maybePromptNotifications } from './notificationPrompt'
 import { PoopCharacter, resolveFaceFromTapState } from './character/PoopCharacter'
+import { SpriteSheetPlayer } from './assets/SpriteSheetPlayer'
 import { DailyDumpModal } from './daily/DailyDumpModal'
 import { ErrorBoundary } from './ErrorBoundary'
 import { EventOverlay } from './events/EventOverlay'
@@ -25,6 +27,18 @@ import './styles.css'
 type Tab = 'play' | 'shop' | 'daily' | 'achieve' | 'collection' | 'flush'
 
 function NavIcon({ id }: { id: Exclude<Tab, 'flush'> }) {
+  const authored =
+    id === 'play'
+      ? UI_ASSETS.nav.play
+      : id === 'shop'
+        ? UI_ASSETS.nav.shop
+        : id === 'collection'
+          ? UI_ASSETS.nav.collection
+          : null
+  if (authored) {
+    return <img className="nav-icon nav-icon-authored" src={authored} alt="" aria-hidden />
+  }
+
   const paths: Record<Exclude<Tab, 'flush'>, ReactNode> = {
     play: (
       <path d="M8 4.5c2-3 8-1 6 2.5 3-.5 5 4 2 5.5 2 4-1 7-5.5 7S3 17 4.5 13C1 11 3 6.5 6 7c-.5-1 .2-2 2-2.5Z" />
@@ -51,6 +65,7 @@ function GameScreen() {
   const { items, push } = useFloatingNumbers()
   const [tab, setTab] = useState<Tab>('play')
   const [squish, setSquish] = useState(false)
+  const [tapFx, setTapFx] = useState<{ id: number; crit: boolean } | null>(null)
   const [flushOpen, setFlushOpen] = useState(false)
   const [dumpModalOpen, setDumpModalOpen] = useState(false)
 
@@ -70,6 +85,7 @@ function GameScreen() {
   const onTap = () => {
     const result = engine.tap()
     push(`+${formatNumber(result.gained)}`, result.crit)
+    setTapFx({ id: Date.now(), crit: result.crit })
     setSquish(true)
     window.setTimeout(() => setSquish(false), 230)
     if (snap.save.settings.haptics) void tapHaptic(result.crit)
@@ -96,14 +112,18 @@ function GameScreen() {
         </div>
         <div className="currency-stack">
           <div className="currency-primary">
-            <span className="currency-icon" aria-hidden>
-              PP
-            </span>
+            <img className="currency-icon" src={UI_ASSETS.currency.pp} alt="" aria-hidden />
             <span className="pp-value">{formatNumber(snap.save.currentPP)}</span>
           </div>
           <div className="currency-meta">
-            <span>{snap.save.gtp} GTP</span>
-            <span>{snap.save.flushPower} FP</span>
+            <span>
+              <img src={UI_ASSETS.currency.gtp} alt="" aria-hidden />
+              {snap.save.gtp} GTP
+            </span>
+            <span>
+              <img src={UI_ASSETS.currency.flushPower} alt="" aria-hidden />
+              {snap.save.flushPower} FP
+            </span>
             <span>{formatMultiplier(snap.production.globalMultiplier)}</span>
           </div>
         </div>
@@ -178,11 +198,14 @@ function GameScreen() {
                 reducedMotion={reducedMotion}
                 onPointerDown={onTap}
               />
-              <div className={`tap-burst ${squish ? 'active' : ''}`} aria-hidden>
-                {Array.from({ length: 8 }, (_, index) => (
-                  <span key={index} style={{ ['--ray' as string]: index }} />
-                ))}
-              </div>
+              {tapFx && (
+                <div className="authored-tap-vfx" key={tapFx.id}>
+                  <SpriteSheetPlayer
+                    name={tapFx.crit ? 'crit_burst' : 'tap_burst'}
+                    reducedMotion={reducedMotion}
+                  />
+                </div>
+              )}
               {snap.eventRuntime && (
                 <EventOverlay
                   runtime={snap.eventRuntime}

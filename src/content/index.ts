@@ -8,6 +8,16 @@ export { EVENTS, EVENT_BY_ID } from './events'
 export { ROYAL_FLUSH_NODES, ROYAL_FLUSH_BY_ID } from './royalFlush'
 export { FLUSH_MILESTONES } from './flushMilestones'
 export { ASSET_MANIFEST } from './assetManifest'
+export {
+  assetUrl,
+  worldLayerPath,
+  resolveSkinExpressionPath,
+  resolveCharacterAuraPath,
+  resolveToiletPath,
+  AUTHORED_WORLD_IDS,
+  UI_ASSETS,
+  EVENT_ASSETS,
+} from './assetPaths'
 export { SKINS_VISUAL, getSkinVisual } from './skinsVisual'
 export type {
   SkinVisualDef,

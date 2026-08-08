@@ -1,0 +1,1661 @@
+{
+  "pack": "Poop Clicker Asset Pack",
+  "version": "1.0.0",
+  "coordinate_space": {
+    "character_rig": "512x512",
+    "icons": "128x128",
+    "backgrounds": "1440x2560",
+    "frames": "512x512"
+  },
+  "assets": [
+    {
+      "file": "P1_worlds/home_bathroom/world_home_bathroom_full.webp",
+      "type": "background",
+      "world": "home_bathroom",
+      "layer": "full",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_background.webp",
+      "type": "background_layer",
+      "world": "home_bathroom",
+      "layer": "background",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_midground.webp",
+      "type": "background_layer",
+      "world": "home_bathroom",
+      "layer": "midground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_foreground.webp",
+      "type": "background_layer",
+      "world": "home_bathroom",
+      "layer": "foreground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_vfx.webp",
+      "type": "background_layer",
+      "world": "home_bathroom",
+      "layer": "vfx",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/office_toilet/world_office_toilet_full.webp",
+      "type": "background",
+      "world": "office_toilet",
+      "layer": "full",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/office_toilet/layers/world_office_toilet_background.webp",
+      "type": "background_layer",
+      "world": "office_toilet",
+      "layer": "background",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/office_toilet/layers/world_office_toilet_midground.webp",
+      "type": "background_layer",
+      "world": "office_toilet",
+      "layer": "midground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/office_toilet/layers/world_office_toilet_foreground.webp",
+      "type": "background_layer",
+      "world": "office_toilet",
+      "layer": "foreground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/office_toilet/layers/world_office_toilet_vfx.webp",
+      "type": "background_layer",
+      "world": "office_toilet",
+      "layer": "vfx",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/omni_throne/world_omni_throne_full.webp",
+      "type": "background",
+      "world": "omni_throne",
+      "layer": "full",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/omni_throne/layers/world_omni_throne_background.webp",
+      "type": "background_layer",
+      "world": "omni_throne",
+      "layer": "background",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/omni_throne/layers/world_omni_throne_midground.webp",
+      "type": "background_layer",
+      "world": "omni_throne",
+      "layer": "midground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/omni_throne/layers/world_omni_throne_foreground.webp",
+      "type": "background_layer",
+      "world": "omni_throne",
+      "layer": "foreground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/omni_throne/layers/world_omni_throne_vfx.webp",
+      "type": "background_layer",
+      "world": "omni_throne",
+      "layer": "vfx",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/world_quantum_bathroom_full.webp",
+      "type": "background",
+      "world": "quantum_bathroom",
+      "layer": "full",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_background.webp",
+      "type": "background_layer",
+      "world": "quantum_bathroom",
+      "layer": "background",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_midground.webp",
+      "type": "background_layer",
+      "world": "quantum_bathroom",
+      "layer": "midground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_foreground.webp",
+      "type": "background_layer",
+      "world": "quantum_bathroom",
+      "layer": "foreground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_vfx.webp",
+      "type": "background_layer",
+      "world": "quantum_bathroom",
+      "layer": "vfx",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/space_loo/world_space_loo_full.webp",
+      "type": "background",
+      "world": "space_loo",
+      "layer": "full",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/space_loo/layers/world_space_loo_background.webp",
+      "type": "background_layer",
+      "world": "space_loo",
+      "layer": "background",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/space_loo/layers/world_space_loo_midground.webp",
+      "type": "background_layer",
+      "world": "space_loo",
+      "layer": "midground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/space_loo/layers/world_space_loo_foreground.webp",
+      "type": "background_layer",
+      "world": "space_loo",
+      "layer": "foreground",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P1_worlds/space_loo/layers/world_space_loo_vfx.webp",
+      "type": "background_layer",
+      "world": "space_loo",
+      "layer": "vfx",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P3_spritesheets/tap_burst_sheet.png",
+      "type": "spritesheet",
+      "name": "tap_burst",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/tap_burst_sheet.png",
+      "sheet_webp": "P3_spritesheets/tap_burst_sheet.webp",
+      "fps_suggested": 24,
+      "loop": false
+    },
+    {
+      "file": "P3_spritesheets/crit_burst_sheet.png",
+      "type": "spritesheet",
+      "name": "crit_burst",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/crit_burst_sheet.png",
+      "sheet_webp": "P3_spritesheets/crit_burst_sheet.webp",
+      "fps_suggested": 24,
+      "loop": false
+    },
+    {
+      "file": "P3_spritesheets/floating_pp_sheet.png",
+      "type": "spritesheet",
+      "name": "floating_pp",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/floating_pp_sheet.png",
+      "sheet_webp": "P3_spritesheets/floating_pp_sheet.webp",
+      "fps_suggested": 24,
+      "loop": true
+    },
+    {
+      "file": "P3_spritesheets/flush_vortex_sheet.png",
+      "type": "spritesheet",
+      "name": "flush_vortex",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/flush_vortex_sheet.png",
+      "sheet_webp": "P3_spritesheets/flush_vortex_sheet.webp",
+      "fps_suggested": 24,
+      "loop": true
+    },
+    {
+      "file": "P3_spritesheets/toilet_paper_sheet.png",
+      "type": "spritesheet",
+      "name": "toilet_paper",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/toilet_paper_sheet.png",
+      "sheet_webp": "P3_spritesheets/toilet_paper_sheet.webp",
+      "fps_suggested": 24,
+      "loop": true
+    },
+    {
+      "file": "P2_store/screenshots/png/screenshot_events_1080x1920.png",
+      "type": "screenshot",
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "file": "P2_store/screenshots/png/screenshot_prestige_1080x1920.png",
+      "type": "screenshot",
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "file": "P2_store/screenshots/png/screenshot_tap_1080x1920.png",
+      "type": "screenshot",
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "file": "P2_store/screenshots/png/screenshot_upgrade_1080x1920.png",
+      "type": "screenshot",
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "file": "P2_store/screenshots/png/screenshot_worlds_1080x1920.png",
+      "type": "screenshot",
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "file": "P2_store/png/feature_graphic_1024x500.png",
+      "type": "store_graphic",
+      "width": 1024,
+      "height": 500
+    },
+    {
+      "file": "P2_store/png/key_art_1920x1080.png",
+      "type": "key_art",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "file": "P2_store/webp/splash_1440x2560.webp",
+      "type": "splash",
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "file": "P0_character/expressions/poop_classic_dizzy.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/expressions/poop_classic_effort.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/expressions/poop_classic_frenzy.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/expressions/poop_classic_happy.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/expressions/poop_classic_normal.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/expressions/poop_classic_overdrive.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/expressions/poop_classic_panic.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/poop_classic_frenzy_aura.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/poop_classic_layered.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/poop_classic_master.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_character/poop_classic_overdrive_aura.svg",
+      "type": "svg",
+      "group": "P0_character",
+      "note": "512x512 rig, pivot (256,402) base centre"
+    },
+    {
+      "file": "P0_environment/home_bathroom_full.svg",
+      "type": "svg",
+      "group": "P0_environment",
+      "note": ""
+    },
+    {
+      "file": "P0_environment/layers/home_bathroom_background.svg",
+      "type": "svg",
+      "group": "P0_environment",
+      "note": ""
+    },
+    {
+      "file": "P0_environment/layers/home_bathroom_foreground.svg",
+      "type": "svg",
+      "group": "P0_environment",
+      "note": ""
+    },
+    {
+      "file": "P0_environment/layers/home_bathroom_midground.svg",
+      "type": "svg",
+      "group": "P0_environment",
+      "note": ""
+    },
+    {
+      "file": "P0_environment/layers/home_bathroom_vfx.svg",
+      "type": "svg",
+      "group": "P0_environment",
+      "note": ""
+    },
+    {
+      "file": "P0_toilet/parts/toilet_part_base.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_toilet/parts/toilet_part_handle.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_toilet/parts/toilet_part_seat.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_toilet/parts/toilet_part_tank.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_toilet/parts/toilet_part_water.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_toilet/toilet_bounce.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_toilet/toilet_clogged.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_toilet/toilet_flush.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_toilet/toilet_idle.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_toilet/toilet_shake.svg",
+      "type": "svg",
+      "group": "P0_toilet",
+      "note": "512x512, pivot (256,428) floor contact"
+    },
+    {
+      "file": "P0_vfx/aura_frenzy.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/aura_overdrive.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/crit_burst.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/floating_pp.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/flush_splash.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/flush_vortex.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/crit_burst/crit_burst_00.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/crit_burst/crit_burst_01.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/crit_burst/crit_burst_02.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/crit_burst/crit_burst_03.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/crit_burst/crit_burst_04.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/crit_burst/crit_burst_05.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/crit_burst/crit_burst_06.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/crit_burst/crit_burst_07.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/floating_pp/floating_pp_00.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/floating_pp/floating_pp_01.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/floating_pp/floating_pp_02.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/floating_pp/floating_pp_03.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/floating_pp/floating_pp_04.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/floating_pp/floating_pp_05.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/floating_pp/floating_pp_06.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/floating_pp/floating_pp_07.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/flush_vortex/flush_vortex_00.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/flush_vortex/flush_vortex_01.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/flush_vortex/flush_vortex_02.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/flush_vortex/flush_vortex_03.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/flush_vortex/flush_vortex_04.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/flush_vortex/flush_vortex_05.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/flush_vortex/flush_vortex_06.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/flush_vortex/flush_vortex_07.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/tap_burst/tap_burst_00.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/tap_burst/tap_burst_01.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/tap_burst/tap_burst_02.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/tap_burst/tap_burst_03.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/tap_burst/tap_burst_04.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/tap_burst/tap_burst_05.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/tap_burst/tap_burst_06.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/frames/tap_burst/tap_burst_07.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/tap_burst.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P0_vfx/unlock_reward.svg",
+      "type": "svg",
+      "group": "P0_vfx",
+      "note": "512x512, pivot (256,256)"
+    },
+    {
+      "file": "P1_accessories/body/body_armor.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/body/body_bowtie.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/body/body_cape.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/body/body_scarf.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/body/body_tie.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/eyewear/eyew_eyepatch.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/eyewear/eyew_monocle.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/eyewear/eyew_nerd.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/eyewear/eyew_sunglasses.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/eyewear/eyew_vr.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/gear/gear_headset.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/gear/gear_stethoscope.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/hats/hats_astronaut.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/hats/hats_cap.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/hats/hats_crown.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/hats/hats_helmet.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/hats/hats_pirate.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/hats/hats_tophat.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/hats/hats_viking.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/hats/hats_wizard.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/horns_halo_aura/horn_aura_ring.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/horns_halo_aura/horn_halo.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/horns_halo_aura/horn_horns.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/particles/particles_bubbles.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/particles/particles_digital.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/particles/particles_embers.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/particles/particles_hearts.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/particles/particles_snow.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/particles/particles_sparkle.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/textures/texture_camo.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/textures/texture_circuit.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/textures/texture_dots.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/textures/texture_lava.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_accessories/textures/texture_stripes.svg",
+      "type": "svg",
+      "group": "P1_accessories",
+      "note": "512x512 rig overlay, drop straight on any skin"
+    },
+    {
+      "file": "P1_events/burrito_rush/burrito_rush.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/clogged_toilet/clogged_stage_0.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/clogged_toilet/clogged_stage_1.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/clogged_toilet/clogged_stage_2.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/clogged_toilet/clogged_stage_3.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/golden_poop/golden_poop_target.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/golden_rain/golden_rain_l.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/golden_rain/golden_rain_m.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/golden_rain/golden_rain_s.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/mega_clog/mega_clog_phase_1.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/mega_clog/mega_clog_phase_2.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/mega_clog/mega_clog_phase_3.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/mystery_flush/mystery_flush.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/plumber/plumber_cps_gauge.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/plumber/plumber_cps_gauge_idle.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_paper/frames/toilet_paper_00.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_paper/frames/toilet_paper_01.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_paper/frames/toilet_paper_02.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_paper/frames/toilet_paper_03.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_paper/frames/toilet_paper_04.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_paper/frames/toilet_paper_05.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_paper/frames/toilet_paper_06.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_paper/frames/toilet_paper_07.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_paper/toilet_paper.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_events/toilet_quake/toilet_quake.svg",
+      "type": "svg",
+      "group": "P1_events",
+      "note": ""
+    },
+    {
+      "file": "P1_skins/404/poop_404_frenzy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/404/poop_404_happy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/404/poop_404_normal.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/blackhole/poop_blackhole_frenzy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/blackhole/poop_blackhole_happy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/blackhole/poop_blackhole_normal.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/classic/poop_classic_frenzy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/classic/poop_classic_happy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/classic/poop_classic_normal.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/corny/poop_corny_frenzy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/corny/poop_corny_happy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/corny/poop_corny_normal.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/cyber/poop_cyber_frenzy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/cyber/poop_cyber_happy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/cyber/poop_cyber_normal.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/diamond/poop_diamond_frenzy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/diamond/poop_diamond_happy.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_skins/diamond/poop_diamond_normal.svg",
+      "type": "svg",
+      "group": "P1_skins",
+      "note": "512x512 rig, identical to master"
+    },
+    {
+      "file": "P1_ui/buttons/button_buy.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/buttons/button_danger.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/buttons/button_disabled.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/buttons/button_primary.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/buttons/button_secondary.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/category/cat_auto.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/category/cat_cps_boost.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/category/cat_manual.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/category/cat_power.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/category/cat_prestige.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/category/cat_utility.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/currency/icon_flush_power.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/currency/icon_gtp.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/currency/icon_pp.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/frames/achievement_bronze.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/frames/achievement_gold.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/frames/achievement_silver.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/frames/rarity_common.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/frames/rarity_epic.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/frames/rarity_legendary.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/frames/rarity_mythic.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/frames/rarity_rare.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/modal/close_button.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/modal/modal_ornament.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/modal/modal_panel.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/modal/modal_ribbon.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/nav/nav_events.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/nav/nav_home.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/nav/nav_shop.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/nav/nav_toilets.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/nav/nav_upgrades.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/utility/icon_ad.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/utility/icon_claim.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/utility/icon_lock.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_ui/utility/icon_reward.svg",
+      "type": "svg",
+      "group": "P1_ui",
+      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
+    },
+    {
+      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_background.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_foreground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_midground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_vfx.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/home_bathroom/world_home_bathroom_full.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/office_toilet/layers/world_office_toilet_background.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/office_toilet/layers/world_office_toilet_foreground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/office_toilet/layers/world_office_toilet_midground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/office_toilet/layers/world_office_toilet_vfx.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/office_toilet/world_office_toilet_full.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/omni_throne/layers/world_omni_throne_background.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/omni_throne/layers/world_omni_throne_foreground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/omni_throne/layers/world_omni_throne_midground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/omni_throne/layers/world_omni_throne_vfx.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/omni_throne/world_omni_throne_full.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_background.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_foreground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_midground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_vfx.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/quantum_bathroom/world_quantum_bathroom_full.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/space_loo/layers/world_space_loo_background.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/space_loo/layers/world_space_loo_foreground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/space_loo/layers/world_space_loo_midground.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/space_loo/layers/world_space_loo_vfx.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P1_worlds/space_loo/world_space_loo_full.svg",
+      "type": "svg",
+      "group": "P1_worlds",
+      "note": ""
+    },
+    {
+      "file": "P2_store/app_icon_adaptive_background.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/app_icon_adaptive_foreground.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/app_icon_legacy.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/key_art_1920x1080.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/play_feature_graphic_1024x500.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/screenshots/screenshot_events.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/screenshots/screenshot_prestige.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/screenshots/screenshot_tap.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/screenshots/screenshot_upgrade.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/screenshots/screenshot_worlds.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    },
+    {
+      "file": "P2_store/splash_screen.svg",
+      "type": "svg",
+      "group": "P2_store",
+      "note": ""
+    }
+  ],
+  "spritesheets": [
+    {
+      "name": "tap_burst",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/tap_burst_sheet.png",
+      "sheet_webp": "P3_spritesheets/tap_burst_sheet.webp",
+      "fps_suggested": 24,
+      "loop": false
+    },
+    {
+      "name": "crit_burst",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/crit_burst_sheet.png",
+      "sheet_webp": "P3_spritesheets/crit_burst_sheet.webp",
+      "fps_suggested": 24,
+      "loop": false
+    },
+    {
+      "name": "floating_pp",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/floating_pp_sheet.png",
+      "sheet_webp": "P3_spritesheets/floating_pp_sheet.webp",
+      "fps_suggested": 24,
+      "loop": true
+    },
+    {
+      "name": "flush_vortex",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/flush_vortex_sheet.png",
+      "sheet_webp": "P3_spritesheets/flush_vortex_sheet.webp",
+      "fps_suggested": 24,
+      "loop": true
+    },
+    {
+      "name": "toilet_paper",
+      "frames": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "sheet": "P3_spritesheets/toilet_paper_sheet.png",
+      "sheet_webp": "P3_spritesheets/toilet_paper_sheet.webp",
+      "fps_suggested": 24,
+      "loop": true
+    }
+  ],
+  "counts": {
+    "svg": 214,
+    "webp": 36,
+    "png": 20
+  }
+}
