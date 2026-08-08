@@ -6,14 +6,7 @@ import type { TapSpeedState } from '../../core/types/gameTypes'
 import './PoopCharacter.css'
 
 export type CharacterFace =
-  | 'normal'
-  | 'happy'
-  | 'effort'
-  | 'panic'
-  | 'frenzy'
-  | 'overdrive'
-  | 'dizzy'
-  | 'event'
+  'normal' | 'happy' | 'effort' | 'panic' | 'frenzy' | 'overdrive' | 'dizzy' | 'event'
 
 export type CharacterTapState = TapSpeedState
 
@@ -97,13 +90,7 @@ function eyeOffsets(face: CharacterFace): { open: number; brow: number } {
   }
 }
 
-function HeadwearLayer({
-  headwear,
-  accent,
-}: {
-  headwear: Headwear
-  accent: string
-}) {
+function HeadwearLayer({ headwear, accent }: { headwear: Headwear; accent: string }) {
   switch (headwear) {
     case 'cowboy_hat':
       return (
@@ -262,7 +249,14 @@ function HeadwearLayer({
       return (
         <g className="layer-headwear">
           <rect x="60" y="24" width="80" height="22" rx="4" fill="#2c3e50" />
-          <text x="100" y="40" textAnchor="middle" fontSize="12" fill="#e74c3c" fontFamily="monospace">
+          <text
+            x="100"
+            y="40"
+            textAnchor="middle"
+            fontSize="12"
+            fill="#e74c3c"
+            fontFamily="monospace"
+          >
             404
           </text>
         </g>
@@ -274,13 +268,7 @@ function HeadwearLayer({
   }
 }
 
-function AccessoryLayer({
-  accessories,
-  color,
-}: {
-  accessories: SkinAccessory[]
-  color: string
-}) {
+function AccessoryLayer({ accessories, color }: { accessories: SkinAccessory[]; color: string }) {
   return (
     <g className="layer-accessories">
       {accessories.includes('tie') && (
@@ -304,7 +292,11 @@ function AccessoryLayer({
         </g>
       )}
       {accessories.includes('cape') && (
-        <path d="M60 110 Q40 170 70 185 Q100 160 130 185 Q160 170 140 110" fill="#6c1d45" opacity="0.85" />
+        <path
+          d="M60 110 Q40 170 70 185 Q100 160 130 185 Q160 170 140 110"
+          fill="#6c1d45"
+          opacity="0.85"
+        />
       )}
       {accessories.includes('headset') && (
         <g>
@@ -361,14 +353,23 @@ function AccessoryLayer({
       {accessories.includes('radiation') && (
         <g>
           <circle cx="100" cy="150" r="14" fill="none" stroke="#a8ff3e" strokeWidth="3" />
-          <path d="M100 150 L100 138 M100 150 L110 156 M100 150 L90 156" stroke="#a8ff3e" strokeWidth="3" />
+          <path
+            d="M100 150 L100 138 M100 150 L110 156 M100 150 L90 156"
+            stroke="#a8ff3e"
+            strokeWidth="3"
+          />
         </g>
       )}
       {accessories.includes('wrap') && (
         <path d="M55 100 Q100 130 145 100" fill="none" stroke="#f5cba7" strokeWidth="10" />
       )}
       {accessories.includes('shell') && (
-        <path d="M55 95 L100 70 L145 95 L130 130 L70 130Z" fill="none" stroke="#d4a017" strokeWidth="5" />
+        <path
+          d="M55 95 L100 70 L145 95 L130 130 L70 130Z"
+          fill="none"
+          stroke="#d4a017"
+          strokeWidth="5"
+        />
       )}
       {accessories.includes('money') && (
         <text x="150" y="100" fontSize="16" fill="#27ae60">
@@ -406,7 +407,16 @@ function AccessoryLayer({
         />
       )}
       {accessories.includes('quantum_dot') && (
-        <rect x="72" y="48" width="56" height="40" rx="4" fill="none" stroke="#abb2b9" strokeWidth="3" />
+        <rect
+          x="72"
+          y="48"
+          width="56"
+          height="40"
+          rx="4"
+          fill="none"
+          stroke="#abb2b9"
+          strokeWidth="3"
+        />
       )}
       {accessories.includes('beans') && (
         <g>
@@ -418,13 +428,7 @@ function AccessoryLayer({
   )
 }
 
-function TextureOverlay({
-  texture,
-  color,
-}: {
-  texture: string
-  color: string
-}) {
+function TextureOverlay({ texture, color }: { texture: string; color: string }) {
   switch (texture) {
     case 'kernels':
       return (
@@ -554,7 +558,11 @@ function AuraLayer({ aura, color }: { aura: string; color: string }) {
   if (aura === 'none') return null
   return (
     <g className="layer-aura">
-      {(aura === 'diamond' || aura === 'glitter' || aura === 'sparkle_food' || aura === 'holo' || aura === 'finale') && (
+      {(aura === 'diamond' ||
+        aura === 'glitter' ||
+        aura === 'sparkle_food' ||
+        aura === 'holo' ||
+        aura === 'finale') && (
         <g>
           <circle className="sparkle" cx="50" cy="70" r="3" fill="#fff" />
           <circle className="sparkle" cx="150" cy="60" r="2.5" fill="#fff" />
@@ -574,9 +582,7 @@ function AuraLayer({ aura, color }: { aura: string; color: string }) {
           opacity="0.45"
         />
       )}
-      {aura === 'radiation' && (
-        <circle cx="100" cy="115" r="72" fill="#a8ff3e" opacity="0.12" />
-      )}
+      {aura === 'radiation' && <circle cx="100" cy="115" r="72" fill="#a8ff3e" opacity="0.12" />}
       {aura === 'flame' && (
         <g opacity="0.55">
           <ellipse cx="70" cy="150" rx="10" ry="18" fill="#e67e22" />
@@ -591,15 +597,40 @@ function AuraLayer({ aura, color }: { aura: string; color: string }) {
         </g>
       )}
       {aura === 'circuit' && (
-        <circle cx="100" cy="115" r="70" fill="none" stroke="#00f5ff" strokeWidth="2" opacity="0.3" />
+        <circle
+          cx="100"
+          cy="115"
+          r="70"
+          fill="none"
+          stroke="#00f5ff"
+          strokeWidth="2"
+          opacity="0.3"
+        />
       )}
       {aura === '404' && (
-        <text x="100" y="175" textAnchor="middle" fontSize="10" fill="#e74c3c" opacity="0.7" fontFamily="monospace">
+        <text
+          x="100"
+          y="175"
+          textAnchor="middle"
+          fontSize="10"
+          fill="#e74c3c"
+          opacity="0.7"
+          fontFamily="monospace"
+        >
           NOT FOUND
         </text>
       )}
       {aura === 'royalty' && (
-        <ellipse cx="100" cy="115" rx="74" ry="56" fill="none" stroke={color} strokeWidth="2" opacity="0.35" />
+        <ellipse
+          cx="100"
+          cy="115"
+          rx="74"
+          ry="56"
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          opacity="0.35"
+        />
       )}
       {aura === 'frenzy' || aura === 'pixels' ? (
         <g opacity="0.4">
@@ -629,13 +660,7 @@ function BodyPath({
       <ellipse cx="100" cy="95" rx="50" ry="40" fill={color} />
       <ellipse cx="100" cy="68" rx="34" ry="28" fill={light} />
       <ellipse cx="88" cy="60" rx="10" ry="7" fill={shade(light, 30)} opacity="0.55" />
-      <path
-        d="M78 88 Q100 100 122 88"
-        fill="none"
-        stroke={dark}
-        strokeWidth="3"
-        opacity="0.25"
-      />
+      <path d="M78 88 Q100 100 122 88" fill="none" stroke={dark} strokeWidth="3" opacity="0.25" />
     </g>
   )
 
@@ -651,7 +676,12 @@ function BodyPath({
     case 'crystal':
       return (
         <g className="body-main layer-body">
-          <polygon points="100,40 145,85 130,155 70,155 55,85" fill={color} stroke={light} strokeWidth="2" />
+          <polygon
+            points="100,40 145,85 130,155 70,155 55,85"
+            fill={color}
+            stroke={light}
+            strokeWidth="2"
+          />
           <polygon points="100,40 120,90 100,120 80,90" fill={light} opacity="0.55" />
         </g>
       )
@@ -710,7 +740,10 @@ function BodyPath({
       return (
         <g className="body-main layer-body" opacity="0.85">
           <ellipse cx="100" cy="100" rx="50" ry="55" fill={light} />
-          <path d="M50 120 Q60 150 70 130 Q85 155 100 130 Q115 155 130 130 Q140 150 150 120" fill={light} />
+          <path
+            d="M50 120 Q60 150 70 130 Q85 155 100 130 Q115 155 130 130 Q140 150 150 120"
+            fill={light}
+          />
         </g>
       )
     case 'box':
@@ -784,7 +817,12 @@ function ParticlesOverlay({
       </circle>
       <circle cx="100" cy="40" r="2" fill="#fff" opacity="0.6">
         {!reducedMotion && (
-          <animate attributeName="opacity" values="0.6;0.1;0.6" dur="0.4s" repeatCount="indefinite" />
+          <animate
+            attributeName="opacity"
+            values="0.6;0.1;0.6"
+            dur="0.4s"
+            repeatCount="indefinite"
+          />
         )}
       </circle>
     </g>
@@ -894,7 +932,14 @@ export function PoopCharacter({
           </g>
 
           <g className={`layer-mouth face-${face}`}>
-            <path className="mouth-path" d={mouthPath(face)} fill="none" stroke="#1d2a32" strokeWidth="4" strokeLinecap="round" />
+            <path
+              className="mouth-path"
+              d={mouthPath(face)}
+              fill="none"
+              stroke="#1d2a32"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
             {(face === 'frenzy' || face === 'overdrive') && (
               <ellipse cx="100" cy="128" rx="8" ry="5" fill="#5a3516" opacity="0.7" />
             )}

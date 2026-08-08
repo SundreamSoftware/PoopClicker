@@ -117,7 +117,11 @@ describe('Daily Challenges', () => {
       purchasedRunUpgrades: { lucky_streak: 10 },
     }
     const withCrit = generateDailyChallenges(save, Date.UTC(2026, 7, 7), LargeNumber.from(10))
-    const base = generateDailyChallenges(createDefaultSave(), Date.UTC(2026, 7, 7), LargeNumber.from(10))
+    const base = generateDailyChallenges(
+      createDefaultSave(),
+      Date.UTC(2026, 7, 7),
+      LargeNumber.from(10),
+    )
     const critChallenge = withCrit.find((c) => c.metric === 'crit_taps')
     const baseCrit = base.find((c) => c.metric === 'crit_taps')
     if (critChallenge && baseCrit) {

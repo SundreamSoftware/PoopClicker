@@ -54,11 +54,7 @@ export const EVENT_SCHEDULER = {
   goldenJitterMs: 60_000,
 } as const
 
-export function scheduleNextRandomEventAt(
-  now: number,
-  luckBonus = 0,
-  flushCount = 0,
-): number {
+export function scheduleNextRandomEventAt(now: number, luckBonus = 0, flushCount = 0): number {
   const shrink = Math.min(0.45, luckBonus * 0.5 + flushCount * 0.005)
   const base = EVENT_SCHEDULER.baseIntervalMs * (1 - shrink)
   const jitter = (Math.random() * 2 - 1) * EVENT_SCHEDULER.jitterMs

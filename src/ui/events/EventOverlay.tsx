@@ -50,9 +50,7 @@ const targetBtn = (x: number, y: number, kind: 'golden' | 'tp_roll'): CSSPropert
       ? 'radial-gradient(circle at 30% 30%, #fff3a0, #f1c40f 45%, #b7950b)'
       : 'linear-gradient(180deg, #f7f7f7, #d0d0d0)',
   boxShadow:
-    kind === 'golden'
-      ? '0 0 16px rgba(241, 196, 15, 0.75)'
-      : '0 4px 10px rgba(0,0,0,0.25)',
+    kind === 'golden' ? '0 0 16px rgba(241, 196, 15, 0.75)' : '0 4px 10px rgba(0,0,0,0.25)',
   fontSize: kind === 'golden' ? 22 : 18,
   lineHeight: 1,
   zIndex: 21,
@@ -72,11 +70,13 @@ function BossBar({
   now: number
 }) {
   const progress = runtime.tapTarget > 0 ? Math.min(1, runtime.taps / runtime.tapTarget) : 0
-  const phaseLabel =
-    runtime.type === 'mega_clog' ? ` · Phase ${runtime.phase}/3` : ''
+  const phaseLabel = runtime.type === 'mega_clog' ? ` · Phase ${runtime.phase}/3` : ''
   return (
     <div style={{ ...bannerStyle, pointerEvents: 'none' }}>
-      <div style={{ fontWeight: 800, letterSpacing: 0.03 }}>{title}{phaseLabel}</div>
+      <div style={{ fontWeight: 800, letterSpacing: 0.03 }}>
+        {title}
+        {phaseLabel}
+      </div>
       <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>
         {runtime.taps}/{runtime.tapTarget} · {formatDuration(remainingMs(runtime, now))}
       </div>
@@ -116,10 +116,8 @@ function PlumberMeter({
 }) {
   const bandMin = 4
   const bandMax = 6
-  const status =
-    rollingCps < bandMin ? 'TOO SLOW' : rollingCps > bandMax ? 'TOO FAST' : 'PERFECT'
-  const color =
-    status === 'PERFECT' ? '#2ecc71' : status === 'TOO SLOW' ? '#f1c40f' : '#e74c3c'
+  const status = rollingCps < bandMin ? 'TOO SLOW' : rollingCps > bandMax ? 'TOO FAST' : 'PERFECT'
+  const color = status === 'PERFECT' ? '#2ecc71' : status === 'TOO SLOW' ? '#f1c40f' : '#e74c3c'
   const meter = Math.min(1, rollingCps / 10)
   return (
     <div
@@ -361,7 +359,9 @@ export function EventOverlay({
     <div style={overlayRoot}>
       <div style={bannerStyle}>
         <div style={{ fontWeight: 800 }}>{title}</div>
-        <div style={{ fontSize: 12, opacity: 0.85 }}>{formatDuration(remainingMs(runtime, now))}</div>
+        <div style={{ fontSize: 12, opacity: 0.85 }}>
+          {formatDuration(remainingMs(runtime, now))}
+        </div>
       </div>
     </div>
   )

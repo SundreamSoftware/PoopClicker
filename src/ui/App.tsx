@@ -197,9 +197,7 @@ function GameScreen() {
       )}
 
       {tab === 'shop' && <ShopPanel />}
-      {tab === 'daily' && (
-        <DailyPanel onOpenDailyDump={() => setDumpModalOpen(true)} />
-      )}
+      {tab === 'daily' && <DailyPanel onOpenDailyDump={() => setDumpModalOpen(true)} />}
       {tab === 'achieve' && <AchievementsPanel />}
       {tab === 'collection' && <CollectionPanel />}
       {(tab === 'flush' || flushOpen) && (

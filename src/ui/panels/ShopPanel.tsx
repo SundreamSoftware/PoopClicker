@@ -198,8 +198,7 @@ export function ShopPanel() {
           {!iapLoading &&
             products.map((product) => {
               const owned =
-                product.kind !== 'consumable' &&
-                snap.save.ownedIapProducts.includes(product.id)
+                product.kind !== 'consumable' && snap.save.ownedIapProducts.includes(product.id)
               return (
                 <div className="list-row" key={product.id}>
                   <div>

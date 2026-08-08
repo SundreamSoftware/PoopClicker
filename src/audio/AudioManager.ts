@@ -393,7 +393,10 @@ class AudioManagerImpl {
       const peak = spec.gain ?? 0.1
       osc.frequency.setValueAtTime(spec.freq, start)
       if (spec.slide) {
-        osc.frequency.linearRampToValueAtTime(Math.max(20, spec.freq + spec.slide), start + spec.dur)
+        osc.frequency.linearRampToValueAtTime(
+          Math.max(20, spec.freq + spec.slide),
+          start + spec.dur,
+        )
       }
       g.gain.setValueAtTime(0.0001, start)
       g.gain.exponentialRampToValueAtTime(peak, start + 0.01)

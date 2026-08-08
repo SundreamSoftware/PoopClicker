@@ -1,9 +1,5 @@
 # Poop Clicker — Progression, Economy & Retention
 
-## Repository status
-
-This repository previously contained only a README. The game was implemented as a **TypeScript + React + Vite** mobile-first PWA with a pure TypeScript game engine (`src/core`) separated from UI (`src/ui`).
-
 ## Core loop
 
 ```text
@@ -14,75 +10,63 @@ OPEN APP → OFFLINE REWARD → DAILY / STREAK / BATHROOM BREAK
 
 ## Currencies
 
-| Currency        | Role                                                                                |
-| --------------- | ----------------------------------------------------------------------------------- |
-| **PP**          | Soft run currency. Spent on generators/upgrades.                                    |
-| **GTP**         | Spendable meta/premium currency (cosmetics, Royal Flush node costs, daily rewards). |
-| **Flush Power** | Permanent prestige power. Never spent. Multiplies tap + idle.                       |
+| Currency        | Role                                                         |
+| --------------- | ------------------------------------------------------------ |
+| **PP**          | Soft run currency. Spent on generators/upgrades.             |
+| **GTP**         | Meta currency (cosmetics, Royal Flush nodes, daily rewards). |
+| **Flush Power** | Permanent prestige multiplier. Never spent.                  |
 
-Legacy saves that used GTP as prestige are migrated: `prestigeBonus` (or 10% of GTP) becomes Flush Power; GTP remains spendable.
+Legacy saves: `prestigeBonus` migrates into Flush Power; GTP stays spendable (`migrateSave.ts`).
 
 ## Flush model
 
-Tracked separately:
-
 - `currentPP` — decreases on purchases
-- `runPPEarned` — never decreases on purchases
-- `lifetimePPEarned` — permanent statistic
-
-Flush reward uses **`runPPEarned`**:
+- `runPPEarned` — never decreases on purchases (prestige basis)
+- `lifetimePPEarned` — lifetime stat
 
 ```text
 flushPowerGain = floor(10 * (runPPEarned / 1e6) ^ 0.33)
+globalMult = 1 + flushPower * 0.05   (soft-caps after 500 FP)
 ```
 
-First Flush of the Day applies **+25%** once per UTC day.
+First flush of the UTC day: **+25%** power gain once.
 
-Global multiplier:
+## Flush milestones
 
-```text
-1 + flushPower * 0.05   (soft-caps after 500 FP)
-```
+Defined in `src/content/flushMilestones.ts`, applied in `performFlush()`:
+
+| Flushes | Effect                                     |
+| ------- | ------------------------------------------ |
+| 1       | Royal Flush tree                           |
+| 3       | Start bonus PP (5 min idle)                |
+| 5       | Auto-buy unlock                            |
+| 10      | Start generator bonus + `king_poop` skin   |
+| 15      | +25% event rewards (`milestoneEventBonus`) |
+| 25      | `diamond_poop`                             |
+| 50      | +25% permanent production                  |
+| 100     | Omni Throne world + `the_final_poop`       |
 
 ## Royal Flush
 
-Unlocked at 1 Flush. Data-driven nodes (`src/content/royalFlush.ts`) in categories:
-
-Pressure · Plumbing · Combo · Idle · Luck
-
-Flush Power is a **threshold** (not spent). Node levels cost **GTP**.
+Unlocked at 1 flush. Data-driven DAG (`src/content/royalFlush.ts`). Flush Power is a **threshold**; node costs are **GTP**. Graph must stay acyclic (validated in tests).
 
 ## Daily systems
 
-- **3 Daily Challenges** / UTC day from activity / economy / event categories, dynamically scaled
-- **Daily Toilet Chest** after claiming all three
-- Optional rewarded-ad **reroll** (1/day) — never required
-- **Daily Streak** with 7-day cycles + Streak Saver
-- **Bathroom Break** charge every 4h, max 2
-- **Daily Dump** local 60s activity with bronze→diamond thresholds
+- **3 Daily Challenges** / UTC day — scaled by production
+- **Daily Toilet Chest** after all three claimed
+- **Rewarded reroll** — 1/day, optional
+- **Daily Streak** — 7-day cycles, Streak Saver
+- **Bathroom Break** — charge every 4h, max 2
+- **Daily Dump** — 60s local mini-game, one attempt per UTC day
+
+## Economy pacing (simulated)
+
+`npm run simulate:economy` runs deterministic profiles (new → 100 flushes) and asserts purchase/flush walls stay reasonable for active play.
+
+## Save
+
+`schemaVersion: 2` — `src/core/save/saveSchema.ts`. Batched persist ~2s; immediate on flush, claims, background.
 
 ## Content volumes
 
-See `npm run validate:content`. Targets include ~30 tap upgrades, 10+ combo, 10+ crit, 20+ generators, 40+ skins, 80+ achievement tiers, 9 events, 30 Royal Flush nodes.
-
-## Save schema
-
-`schemaVersion: 2` — see `src/core/save/saveSchema.ts` and `migrateSave.ts`.
-
-Persistence batches about every 2s during play and immediately on purchases / flush / claims / background.
-
-## Ads
-
-`StubAdService` supports rewarded placements and interstitial frequency caps. Interstitials are blocked during events/frenzy and for the first 30s of a session.
-
-## Analytics
-
-High-frequency taps are aggregated; feature events (`flush`, `daily_*`, `achievement_*`, `skin_*`, `event_*`, …) are tracked via `AnalyticsSink`.
-
-## Assets
-
-Procedural/CSS skin variants are wired through `ASSET_MANIFEST`. Final illustration art is documented as missing under `ASSET_MANIFEST.missingFinalArt`.
-
-## Notifications
-
-Scheduler hooks exist (`src/services/notifications.ts`). Full OS permission UX is intentionally not prompted on first launch.
+Targets enforced in `tests/content/contentValidation.test.ts`: 30+ tap upgrades, 20+ generators, 40+ skins, 80+ achievements, 9 events, 25+ Royal Flush nodes.

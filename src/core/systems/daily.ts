@@ -82,9 +82,7 @@ function pickByCategory(
   const list =
     pool.length > 0
       ? pool
-      : CHALLENGE_TEMPLATES.filter(
-          (t) => t.category === category && !excludeTemplateIds.has(t.id),
-        )
+      : CHALLENGE_TEMPLATES.filter((t) => t.category === category && !excludeTemplateIds.has(t.id))
   const fallback = CHALLENGE_TEMPLATES.filter((t) => t.category === category)
   return list[Math.floor(rng() * list.length)] ?? fallback[0] ?? CHALLENGE_TEMPLATES[0]
 }

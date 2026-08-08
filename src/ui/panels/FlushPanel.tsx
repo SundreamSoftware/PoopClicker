@@ -57,7 +57,11 @@ export function FlushPanel({ onClose }: { onClose: () => void }) {
           {formatPercent(preview.nextIdleBonusPercent)} Idle
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <button className="primary-btn" disabled={!snap.canFlush} onClick={() => void confirmFlush()}>
+          <button
+            className="primary-btn"
+            disabled={!snap.canFlush}
+            onClick={() => void confirmFlush()}
+          >
             CONFIRM FLUSH
           </button>
           <button className="ghost-btn" onClick={onClose}>

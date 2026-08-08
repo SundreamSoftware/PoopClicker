@@ -979,13 +979,7 @@ export class GameEngine {
       this.analytics.track('event_fail', { id: runtime.defId })
     }
 
-    this.save = afterEventSchedule(
-      this.save,
-      now,
-      runtime.type,
-      production.goldenChanceBonus,
-      0,
-    )
+    this.save = afterEventSchedule(this.save, now, runtime.type, production.goldenChanceBonus, 0)
     this.save = {
       ...this.save,
       lastEventEndedAt: { ...this.save.lastEventEndedAt, [runtime.defId]: now },

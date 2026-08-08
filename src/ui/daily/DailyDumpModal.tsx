@@ -1,9 +1,6 @@
 import type { CSSProperties } from 'react'
 import { formatDuration } from '../../core/numbers/formatNumber'
-import {
-  DAILY_DUMP,
-  type DailyDumpRuntime,
-} from '../../core/systems/dailyDump'
+import { DAILY_DUMP, type DailyDumpRuntime } from '../../core/systems/dailyDump'
 
 export interface DailyDumpModalProps {
   runtime: DailyDumpRuntime
@@ -92,8 +89,8 @@ export function DailyDumpModal({
         {runtime.phase === 'idle' && (
           <div style={{ marginTop: 18 }}>
             <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.4 }}>
-              Tap as fast as you can for one minute. Combos boost your score. Tiers:{' '}
-              Bronze {DAILY_DUMP.tiers.bronze}+ · Silver {DAILY_DUMP.tiers.silver}+ · Gold{' '}
+              Tap as fast as you can for one minute. Combos boost your score. Tiers: Bronze{' '}
+              {DAILY_DUMP.tiers.bronze}+ · Silver {DAILY_DUMP.tiers.silver}+ · Gold{' '}
               {DAILY_DUMP.tiers.gold}+ · Diamond {DAILY_DUMP.tiers.diamond}+.
             </p>
             <button type="button" style={{ ...primaryBtn, width: '100%' }} onClick={onStart}>
@@ -151,8 +148,7 @@ export function DailyDumpModal({
                 cursor: 'pointer',
                 touchAction: 'manipulation',
                 userSelect: 'none',
-                background:
-                  'radial-gradient(circle at 35% 30%, #c8894d, #8b5a2b 55%, #5a3516)',
+                background: 'radial-gradient(circle at 35% 30%, #c8894d, #8b5a2b 55%, #5a3516)',
                 boxShadow: '0 12px 28px rgba(20,30,40,0.28)',
                 color: '#fff8e6',
                 fontFamily: 'Fredoka, sans-serif',
@@ -210,7 +206,9 @@ function Stat({ label, value }: { label: string; value: string }) {
       }}
     >
       <div style={{ fontSize: 11, color: '#5d6d76', textTransform: 'uppercase' }}>{label}</div>
-      <div style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 20, fontWeight: 700 }}>{value}</div>
+      <div style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 20, fontWeight: 700 }}>
+        {value}
+      </div>
     </div>
   )
 }

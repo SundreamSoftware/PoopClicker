@@ -6,6 +6,7 @@ Absurd casual / clicker / idle game focused on retention, Flush prestige, collec
 
 - TypeScript + React 19 + Vite
 - Pure TS game engine (`src/core`) + data-driven content (`src/content`)
+- Capacitor Android shell (`com.sundreamsoftware.poopclicker`)
 - Vitest, oxlint, Prettier, GitHub Actions CI
 
 ## Quick start
@@ -19,13 +20,13 @@ npm run dev
 
 Debug APK for device testing:
 
-- [`artifacts/PoopClicker-debug.apk`](artifacts/PoopClicker-debug.apk)
+- [`artifacts/PoopClicker-debug.apk`](artifacts/PoopClicker-debug.apk) (when present)
 
 ```bash
 adb install -r artifacts/PoopClicker-debug.apk
 ```
 
-Rebuild: `npm run cap:apk` (requires Android SDK). See [docs/ANDROID.md](docs/ANDROID.md).
+Rebuild: `npm run cap:apk` — see [docs/ANDROID.md](docs/ANDROID.md).
 
 ## Validate
 
@@ -33,12 +34,26 @@ Rebuild: `npm run cap:apk` (requires Android SDK). See [docs/ANDROID.md](docs/AN
 npm run ci
 ```
 
+Focused suites:
+
+```bash
+npm run validate:content
+npm run simulate:economy
+```
+
 ## Docs
 
-- [Progression & economy](docs/PROGRESSION.md)
-- [Testing](docs/TESTING.md)
-- [Android APK](docs/ANDROID.md)
+| Doc | Topic |
+| --- | ----- |
+| [PROGRESSION.md](docs/PROGRESSION.md) | Economy, flush, dailies |
+| [TESTING.md](docs/TESTING.md) | Vitest, sim, Android tests |
+| [ANDROID.md](docs/ANDROID.md) | APK build & package id |
+| [MONETIZATION.md](docs/MONETIZATION.md) | Ads & IAP |
+| [EVENTS.md](docs/EVENTS.md) | Live events & UI |
+| [ASSETS.md](docs/ASSETS.md) | Manifest & procedural art |
+| [ANALYTICS.md](docs/ANALYTICS.md) | Event tracking |
+| [RELEASE.md](docs/RELEASE.md) | Ship checklist |
 
-## Note on assets
+## Assets
 
-Gameplay uses procedural/CSS character variants keyed by `ASSET_MANIFEST`. Final illustration art is not bundled; see `missingFinalArt` in the manifest.
+Gameplay uses procedural/CSS character variants keyed by `ASSET_MANIFEST`. Final illustration art is not bundled; see `missingFinalArt` in the manifest and [docs/ASSETS.md](docs/ASSETS.md).

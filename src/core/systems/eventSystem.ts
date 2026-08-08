@@ -12,6 +12,32 @@ const PLUMBER_BAND_MIN = 4
 const PLUMBER_BAND_MAX = 6
 const PLUMBER_SUCCESS_RATIO = 0.55
 
+/** uiPresentation values with runtime handling in eventSystem + EventOverlay. */
+export const EVENT_UI_PRESENTATIONS_SUPPORTED = [
+  'floating_target',
+  'boss_bar',
+  'banner_boost',
+  'falling_objects',
+  'cps_meter',
+  'screen_shake_boost',
+  'multi_target',
+  'choice_cards',
+] as const
+
+export type EventUiPresentation = (typeof EVENT_UI_PRESENTATIONS_SUPPORTED)[number]
+
+/** Maps content uiPresentation strings to event types that implement them. */
+export const EVENT_TYPES_BY_UI_PRESENTATION: Record<EventUiPresentation, EventType[]> = {
+  floating_target: ['golden_poop'],
+  boss_bar: ['clogged_toilet', 'mega_clog'],
+  banner_boost: ['burrito_rush'],
+  falling_objects: ['toilet_paper_storm'],
+  cps_meter: ['plumber_inspection'],
+  screen_shake_boost: ['toilet_quake'],
+  multi_target: ['golden_rain'],
+  choice_cards: ['mystery_flush'],
+}
+
 function uid(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`
 }
@@ -153,7 +179,11 @@ export function tickEventRuntime(
     next = { ...next, inBandMs, lastCpsSampleAt: now, bandScore: Math.min(1, inBandMs / elapsed) }
   }
 
-  if (next.type === 'mega_clog' && next.phase < 3 && next.taps >= next.phase * next.phaseTapTarget) {
+  if (
+    next.type === 'mega_clog' &&
+    next.phase < 3 &&
+    next.taps >= next.phase * next.phaseTapTarget
+  ) {
     next = { ...next, phase: next.phase + 1 }
   }
 
