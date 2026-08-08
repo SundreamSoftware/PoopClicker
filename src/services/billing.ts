@@ -30,11 +30,32 @@ export interface PurchaseResult {
   reason?: PurchaseFailureReason
 }
 
+export interface Entitlements {
+  removeAds: boolean
+  ownedProductIds: string[]
+}
+
 export interface BillingService {
   init(): Promise<void>
+  loadProducts(): Promise<StoreProduct[]>
+  /** @deprecated alias of loadProducts */
   getCatalog(): Promise<StoreProduct[]>
   purchase(productId: string): Promise<PurchaseResult>
   restore(): Promise<PurchaseResult[]>
+  getEntitlements(): Entitlements
+}
+
+/**
+ * Expected GameEngine grant hooks (idempotent via `ownedIapProducts` on save).
+ * Prefer `applyIapGrant` for concrete mutations.
+ */
+export function describeExpectedGrantHooks(): string {
+  return [
+    'Idempotent grants via PlayerSaveV2.ownedIapProducts + removeAds + ownedSkins + gtp.',
+    'Non-consumables/bundles: skip re-grant when productId already in ownedIapProducts.',
+    'Consumable GTP packs: always add grants.gtp; do not mark as owned forever.',
+    'Engine should expose applyIapGrant(productId) / restoreEntitlements(productIds).',
+  ].join(' ')
 }
 
 export function applyIapGrant(
@@ -85,9 +106,21 @@ export class StubBillingService implements BillingService {
     this.ready = true
   }
 
-  async getCatalog(): Promise<StoreProduct[]> {
+  async loadProducts(): Promise<StoreProduct[]> {
     if (!this.ready) await this.init()
     return IAP_PRODUCTS.map((def) => toStoreProduct(def))
+  }
+
+  async getCatalog(): Promise<StoreProduct[]> {
+    return this.loadProducts()
+  }
+
+  getEntitlements(): Entitlements {
+    const ownedProductIds = IAP_PRODUCTS.filter((d) => this.ownedStoreIds.has(d.storeId)).map(
+      (d) => d.id,
+    )
+    const removeAds = ownedProductIds.some((id) => Boolean(IAP_BY_ID[id]?.grants.removeAds))
+    return { removeAds, ownedProductIds }
   }
 
   async purchase(productId: string): Promise<PurchaseResult> {
@@ -145,9 +178,9 @@ export class CapacitorBillingService implements BillingService {
     }
   }
 
-  async getCatalog(): Promise<StoreProduct[]> {
+  async loadProducts(): Promise<StoreProduct[]> {
     if (this.usingStub || !this.native) {
-      return this.stub.getCatalog()
+      return this.stub.loadProducts()
     }
 
     try {
@@ -164,6 +197,14 @@ export class CapacitorBillingService implements BillingService {
       console.warn('[billing] getProducts failed', err)
       return IAP_PRODUCTS.map((def) => toStoreProduct(def))
     }
+  }
+
+  async getCatalog(): Promise<StoreProduct[]> {
+    return this.loadProducts()
+  }
+
+  getEntitlements(): Entitlements {
+    return this.stub.getEntitlements()
   }
 
   async purchase(productId: string): Promise<PurchaseResult> {
