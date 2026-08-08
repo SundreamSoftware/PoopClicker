@@ -1,43 +1,43 @@
 # Analytics
 
-Analytics are **opt-in at the sink level** — the game ships with in-memory / dev-console sinks; wire a network sink for production.
+## Wiring
 
-## API
+`src/state/gameSingleton.ts` creates a real `AnalyticsSink` via `createAnalytics()` and passes it into `GameEngine.fromStorage({ analytics })`. The engine must receive this sink — do not construct a silent no-op in production.
 
-`AnalyticsSink` (`src/services/analytics.ts`):
+## Providers
 
-```typescript
-track(event: string, payload?: Record<string, unknown>): void
-```
+| Provider                | When                                                               |
+| ----------------------- | ------------------------------------------------------------------ |
+| `ConsoleAnalytics`      | Dev (`import.meta.env.DEV`)                                        |
+| `FirebaseAnalyticsSink` | Native Capacitor (`@capacitor-firebase/analytics`, dynamic import) |
+| `MemoryAnalytics`       | Unit tests                                                         |
+| `AggregatingAnalytics`  | Always wraps the composite sink                                    |
 
-Implementations:
+`createAnalytics()` builds `AggregatingAnalytics(CompositeAnalytics([...]))`. Missing Firebase / plugin failures are swallowed so gameplay never blocks.
 
-- `MemoryAnalytics` — test assertions
-- `ConsoleAnalytics` — dev logging (`import.meta.env.DEV`)
-- `AggregatingAnalytics` — wraps another sink; batches high-frequency `tap` into `taps_aggregated` every 50 taps
+## Retention / product events (engine)
 
-## Event naming
+Emitted from gameplay (not every tap):
 
-Feature events use snake_case prefixes:
+- `session_start` / `session_end` (bootstrap / background when wired)
+- `first_tap`, `first_generator`, `first_upgrade`, `first_flush`
+- `flush`, `flush_power_gain`
+- `daily_open`, `daily_challenge_complete`, `daily_challenge_claim`, `daily_chest`
+- `streak_claim`, `streak_break` / `streak_broken`, `streak_saver`
+- `bathroom_break_claim`
+- `daily_dump_start`, `daily_dump_complete`
+- `achievement_unlock`, `achievement_claim`
+- `skin_unlock`, `skin_equip`
+- `world_unlock`, `world_enter` (when wired)
+- `event_start`, `event_complete`, `event_fail`
+- `frenzy_started`, `frenzy_completed`
+- `rewarded_ad_complete` / `rewarded_*` from UI placements
+- `iap_*` from shop purchase flow
 
-| Prefix                                        | Examples              |
-| --------------------------------------------- | --------------------- |
-| `tap`, `first_tap`, `taps_aggregated`         | Input                 |
-| `flush`, `frenzy_started`, `frenzy_completed` | Prestige / tempo      |
-| `daily_*`, `streak_*`, `daily_dump_*`         | Retention             |
-| `achievement_unlock`                          | Meta                  |
-| `event_start`, `event_complete`               | Live events           |
-| `skin_*`, `offline_reward_claim`              | Collection / sessions |
-| `iap_*` (when wired)                          | Monetization          |
+High-frequency taps use `track('tap')` which is aggregated to `taps_aggregated` every 50 taps.
 
-Content events reference `analyticsId` on `EventDef` where applicable.
+## Privacy
 
-## Privacy / volume
-
-- Do not send raw tap streams; use aggregation or session summaries.
-- Avoid PII in payloads; prefer ids and counts.
-- High-frequency engine paths call `track('tap')` — always wrap production sinks with `AggregatingAnalytics` or equivalent.
-
-## Testing
-
-Engine tests can inject `MemoryAnalytics` via `GameEngine` constructor options (when needed). Most tests rely on side-effect-free default no-op sink.
+- No PII in payloads
+- No per-tap network events
+- Consent / UMP must complete before ad-related analytics where required by policy

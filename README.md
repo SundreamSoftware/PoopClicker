@@ -18,15 +18,14 @@ npm run dev
 
 ## Android APK
 
-Debug APK for device testing:
-
-- [`artifacts/PoopClicker-debug.apk`](artifacts/PoopClicker-debug.apk) (when present)
+Debug APKs are produced by CI (`PoopClicker-debug` artifact on PR validation) or locally:
 
 ```bash
-adb install -r artifacts/PoopClicker-debug.apk
+npm run cap:apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Rebuild: `npm run cap:apk` — see [docs/ANDROID.md](docs/ANDROID.md).
+See [docs/ANDROID.md](docs/ANDROID.md) and [docs/RELEASE.md](docs/RELEASE.md). Binaries are not committed to git.
 
 ## Validate
 

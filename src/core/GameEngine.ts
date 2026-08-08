@@ -132,14 +132,28 @@ export class GameEngine {
   }
 
   static fromStorage(
-    storage: Storage | null = typeof localStorage !== 'undefined' ? localStorage : null,
-    clock?: Clock,
+    options: {
+      storage?: Storage | null
+      clock?: Clock
+      analytics?: AnalyticsSink
+    } = {},
   ): GameEngine {
+    const storage =
+      options.storage === undefined
+        ? typeof localStorage !== 'undefined'
+          ? localStorage
+          : null
+        : options.storage
     const key = 'poop_clicker_save_v2'
     const raw = storage?.getItem(key)
-    const now = (clock ?? new SystemClock()).now()
+    const now = (options.clock ?? new SystemClock()).now()
     const save = raw ? deserializeSave(raw, now) : createDefaultSave(now)
-    return new GameEngine({ clock, save, storage })
+    return new GameEngine({
+      clock: options.clock,
+      save,
+      storage,
+      analytics: options.analytics,
+    })
   }
 
   subscribe(listener: Listener): () => void {
@@ -168,6 +182,7 @@ export class GameEngine {
       }
     }
     this.save = { ...this.save, sessionsCount: this.save.sessionsCount + 1 }
+    this.analytics.track('session_start', { sessionsCount: this.save.sessionsCount })
 
     const away = Math.max(0, now - this.save.lastActiveTimestamp)
     this.absenceMs = away
@@ -422,6 +437,7 @@ export class GameEngine {
     )
     if (balance.lt(cost)) return { ok: false, reason: 'insufficient_pp' }
 
+    const isFirstGenerator = Object.values(this.save.generators).every((n) => n <= 0) && level === 0
     this.save = {
       ...this.save,
       currentPP: balance.sub(cost).serialize(),
@@ -431,6 +447,7 @@ export class GameEngine {
     this.save = progressChallenge(this.save, 'generator_levels', buyCount)
     this.save = progressChallenge(this.save, 'spend_pp', cost.toNumber())
     this.save = progressChallenge(this.save, 'generator_level', level + buyCount)
+    if (isFirstGenerator) this.analytics.track('first_generator', { generatorId })
     this.applyGeneratorMilestones(generatorId)
     this.syncMeta(this.time.now())
     this.persistImmediate()
@@ -486,6 +503,7 @@ export class GameEngine {
     const balance = LargeNumber.deserialize(this.save.currentPP)
     if (balance.lt(cost)) return { ok: false, reason: 'insufficient_pp' }
 
+    const isFirstUpgrade = Object.values(this.save.purchasedRunUpgrades).every((n) => n <= 0)
     this.save = {
       ...this.save,
       currentPP: balance.sub(cost).serialize(),
@@ -496,6 +514,7 @@ export class GameEngine {
     }
     this.save = progressChallenge(this.save, 'upgrades', 1)
     this.save = progressChallenge(this.save, 'spend_pp', cost.toNumber())
+    if (isFirstUpgrade) this.analytics.track('first_upgrade', { upgradeId })
     this.syncMeta(this.time.now())
     this.persistImmediate()
     this.emit()
@@ -514,6 +533,7 @@ export class GameEngine {
     this.save = result.save
     this.combo = 0
     this.save = progressChallenge(this.save, 'flush', 1)
+    if (this.save.flushCount === 1) this.analytics.track('first_flush', {})
     this.analytics.track('flush', {
       flushPowerGain: result.preview.flushPowerGain,
       flushCount: this.save.flushCount,
@@ -682,6 +702,7 @@ export class GameEngine {
   setWorld(worldId: string): ClaimResult {
     if (!this.save.unlockedWorlds.includes(worldId)) return { ok: false, reason: 'locked' }
     this.save = { ...this.save, currentWorldId: worldId }
+    this.analytics.track('world_enter', { worldId })
     this.persistImmediate()
     this.emit()
     return { ok: true }
@@ -1162,6 +1183,7 @@ export class GameEngine {
       const dt = Math.max(0, now - this.lastTickAt)
       this.dailyDumpRuntime = tickDailyDump(this.dailyDumpRuntime, now, dt)
     }
+    this.analytics.track('session_end', { playMs: this.save.totalPlayTimeMs })
     this.save = { ...this.save, lastActiveTimestamp: now }
     this.syncActiveEventFromRuntime()
     this.persistImmediate()

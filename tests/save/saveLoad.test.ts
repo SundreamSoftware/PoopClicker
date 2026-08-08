@@ -39,7 +39,7 @@ describe('Save/Load vertical slice', () => {
     engine.flush()
     engine.persistImmediate()
 
-    const restarted = GameEngine.fromStorage(storage, clock)
+    const restarted = GameEngine.fromStorage({ storage, clock })
     const save = restarted.exportSave()
     expect(save.tapCount).toBeGreaterThanOrEqual(120)
     expect(save.flushCount).toBe(1)

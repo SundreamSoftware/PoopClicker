@@ -4,13 +4,7 @@ Poop Clicker ships as a **Capacitor** WebView shell (`com.sundreamsoftware.poopc
 
 ## Debug APK (sideload)
 
-Artifact (when checked in):
-
-- `artifacts/PoopClicker-debug.apk`
-
-```bash
-adb install -r artifacts/PoopClicker-debug.apk
-```
+Prefer CI artifacts from the PR `validate` job (`PoopClicker-debug`) or a local rebuild. Do not commit APK binaries.
 
 ## Rebuild locally
 
@@ -24,6 +18,7 @@ echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 npm install
 npm run cap:apk
 # output: android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ## Package & tests
