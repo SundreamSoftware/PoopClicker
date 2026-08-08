@@ -1,14 +1,15 @@
 # Next steps after merge to `main`
 
-Merged: PR #1 → `main` @ `fb3df21` (2026-08-08)  
-Debug APK: [Release v1.0.0](https://github.com/SundreamSoftware/PoopClicker/releases/tag/v1.0.0)
+Current `main`: `2a56434` (2026-08-08)  
+Fixed debug APK: [Release v1.0.1](https://github.com/SundreamSoftware/PoopClicker/releases/tag/v1.0.1)
 
 ## Verified on merge
 
 | Check                                                        | Result       |
 | ------------------------------------------------------------ | ------------ |
-| `npm run ci` (format, lint, typecheck, 129 tests, web build) | PASS         |
+| `npm run ci` (format, lint, typecheck, 135 tests, web build) | PASS         |
 | Capacitor sync + `assembleDebug`                             | PASS         |
+| Emulator launch + Capacitor WebView smoke                    | PASS         |
 | GitHub Release APK published                                 | PASS         |
 | Physical device install / Play Store publish                 | **NOT DONE** |
 
@@ -29,14 +30,14 @@ Debug APK: [Release v1.0.0](https://github.com/SundreamSoftware/PoopClicker/rele
 
 ### P1 — quality / retention before wide launch
 
-| ID  | Item                                      | Why                                                        | Action                                                                      |
-| --- | ----------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
-| N10 | Physical device QA matrix                 | Web smoke ≠ device game feel                               | Install release APK; test taps, events, Daily Dump, flush, ads, IAP restore |
-| N11 | Instrumented Android tests on emulator CI | Implemented as scheduled/manual `android-instrumented.yml` | Monitor scheduled runs and keep launch/WebView smoke green                  |
-| N12 | Store listing assets                      | Need screenshots, feature graphic, short/long description  | Produce phone screenshots from device                                       |
-| N13 | Content rating / target API checklist     | Play policy                                                | Complete questionnaire; verify `targetSdk`                                  |
-| N14 | Offline + background lifecycle on device  | Battery/OEM killers                                        | Kill app mid-event / mid-Daily Dump; verify save                            |
-| N15 | Notification permission UX on Android 13+ | Prompt timing already deferred in code                     | Verify POST_NOTIFICATIONS flow on API 33+                                   |
+| ID  | Item                                      | Why                                                       | Action                                                                      |
+| --- | ----------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------- |
+| N10 | Physical device QA matrix                 | Web smoke ≠ device game feel                              | Install release APK; test taps, events, Daily Dump, flush, ads, IAP restore |
+| N11 | Instrumented Android tests on emulator CI | **Implemented and green**                                 | Monitor scheduled/main native-change runs                                   |
+| N12 | Store listing assets                      | Need screenshots, feature graphic, short/long description | Produce phone screenshots from device                                       |
+| N13 | Content rating / target API checklist     | Play policy                                               | Complete questionnaire; verify `targetSdk`                                  |
+| N14 | Offline + background lifecycle on device  | Battery/OEM killers                                       | Kill app mid-event / mid-Daily Dump; verify save                            |
+| N15 | Notification permission UX on Android 13+ | Prompt timing already deferred in code                    | Verify POST_NOTIFICATIONS flow on API 33+                                   |
 
 ### P2 — meaningful polish
 
@@ -74,8 +75,8 @@ Debug APK: [Release v1.0.0](https://github.com/SundreamSoftware/PoopClicker/rele
 ## Sideload now
 
 ```bash
-# From GitHub Release v1.0.0
-adb install -r PoopClicker-debug.apk
+# From GitHub Release v1.0.1
+adb install -r PoopClicker-v1.0.1-debug.apk
 ```
 
 Or rebuild locally from `main`:
