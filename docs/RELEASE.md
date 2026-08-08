@@ -2,10 +2,10 @@
 
 ## CI (no Play Console secrets required)
 
-| Workflow | Trigger | Output |
-| --- | --- | --- |
-| `CI` | `pull_request` → `main`, `workflow_dispatch` | Web validate + `cap sync` + `assembleDebug` APK artifact |
-| `Android Release Build` | `workflow_dispatch` | `bundleRelease` or `assembleRelease` AAB/APK artifact |
+| Workflow                | Trigger                                      | Output                                                   |
+| ----------------------- | -------------------------------------------- | -------------------------------------------------------- |
+| `CI`                    | `pull_request` → `main`, `workflow_dispatch` | Web validate + `cap sync` + `assembleDebug` APK artifact |
+| `Android Release Build` | `workflow_dispatch`                          | `bundleRelease` or `assembleRelease` AAB/APK artifact    |
 
 Neither workflow publishes to Google Play.
 

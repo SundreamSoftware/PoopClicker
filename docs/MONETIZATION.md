@@ -4,11 +4,11 @@ Production-ready service layer for ads, consent, and IAP. **Web and Vitest alway
 
 ## Architecture
 
-| Layer | Web / tests | Native Android |
-| --- | --- | --- |
-| Ads | `StubAdService` | `CapacitorAdMobService` → `@capacitor-community/admob` |
-| Consent (UMP) | `StubConsentService` (`not_required`) | `CapacitorUmpConsentService` |
-| Billing | `StubBillingService` (in-memory) | `CapacitorBillingService` → `@capgo/native-purchases` |
+| Layer         | Web / tests                           | Native Android                                         |
+| ------------- | ------------------------------------- | ------------------------------------------------------ |
+| Ads           | `StubAdService`                       | `CapacitorAdMobService` → `@capacitor-community/admob` |
+| Consent (UMP) | `StubConsentService` (`not_required`) | `CapacitorUmpConsentService`                           |
+| Billing       | `StubBillingService` (in-memory)      | `CapacitorBillingService` → `@capgo/native-purchases`  |
 
 Factories: `createAdService()`, `createConsentService()`, `createBillingService()` in `src/services/*` and re-exported from `src/state/gameSingleton.ts`.
 

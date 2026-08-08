@@ -5,10 +5,7 @@ import { Capacitor } from '@capacitor/core'
  * do not prompt in the first seconds of play.
  */
 export type NotificationKind =
-  | 'bathroom_break_ready'
-  | 'daily_expiring'
-  | 'offline_reward'
-  | 'daily_streak'
+  'bathroom_break_ready' | 'daily_expiring' | 'offline_reward' | 'daily_streak'
 
 export interface NotificationScheduler {
   schedule(kind: NotificationKind, fireAtMs: number, body: string): void

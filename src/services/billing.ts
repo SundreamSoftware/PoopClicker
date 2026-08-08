@@ -21,12 +21,7 @@ export interface StoreProduct {
 }
 
 export type PurchaseFailureReason =
-  | 'cancel'
-  | 'unavailable'
-  | 'already_owned'
-  | 'error'
-  | 'pending'
-  | 'not_found'
+  'cancel' | 'unavailable' | 'already_owned' | 'error' | 'pending' | 'not_found'
 
 export interface PurchaseResult {
   ok: boolean
@@ -42,7 +37,11 @@ export interface BillingService {
   restore(): Promise<PurchaseResult[]>
 }
 
-export function applyIapGrant(save: PlayerSaveV2, grant: IapGrant, productId?: string): PlayerSaveV2 {
+export function applyIapGrant(
+  save: PlayerSaveV2,
+  grant: IapGrant,
+  productId?: string,
+): PlayerSaveV2 {
   const ownedSkins = new Set(save.ownedSkins)
   if (grant.skinIds) {
     for (const skinId of grant.skinIds) ownedSkins.add(skinId)
@@ -117,7 +116,9 @@ type NativePurchasesLike = {
   getProducts: (opts: {
     productIdentifiers: string[]
     productType?: string
-  }) => Promise<{ products: Array<{ identifier: string; title: string; description: string; priceString: string }> }>
+  }) => Promise<{
+    products: Array<{ identifier: string; title: string; description: string; priceString: string }>
+  }>
   purchaseProduct: (opts: {
     productIdentifier: string
     isConsumable?: boolean

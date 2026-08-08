@@ -16,7 +16,8 @@ export type RewardedPlacement =
 
 export interface AdResult {
   ok: boolean
-  reason?: 'no_fill' | 'load_failure' | 'cancel' | 'duplicate' | 'offline' | 'completed' | 'not_ready'
+  reason?:
+    'no_fill' | 'load_failure' | 'cancel' | 'duplicate' | 'offline' | 'completed' | 'not_ready'
 }
 
 export interface AdService {
@@ -129,7 +130,11 @@ export class CapacitorAdMobService implements AdService {
       if (message.includes('cancel') || message.includes('dismiss')) {
         return { ok: false, reason: 'cancel' }
       }
-      if (message.includes('no fill') || message.includes('nofill') || message.includes('no_fill')) {
+      if (
+        message.includes('no fill') ||
+        message.includes('nofill') ||
+        message.includes('no_fill')
+      ) {
         return { ok: false, reason: 'no_fill' }
       }
       return { ok: false, reason: 'load_failure' }
@@ -166,7 +171,11 @@ export class CapacitorAdMobService implements AdService {
       if (message.includes('cancel') || message.includes('dismiss')) {
         return { ok: false, reason: 'cancel' }
       }
-      if (message.includes('no fill') || message.includes('nofill') || message.includes('no_fill')) {
+      if (
+        message.includes('no fill') ||
+        message.includes('nofill') ||
+        message.includes('no_fill')
+      ) {
         return { ok: false, reason: 'no_fill' }
       }
       return { ok: false, reason: 'load_failure' }
