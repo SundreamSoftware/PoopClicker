@@ -132,7 +132,8 @@ Date: 2026-08-08
 - Prefer `pull_request` + `workflow_dispatch` (no duplicate push+PR on feature branches)
 - Concurrency cancellation enabled
 - Android compile on PR
-- **Required check `validate` GREEN** on `da8dedf` — https://github.com/SundreamSoftware/PoopClicker/actions/runs/31253279433
+- **Required check `validate` GREEN** on `201067f` — https://github.com/SundreamSoftware/PoopClicker/actions/runs/31253505402
+- Open P0: **0** · Open P1: **0** (remaining items are P2/P3 ops/polish)
 
 ## Manual validation
 
