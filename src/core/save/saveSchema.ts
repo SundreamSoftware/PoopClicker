@@ -71,7 +71,9 @@ export interface PlayerSaveV2 {
   lastEventEndedAt: Record<string, number>
   lastGoldenPoopAt: number
   nextGoldenPoopAt: number
+  nextRandomEventAt: number
   autoBuyUnlocked: boolean
+  autoBuyEnabled: boolean
   permanentProductionBonus: number
   tutorialFlags: Record<string, boolean>
   lastSaveTimestamp: number
@@ -83,6 +85,7 @@ export interface PlayerSaveV2 {
     reducedMotion: boolean
     haptics: boolean
     sfx: boolean
+    music: boolean
   }
 }
 

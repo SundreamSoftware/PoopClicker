@@ -147,7 +147,9 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     lastEventEndedAt: (raw.lastEventEndedAt as Record<string, number>) ?? {},
     lastGoldenPoopAt: asNumber(raw.lastGoldenPoopAt),
     nextGoldenPoopAt: asNumber(raw.nextGoldenPoopAt, now + 180_000),
+    nextRandomEventAt: asNumber(raw.nextRandomEventAt, now + 270_000),
     autoBuyUnlocked: asBool(raw.autoBuyUnlocked),
+    autoBuyEnabled: asBool(raw.autoBuyEnabled),
     permanentProductionBonus: asNumber(raw.permanentProductionBonus),
     tutorialFlags: {
       ...base.tutorialFlags,
@@ -162,6 +164,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
       reducedMotion: asBool(settings.reducedMotion),
       haptics: asBool(settings.haptics, true),
       sfx: asBool(settings.sfx, true),
+      music: asBool(settings.music, true),
     },
   }
 }
