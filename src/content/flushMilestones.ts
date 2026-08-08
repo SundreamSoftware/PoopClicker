@@ -1,0 +1,65 @@
+import type { FlushMilestoneDef } from '../core/types/gameTypes'
+
+export const FLUSH_MILESTONES: FlushMilestoneDef[] = [
+  {
+    id: 'flush_1_royal',
+    flushCount: 1,
+    name: 'Royal Flush Tree',
+    description: 'Permanent upgrades unlocked.',
+    unlockRoyalFlush: true,
+  },
+  {
+    id: 'flush_3_start_pp',
+    flushCount: 3,
+    name: 'Warm Seat Start',
+    description: 'Begin runs with bonus PP.',
+    startBonusPpMinutes: 5,
+  },
+  {
+    id: 'flush_5_autobuy',
+    flushCount: 5,
+    name: 'Auto-Buy',
+    description: 'Convenience for busy flushers.',
+    unlockAutoBuy: true,
+  },
+  {
+    id: 'flush_10_generator',
+    flushCount: 10,
+    name: 'Apprentice Plunger',
+    description: 'Start with Plunger Intern at higher level.',
+    startGeneratorBonusLevel: 5,
+    unlockSkinId: 'king_poop',
+  },
+  {
+    id: 'flush_15_events',
+    flushCount: 15,
+    name: 'Event Magnet',
+    description: 'Events pay better.',
+    eventBonusPercent: 0.25,
+    unlockSkinId: 'nuclear_poop',
+  },
+  {
+    id: 'flush_25_diamond',
+    flushCount: 25,
+    name: 'Diamond Poop',
+    description: 'Legendary cosmetic unlocked.',
+    unlockSkinId: 'diamond_poop',
+  },
+  {
+    id: 'flush_50_bonus',
+    flushCount: 50,
+    name: 'Permanent Pressure',
+    description: '+25% permanent production.',
+    permanentProductionBonus: 0.25,
+    unlockSkinId: 'multiverse_poop',
+  },
+  {
+    id: 'flush_100_world',
+    flushCount: 100,
+    name: 'Omni Throne',
+    description: 'Ultimate world and Final Poop.',
+    unlockWorldId: 'omni_throne',
+    unlockSkinId: 'the_final_poop',
+    permanentProductionBonus: 0.5,
+  },
+]

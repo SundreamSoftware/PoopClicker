@@ -1,0 +1,417 @@
+.world-stage {
+  --w-a: #1a3a4a;
+  --w-b: #2d5a4a;
+  --w-c: #f0d7a8;
+  --w-accent: #f4c95f;
+  --w-prop: rgba(255, 255, 255, 0.12);
+  position: relative;
+  width: 100%;
+  min-height: 52dvh;
+  border-radius: 22px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  background:
+    radial-gradient(
+      circle at 20% 10%,
+      color-mix(in srgb, var(--w-accent) 35%, transparent),
+      transparent 42%
+    ),
+    linear-gradient(180deg, var(--w-a), var(--w-b) 48%, var(--w-c));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.world-stage > .world-children {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.world-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.world-label {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  z-index: 3;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+/* Per-world palettes */
+.world-home_bathroom {
+  --w-a: #2a4a5c;
+  --w-b: #3d6b5c;
+  --w-c: #e8d5b0;
+  --w-accent: #7ec8e3;
+}
+.world-office_toilet {
+  --w-a: #2c3e50;
+  --w-b: #566573;
+  --w-c: #d5d8dc;
+  --w-accent: #f4d03f;
+}
+.world-gas_station_restroom {
+  --w-a: #3e2723;
+  --w-b: #5d4037;
+  --w-c: #a1887f;
+  --w-accent: #ff7043;
+}
+.world-stadium_loo {
+  --w-a: #1b4332;
+  --w-b: #2d6a4f;
+  --w-c: #95d5b2;
+  --w-accent: #ffd166;
+}
+.world-space_loo {
+  --w-a: #0b1026;
+  --w-b: #1a237e;
+  --w-c: #311b92;
+  --w-accent: #80d8ff;
+}
+.world-quantum_bathroom {
+  --w-a: #1a0033;
+  --w-b: #4a148c;
+  --w-c: #7b1fa2;
+  --w-accent: #ea80fc;
+}
+.world-chrono_chamber {
+  --w-a: #004d40;
+  --w-b: #00695c;
+  --w-c: #4db6ac;
+  --w-accent: #ffe082;
+}
+.world-neon_arcade_stall {
+  --w-a: #12002a;
+  --w-b: #2a0050;
+  --w-c: #4a0080;
+  --w-accent: #00f5ff;
+}
+.world-volcanic_spa_toilet {
+  --w-a: #3e0707;
+  --w-b: #7f1d1d;
+  --w-c: #c2410c;
+  --w-accent: #fbbf24;
+}
+.world-cloud_restroom {
+  --w-a: #7dd3fc;
+  --w-b: #bae6fd;
+  --w-c: #f0f9ff;
+  --w-accent: #ffffff;
+}
+.world-void_washroom {
+  --w-a: #050505;
+  --w-b: #1a0030;
+  --w-c: #0d0018;
+  --w-accent: #a78bfa;
+}
+.world-omni_throne {
+  --w-a: #1c1917;
+  --w-b: #44403c;
+  --w-c: #a8a29e;
+  --w-accent: #fbbf24;
+}
+
+/* Environmental animated props */
+.fx-drip,
+.fx-steam,
+.fx-flicker,
+.fx-float,
+.fx-pulse,
+.fx-scan,
+.fx-spark,
+.fx-ember,
+.fx-cloud,
+.fx-void,
+.fx-crown,
+.fx-star {
+  position: absolute;
+  border-radius: 999px;
+  background: var(--w-prop);
+}
+
+.fx-drip {
+  width: 6px;
+  height: 10px;
+  left: 22%;
+  top: 8%;
+  background: rgba(126, 200, 227, 0.55);
+  animation: dripFall 2.8s ease-in infinite;
+}
+.fx-drip:nth-child(2) {
+  left: 70%;
+  animation-delay: 1.1s;
+}
+
+.fx-steam {
+  width: 40px;
+  height: 40px;
+  left: 15%;
+  bottom: 18%;
+  background: rgba(255, 255, 255, 0.18);
+  filter: blur(2px);
+  animation: steamRise 3.5s ease-in-out infinite;
+}
+.fx-steam:nth-child(2) {
+  left: 72%;
+  width: 28px;
+  height: 28px;
+  animation-delay: 1.2s;
+}
+
+.fx-flicker {
+  width: 120%;
+  height: 8px;
+  left: -10%;
+  top: 18%;
+  background: linear-gradient(90deg, transparent, rgba(255, 112, 67, 0.35), transparent);
+  animation: flickerBar 2.2s steps(2) infinite;
+}
+
+.fx-float {
+  width: 18px;
+  height: 18px;
+  right: 16%;
+  top: 22%;
+  background: rgba(255, 209, 102, 0.55);
+  animation: floatBob 2.4s ease-in-out infinite;
+}
+
+.fx-star {
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  animation: twinkleStar 2s ease-in-out infinite;
+}
+.fx-star:nth-child(1) {
+  left: 18%;
+  top: 20%;
+}
+.fx-star:nth-child(2) {
+  left: 60%;
+  top: 12%;
+  animation-delay: 0.4s;
+}
+.fx-star:nth-child(3) {
+  left: 80%;
+  top: 30%;
+  animation-delay: 0.9s;
+}
+
+.fx-pulse {
+  width: 90px;
+  height: 90px;
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  border: 2px solid rgba(234, 128, 252, 0.45);
+  background: transparent;
+  animation: quantumPulse 2.6s ease-out infinite;
+}
+
+.fx-scan {
+  width: 100%;
+  height: 18%;
+  left: 0;
+  top: -20%;
+  background: linear-gradient(180deg, transparent, rgba(255, 224, 130, 0.2), transparent);
+  animation: chronoScan 3.2s linear infinite;
+}
+
+.fx-spark {
+  width: 8px;
+  height: 8px;
+  background: #00f5ff;
+  box-shadow: 0 0 12px #00f5ff;
+  animation: arcadeBlink 0.9s steps(2) infinite;
+}
+.fx-spark:nth-child(1) {
+  left: 12%;
+  top: 24%;
+}
+.fx-spark:nth-child(2) {
+  right: 14%;
+  top: 40%;
+  background: #ff00aa;
+  box-shadow: 0 0 12px #ff00aa;
+  animation-delay: 0.3s;
+}
+.fx-spark:nth-child(3) {
+  left: 40%;
+  top: 12%;
+  background: #f1c40f;
+  box-shadow: 0 0 12px #f1c40f;
+  animation-delay: 0.6s;
+}
+
+.fx-ember {
+  width: 10px;
+  height: 10px;
+  bottom: 12%;
+  background: #fbbf24;
+  animation: emberUp 2.1s ease-in infinite;
+}
+.fx-ember:nth-child(1) {
+  left: 30%;
+}
+.fx-ember:nth-child(2) {
+  left: 55%;
+  animation-delay: 0.7s;
+}
+.fx-ember:nth-child(3) {
+  left: 72%;
+  animation-delay: 1.3s;
+}
+
+.fx-cloud {
+  width: 80px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.55);
+  filter: blur(1px);
+  animation: cloudDrift 8s linear infinite;
+}
+.fx-cloud:nth-child(1) {
+  top: 16%;
+  left: -20%;
+}
+.fx-cloud:nth-child(2) {
+  top: 28%;
+  left: -40%;
+  width: 110px;
+  animation-duration: 11s;
+}
+
+.fx-void {
+  width: 140px;
+  height: 140px;
+  left: 50%;
+  top: 35%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.25), transparent 70%);
+  animation: voidBreathe 3.5s ease-in-out infinite;
+}
+
+.fx-crown {
+  width: 50px;
+  height: 20px;
+  left: 50%;
+  top: 10%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.55), transparent);
+  animation: crownShimmer 2.2s ease-in-out infinite;
+}
+
+.world-stage.reduced .world-fx * {
+  animation: none !important;
+}
+
+@keyframes dripFall {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(180px);
+    opacity: 0;
+  }
+}
+@keyframes steamRise {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-24px) scale(1.15);
+    opacity: 0.45;
+  }
+}
+@keyframes flickerBar {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+@keyframes floatBob {
+  50% {
+    transform: translateY(-12px);
+  }
+}
+@keyframes twinkleStar {
+  50% {
+    opacity: 0.2;
+    transform: scale(0.6);
+  }
+}
+@keyframes quantumPulse {
+  0% {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(-50%) scale(1.6);
+    opacity: 0;
+  }
+}
+@keyframes chronoScan {
+  0% {
+    top: -20%;
+  }
+  100% {
+    top: 110%;
+  }
+}
+@keyframes arcadeBlink {
+  50% {
+    opacity: 0.15;
+  }
+}
+@keyframes emberUp {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-120px) scale(0.4);
+    opacity: 0;
+  }
+}
+@keyframes cloudDrift {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(140%);
+  }
+}
+@keyframes voidBreathe {
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.8;
+  }
+}
+@keyframes crownShimmer {
+  50% {
+    opacity: 0.35;
+    filter: brightness(1.4);
+  }
+}
