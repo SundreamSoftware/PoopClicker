@@ -123,14 +123,16 @@ Date: 2026-08-08
 
 ## Tests
 
-- 126 Vitest tests (systems, monetization, UI, time, economy, content, engine)
-- Local: format, lint, typecheck, test, build green (this audit run)
+- 129 Vitest tests (systems, monetization, UI, time, economy, content, engine, e2e journey)
+- Lightweight E2E: `tests/e2e/coreJourney.test.ts` (tap→buy→flush→restore + Daily Dump idempotency)
+- Local: format, lint, typecheck, test, build, Android assembleDebug green
 
 ## CI
 
 - Prefer `pull_request` + `workflow_dispatch` (no duplicate push+PR on feature branches)
 - Concurrency cancellation enabled
 - Android compile on PR
+- **Required check `validate` GREEN** on `da8dedf` — https://github.com/SundreamSoftware/PoopClicker/actions/runs/31253279433
 
 ## Manual validation
 
