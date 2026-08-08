@@ -8,3 +8,13 @@ export { EVENTS, EVENT_BY_ID } from './events'
 export { ROYAL_FLUSH_NODES, ROYAL_FLUSH_BY_ID } from './royalFlush'
 export { FLUSH_MILESTONES } from './flushMilestones'
 export { ASSET_MANIFEST } from './assetManifest'
+export { SKINS_VISUAL, getSkinVisual } from './skinsVisual'
+export type {
+  SkinVisualDef,
+  BodyShape,
+  SkinAccessory,
+  Headwear,
+  SkinTexture,
+  SkinAura,
+  FaceStyle,
+} from './skinsVisual'
