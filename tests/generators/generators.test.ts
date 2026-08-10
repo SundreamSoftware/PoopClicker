@@ -25,4 +25,11 @@ describe('Generators', () => {
     const claimed2 = engine.exportSave().claimedGeneratorMilestones.plunger_intern
     expect(claimed2.filter((x) => x === 10)).toHaveLength(1)
   })
+
+  it('returns pp_locked when unlockPP is not met', () => {
+    const engine = createTestEngine()
+    const result = engine.buyGenerator('fiber_farmer')
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('pp_locked')
+  })
 })

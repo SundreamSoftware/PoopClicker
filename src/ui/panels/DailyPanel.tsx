@@ -1,22 +1,51 @@
+import { canStartDailyDump, utcWeekKey } from '../../core/systems/dailyDump'
+import {
+  estimateWeeklyLeagueStanding,
+  weeklyLeagueShareText,
+} from '../../core/systems/weeklyLeague'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 
 export interface DailyPanelProps {
   onOpenDailyDump?: () => void
+  onToast?: (message: string) => void
 }
 
-export function DailyPanel({ onOpenDailyDump }: DailyPanelProps) {
+export function DailyPanel({ onOpenDailyDump, onToast }: DailyPanelProps) {
   const { engine, ads } = useGameContext()
   const snap = useGameSnapshot()
   const completed = snap.save.dailyChallenges.filter((c) => c.completed).length
   const claimed = snap.save.dailyChallenges.filter((c) => c.claimed).length
   const dump = snap.save.dailyDumpState
+  const weekKey = dump.weeklyBestWeekKey ?? utcWeekKey(Date.now())
+  const league = estimateWeeklyLeagueStanding(dump.weeklyBestScore, weekKey)
   const dumpStatus =
     dump.rewardClaimed && dump.lastPlayedDate
       ? `Claimed · ${dump.lastTier} (${dump.lastScore} pts)`
       : dump.lastPlayedDate && !dump.rewardClaimed
         ? 'In progress — finish in modal'
         : 'Ready to play'
+  const canStart = canStartDailyDump(snap.save, Date.now())
+
+  const shareLeague = async () => {
+    const text = weeklyLeagueShareText(league)
+    if (navigator.share) {
+      try {
+        await navigator.share({ text })
+        return
+      } catch {
+        // cancelled
+      }
+    }
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(text)
+        onToast?.('League card copied!')
+      } catch {
+        onToast?.('Could not share league card')
+      }
+    }
+  }
 
   return (
     <div className="panel">
@@ -92,18 +121,50 @@ export function DailyPanel({ onOpenDailyDump }: DailyPanelProps) {
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <button
             className="primary-btn"
+            disabled={!canStart}
             onClick={() => {
-              const result = engine.startDailyDump()
-              if (result.ok) onOpenDailyDump?.()
+              if (canStart) {
+                onOpenDailyDump?.()
+              }
             }}
           >
-            Start
+            {canStart ? 'Start' : 'Already Played'}
           </button>
         </div>
         <div className="meta-line">
           Best {dump.bestScore} · Last tier {dump.lastTier}
           {dump.lastScore > 0 ? ` · ${dump.lastScore} pts` : ''}
         </div>
+      </div>
+
+      <div className="goal-card weekly-league-card" style={{ marginTop: 12 }}>
+        <div className="goal-title">WEEKLY TOILET LEAGUE</div>
+        <div className="goal-sub">{weekKey}</div>
+        {dump.weeklyBestScore > 0 ? (
+          <>
+            <div className="meta-line" style={{ marginTop: 6 }}>
+              Week best {league.score} · {league.label}
+            </div>
+            <div className="progress" style={{ marginTop: 8 }}>
+              <span style={{ width: `${league.percentile}%` }} />
+            </div>
+            <div className="meta-line">
+              ≈#{league.approxRank.toLocaleString()} / {league.fieldSize.toLocaleString()}
+            </div>
+          </>
+        ) : (
+          <div className="meta-line" style={{ marginTop: 6 }}>
+            Play Daily Dump this week to enter the local league ladder.
+          </div>
+        )}
+        <button
+          className="ghost-btn"
+          style={{ marginTop: 8 }}
+          disabled={dump.weeklyBestScore <= 0}
+          onClick={() => void shareLeague()}
+        >
+          Share standing
+        </button>
       </div>
     </div>
   )

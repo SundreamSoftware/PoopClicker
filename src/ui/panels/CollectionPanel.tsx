@@ -11,16 +11,14 @@ import { SKINS } from '../../content/skins'
 import { WORLDS } from '../../content/worlds'
 import { collectionPercent } from '../../core/systems/achievements'
 import { getSkinStatus, isSkinUnlockRequirementMet } from '../../core/systems/skins'
-import { cancelNotificationReminders } from '../../services/notifications'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 import { maybeShowInterstitial } from '../monetizationHelpers'
 
 export function CollectionPanel() {
-  const { engine, ads, consent, notifications } = useGameContext()
+  const { engine, ads } = useGameContext()
   const snap = useGameSnapshot()
   const [tab, setTab] = useState<'overview' | 'skins' | 'worlds'>('overview')
-  const [privacyStatus, setPrivacyStatus] = useState<string | null>(null)
 
   const stats = useMemo(() => {
     const skins = snap.save.ownedSkins.length
@@ -40,7 +38,7 @@ export function CollectionPanel() {
 
   return (
     <div className="panel">
-      <h2>Poopdex</h2>
+      <h2>Collection</h2>
       <div className="tabs">
         <button className={tab === 'overview' ? 'active' : ''} onClick={() => setTab('overview')}>
           Overview
@@ -55,11 +53,23 @@ export function CollectionPanel() {
 
       {tab === 'overview' && (
         <>
-          <div className="list-row">
-            <span>SKINS</span>
-            <strong>
-              {stats.skins} / {SKINS.length}
-            </strong>
+          <div className="goal-card">
+            <div className="goal-title">EQUIPPED SKIN</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+              <img
+                src={resolveSkinThumbnailPath(snap.save.equippedSkinId) || ''}
+                alt={snap.save.equippedSkinId}
+                style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'contain' }}
+              />
+              <div>
+                <div style={{ fontWeight: 700 }}>
+                  {SKINS.find((s) => s.id === snap.save.equippedSkinId)?.name || 'Unknown'}
+                </div>
+                <div className="meta-line">
+                  Collection {stats.total}% · {stats.skins}/{SKINS.length} skins
+                </div>
+              </div>
+            </div>
           </div>
           <div className="list-row">
             <span>WORLDS</span>
@@ -84,13 +94,6 @@ export function CollectionPanel() {
             <strong>
               {stats.achievements} / {ACHIEVEMENTS.length}
             </strong>
-          </div>
-          <div className="goal-card">
-            <div className="goal-title">TOTAL COLLECTION</div>
-            <div className="goal-sub">{stats.total}%</div>
-            <div className="progress">
-              <span style={{ width: `${stats.total}%` }} />
-            </div>
           </div>
         </>
       )}
@@ -195,65 +198,6 @@ export function CollectionPanel() {
             </div>
           )
         })}
-
-      <div className="goal-card" style={{ marginTop: 16 }}>
-        <div className="goal-title">SETTINGS</div>
-        <div className="meta-line" style={{ marginBottom: 8 }}>
-          Audio, haptics, and motion preferences
-        </div>
-        {(
-          [
-            ['sfx', 'Sound effects'],
-            ['music', 'Music'],
-            ['haptics', 'Haptics'],
-            ['reducedMotion', 'Reduced motion'],
-            ['notifications', 'Notifications'],
-          ] as const
-        ).map(([key, label]) => (
-          <label key={key} className="list-row" style={{ cursor: 'pointer' }}>
-            <span>{label}</span>
-            <input
-              type="checkbox"
-              checked={snap.save.settings[key]}
-              onChange={(e) => {
-                engine.updateSettings({ [key]: e.target.checked })
-                if (key === 'notifications' && !e.target.checked) {
-                  cancelNotificationReminders(notifications)
-                }
-              }}
-            />
-          </label>
-        ))}
-        {snap.save.autoBuyUnlocked && (
-          <label className="list-row" style={{ cursor: 'pointer' }}>
-            <span>Auto-Buy</span>
-            <input
-              type="checkbox"
-              checked={snap.save.autoBuyEnabled}
-              onChange={(e) => engine.setAutoBuyEnabled(e.target.checked)}
-            />
-          </label>
-        )}
-        <div className="list-row">
-          <div>
-            <span>Privacy choices</span>
-            {privacyStatus && <div className="meta-line">{privacyStatus}</div>}
-          </div>
-          <button
-            className="ghost-btn"
-            onClick={async () => {
-              const outcome = await consent.showPrivacyOptions()
-              setPrivacyStatus(
-                outcome === 'unavailable'
-                  ? 'Privacy form is not required or unavailable.'
-                  : 'Privacy choices updated.',
-              )
-            }}
-          >
-            Manage
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

@@ -9,7 +9,7 @@ import {
   safeElapsed,
   toUtcDateKey,
 } from '../../src/core/time/TimeService'
-import { canStartDailyDump } from '../../src/core/systems/dailyDump'
+import { canStartDailyDump, DAILY_DUMP } from '../../src/core/systems/dailyDump'
 import { processStreak } from '../../src/core/systems/daily'
 import { ECONOMY } from '../../src/core/economy/formulas'
 
@@ -114,7 +114,7 @@ describe('Daily dump once per UTC day', () => {
     expect(canStartDailyDump(played, clock.now())).toBe(true)
   })
 
-  it('engine enforces one start per day', () => {
+  it('engine enforces one completed attempt per day', () => {
     const clock = new FixedClock(Date.UTC(2026, 7, 8, 12))
     const engine = new GameEngine({
       clock,
@@ -122,6 +122,12 @@ describe('Daily dump once per UTC day', () => {
       storage: null,
     })
     expect(engine.startDailyDump().ok).toBe(true)
+    // Mid-run resume is allowed (does not burn a second attempt).
+    expect(engine.startDailyDump().ok).toBe(true)
+    clock.advance(DAILY_DUMP.countdownMs + DAILY_DUMP.durationMs + 50)
+    engine.tick(DAILY_DUMP.countdownMs + DAILY_DUMP.durationMs + 50)
+    expect(engine.claimDailyDumpReward().ok).toBe(true)
+    expect(engine.startDailyDump().ok).toBe(false)
     expect(engine.startDailyDump().reason).toBe('already_played')
     clock.advance(86_400_000)
     expect(engine.startDailyDump().ok).toBe(true)
@@ -146,5 +152,23 @@ describe('Clock rollback safety', () => {
     expect(engine.getSnapshot().offlineReward).toBeNull()
     const streak = engine.claimStreak()
     expect(streak.ok).toBe(false)
+    // Rolled back onto the same UTC day as last claim.
+    expect(streak.reason).toBe('already_claimed')
+  })
+
+  it('returns clock_rollback when last claim is in the future', () => {
+    const clock = new FixedClock(Date.UTC(2026, 7, 7, 12))
+    const engine = new GameEngine({
+      clock,
+      save: {
+        ...createDefaultSave(clock.now()),
+        lastDailyClaim: '2026-08-08',
+        dailyStreak: 2,
+      },
+      storage: null,
+    })
+    const streak = engine.claimStreak()
+    expect(streak.ok).toBe(false)
+    expect(streak.reason).toBe('clock_rollback')
   })
 })

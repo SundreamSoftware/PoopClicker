@@ -10,6 +10,7 @@ export interface EventOverlayProps {
   reducedMotion?: boolean
   onCatchTarget: (id: string) => void
   onMysteryPick: (option: 0 | 1 | 2) => void
+  onSkip?: () => void
   onDismiss?: () => void
   now?: number
 }
@@ -31,7 +32,7 @@ const bannerStyle: CSSProperties = {
   borderRadius: 14,
   background: 'rgba(20, 30, 40, 0.82)',
   color: '#fff',
-  pointerEvents: 'none',
+  pointerEvents: 'auto',
   boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
 }
 
@@ -75,7 +76,7 @@ function BossBar({
           `P1_events/clogged_toilet/clogged_stage_${Math.min(3, Math.floor(progress * 4))}.svg`,
         )
   return (
-    <div style={{ ...bannerStyle, pointerEvents: 'none' }}>
+    <div style={bannerStyle} className="event-banner-ui">
       <img
         src={artSrc}
         alt=""
@@ -140,11 +141,10 @@ function PlumberMeter({
     <div
       style={{
         ...overlayRoot,
-        pointerEvents: 'auto',
         background: 'rgba(10, 16, 24, 0.35)',
       }}
     >
-      <div style={{ ...bannerStyle, pointerEvents: 'none', top: '18%' }}>
+      <div style={{ ...bannerStyle, pointerEvents: 'none', top: '18%' }} className="event-banner-ui">
         <div style={{ fontWeight: 800 }}>PLUMBER INSPECTION</div>
         <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>
           Hold CPS between {bandMin}–{bandMax} · {formatDuration(remainingMs(runtime, now))}
@@ -203,10 +203,12 @@ function PlumberMeter({
 function MysteryCards({
   runtime,
   onMysteryPick,
+  onSkip,
   now,
 }: {
   runtime: ActiveEventRuntime
   onMysteryPick: (option: 0 | 1 | 2) => void
+  onSkip?: () => void
   now: number
 }) {
   const labels = ['???', '???', '???']
@@ -215,7 +217,6 @@ function MysteryCards({
     <div
       style={{
         ...overlayRoot,
-        pointerEvents: 'auto',
         background: 'rgba(12, 18, 28, 0.55)',
         display: 'grid',
         placeItems: 'center',
@@ -235,12 +236,14 @@ function MysteryCards({
         }}
       />
       <div
+        className="event-banner-ui"
         style={{
           position: 'relative',
           zIndex: 1,
           width: 'min(360px, 92%)',
           color: '#fff',
           textAlign: 'center',
+          pointerEvents: 'auto',
         }}
       >
         <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 6 }}>MYSTERY FLUSH</div>
@@ -251,11 +254,12 @@ function MysteryCards({
           {([0, 1, 2] as const).map((option) => {
             const picked = runtime.mysteryOption === option
             const show = runtime.mysteryRevealed && picked
+            const isDisabled = !runtime.awaitingChoice || runtime.mysteryRevealed || runtime.rewardClaimed
             return (
               <button
                 key={option}
                 type="button"
-                disabled={runtime.mysteryRevealed || runtime.rewardClaimed}
+                disabled={isDisabled}
                 onClick={() => onMysteryPick(option)}
                 style={{
                   pointerEvents: 'auto',
@@ -267,16 +271,39 @@ function MysteryCards({
                     : 'linear-gradient(180deg, #3a2f55, #1d2440)',
                   color: '#fff',
                   fontWeight: 800,
-                  cursor: runtime.mysteryRevealed ? 'default' : 'pointer',
+                  cursor: isDisabled ? 'default' : 'pointer',
                   boxShadow: '0 8px 18px rgba(0,0,0,0.28)',
+                  opacity: isDisabled && !show ? 0.6 : 1,
                 }}
               >
                 <div style={{ fontSize: 28, marginBottom: 8 }}>{show ? '✓' : '?'}</div>
-                <div style={{ fontSize: 13 }}>{show ? revealed[option] : labels[option]}</div>
+                <div style={{ fontSize: 13 }}>
+                  {show ? revealed[option] : runtime.awaitingChoice ? labels[option] : 'Wait…'}
+                </div>
               </button>
             )
           })}
         </div>
+        {runtime.awaitingChoice && onSkip && (
+          <button
+            type="button"
+            onClick={onSkip}
+            style={{
+              pointerEvents: 'auto',
+              marginTop: 16,
+              width: '100%',
+              padding: '8px 16px',
+              borderRadius: 10,
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'rgba(0,0,0,0.2)',
+              color: '#fff',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Skip (auto-pick)
+          </button>
+        )}
       </div>
     </div>
   )
@@ -288,6 +315,7 @@ export function EventOverlay({
   reducedMotion = false,
   onCatchTarget,
   onMysteryPick,
+  onSkip,
   onDismiss,
   now = Date.now(),
 }: EventOverlayProps) {
@@ -303,7 +331,14 @@ export function EventOverlay({
   }
 
   if (runtime.type === 'mystery_flush') {
-    return <MysteryCards runtime={runtime} onMysteryPick={onMysteryPick} now={now} />
+    return (
+      <MysteryCards
+        runtime={runtime}
+        onMysteryPick={onMysteryPick}
+        onSkip={onSkip}
+        now={now}
+      />
+    )
   }
 
   if (runtime.type === 'burrito_rush' || runtime.type === 'toilet_quake') {
@@ -316,7 +351,7 @@ export function EventOverlay({
               runtime.type === 'burrito_rush'
                 ? 'linear-gradient(90deg, rgba(192,57,43,0.9), rgba(230,126,34,0.9))'
                 : 'linear-gradient(90deg, rgba(41,128,185,0.9), rgba(52,73,94,0.9))',
-            animation: reducedMotion ? undefined : 'none',
+            animation: reducedMotion ? 'none' : undefined,
           }}
         >
           <img

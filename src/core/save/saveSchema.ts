@@ -15,16 +15,54 @@ export interface AchievementSaveState {
   discovered: boolean
 }
 
+/** Serializable Daily Dump runtime (no tapTimestamps / rollingCps). */
+export interface DailyDumpActiveRuntime {
+  phase: 'countdown' | 'running' | 'finished'
+  startedAt: number
+  endsAt: number
+  countdownEndsAt: number
+  score: number
+  taps: number
+  combo: number
+  peakCombo: number
+  rewardTier: 'none' | 'bronze' | 'silver' | 'gold' | 'diamond'
+  gtpReward: number
+}
+
 export interface DailyDumpState {
   lastPlayedDate: string | null
   bestScore: number
   lastScore: number
   lastTier: 'none' | 'bronze' | 'silver' | 'gold' | 'diamond'
   rewardClaimed: boolean
+  /** Persisted mid-run / finished-unclaimed dump so kill-app does not burn the day. */
+  activeRuntime: DailyDumpActiveRuntime | null
+  /** ISO week key `YYYY-Www` for weekly league tracking. */
+  weeklyBestWeekKey: string | null
+  weeklyBestScore: number
+}
+
+export interface SessionMissionSaveEntry {
+  id: string
+  progress: number
+  claimed: boolean
+}
+
+export interface SessionMissionsSave {
+  dateKey: string | null
+  missions: SessionMissionSaveEntry[]
+}
+
+export interface RewardedCooldownsSave {
+  incomeBoostAt: number
+  instantPpsAt: number
+  eventRetryAt: number
+  goldenSpawnAt: number
 }
 
 export interface PlayerSaveV2 {
   schemaVersion: number
+  saveRevision: number
   currentPP: SerializedLargeNumber
   runPPEarned: SerializedLargeNumber
   lifetimePPEarned: SerializedLargeNumber
@@ -66,12 +104,15 @@ export interface PlayerSaveV2 {
   eventsCompleted: number
   eventCompletions: Record<string, number>
   dailyDumpState: DailyDumpState
+  sessionMissions: SessionMissionsSave
+  rewardedCooldowns: RewardedCooldownsSave
   activeBoosts: ActiveBoost[]
   activeEvent: ActiveEvent | null
   lastEventEndedAt: Record<string, number>
   lastGoldenPoopAt: number
   nextGoldenPoopAt: number
   nextRandomEventAt: number
+  lastEventActivityAt: number
   autoBuyUnlocked: boolean
   autoBuyEnabled: boolean
   autoBuyPreferences: {

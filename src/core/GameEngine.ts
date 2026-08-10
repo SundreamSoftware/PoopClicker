@@ -1,3 +1,4 @@
+import { FLUSH_MILESTONES } from '../content/flushMilestones'
 import { GENERATOR_BY_ID } from '../content/generators'
 import { UPGRADES, UPGRADE_BY_ID } from '../content/upgrades'
 import { IAP_BY_ID } from '../content/iapProducts'
@@ -17,15 +18,19 @@ import type { PlayerSaveV2 } from './save/saveSchema'
 import { FixedClock, SystemClock, TimeService, type Clock } from './time/TimeService'
 import type { ClaimResult, NextGoal, OfflineReward, TapSpeedState } from './types/gameTypes'
 import type { ActiveEventRuntime } from './types/eventRuntime'
-import { scheduleNextRandomEventAt } from './types/eventRuntime'
+import { EVENT_SCHEDULER, scheduleNextRandomEventAt } from './types/eventRuntime'
 import { claimAchievement, syncAchievements } from './systems/achievements'
 import { decideAutoBuy } from './systems/autoBuy'
 import {
   canStartDailyDump,
   createIdleDailyDumpRuntime,
+  isResumableDailyDumpRuntime,
+  restoreDailyDumpRuntime,
+  serializeDailyDumpRuntime,
   startDailyDumpRuntime,
   tapDailyDump,
   tickDailyDump,
+  utcWeekKey,
   type DailyDumpRuntime,
 } from './systems/dailyDump'
 import {
@@ -51,6 +56,22 @@ import {
 import { buildFlushPreview, canFlush, performFlush } from './systems/flush'
 import { computeProduction, resolveTapSpeedState } from './systems/production'
 import { equipSkin, grantEligibleSkins, purchaseSkin } from './systems/skins'
+import {
+  claimSessionMission,
+  ensureSessionMissionsForDay,
+  progressSessionMission,
+  restoreSessionMissions,
+  serializeSessionMissions,
+  type SessionMissionsState,
+} from './systems/sessionMissions'
+
+const REWARDED_COOLDOWN_MS = 600_000
+
+export type RewardedPlacement =
+  | 'income_boost'
+  | 'instant_pps'
+  | 'event_retry'
+  | 'golden_spawn'
 import type { AnalyticsSink } from '../services/analytics'
 import { applyIapGrant as applyIapGrantToSave } from '../services/billing'
 
@@ -74,6 +95,7 @@ export interface EngineSnapshot {
   eventRuntime: ActiveEventRuntime | null
   dailyDump: DailyDumpRuntime
   frenzyActive: boolean
+  sessionMissions: SessionMissionsState
 }
 
 type Listener = () => void
@@ -98,6 +120,7 @@ export class GameEngine {
   private eventRuntime: ActiveEventRuntime | null = null
   private dailyDumpRuntime = createIdleDailyDumpRuntime()
   private lastAutoBuyAt = 0
+  private lastDailyStateCheckAt = 0
   private frenzyStartedAt = 0
   private frenzyActiveUntil = 0
   private firstTapTracked = false
@@ -105,6 +128,7 @@ export class GameEngine {
   private cachedSnapshot: EngineSnapshot | null = null
   private uiVersion = 0
   private lastUiEmitAt = 0
+  private sessionMissions: SessionMissionsState = restoreSessionMissions(undefined)
 
   constructor(
     options: {
@@ -174,15 +198,18 @@ export class GameEngine {
     this.emit(true)
   }
 
-  private bootstrap(now: number): void {
+  private bootstrap(now: number, opts: { countSession?: boolean } = {}): void {
+    const countSession = opts.countSession ?? true
     if (this.save.nextRandomEventAt === 0) {
       this.save = {
         ...this.save,
         nextRandomEventAt: scheduleNextRandomEventAt(now, 0, this.save.flushCount),
       }
     }
-    this.save = { ...this.save, sessionsCount: this.save.sessionsCount + 1 }
-    this.analytics.track('session_start', { sessionsCount: this.save.sessionsCount })
+    if (countSession) {
+      this.save = { ...this.save, sessionsCount: this.save.sessionsCount + 1 }
+      this.analytics.track('session_start', { sessionsCount: this.save.sessionsCount })
+    }
 
     const away = Math.max(0, now - this.save.lastActiveTimestamp)
     this.absenceMs = away
@@ -218,9 +245,52 @@ export class GameEngine {
           failed: this.save.activeEvent.failed,
           rewardClaimed: this.save.activeEvent.rewardClaimed,
           endsAt: this.save.activeEvent.endsAt,
+          caughtCount: this.save.activeEvent.caughtCount ?? hydrated.caughtCount,
+          inBandMs: this.save.activeEvent.inBandMs ?? hydrated.inBandMs,
+          bandScore: this.save.activeEvent.bandScore ?? hydrated.bandScore,
+          awaitingChoice: this.save.activeEvent.awaitingChoice ?? hydrated.awaitingChoice,
+          mysteryRevealed: this.save.activeEvent.mysteryRevealed ?? hydrated.mysteryRevealed,
+          mysteryOption: this.save.activeEvent.mysteryOption ?? hydrated.mysteryOption,
         }
       }
     }
+
+    if (this.save.dailyDumpState.activeRuntime) {
+      const todayKey = this.time.todayKey()
+      const lastPlayedDate = this.save.dailyDumpState.lastPlayedDate
+      
+      if (lastPlayedDate && lastPlayedDate !== todayKey) {
+        this.save = {
+          ...this.save,
+          dailyDumpState: {
+            ...this.save.dailyDumpState,
+            activeRuntime: null,
+          },
+        }
+        this.dailyDumpRuntime = createIdleDailyDumpRuntime()
+      } else {
+        this.dailyDumpRuntime = restoreDailyDumpRuntime(this.save.dailyDumpState.activeRuntime)
+        if (
+          this.dailyDumpRuntime.phase === 'finished' &&
+          this.save.dailyDumpState.lastPlayedDate == null
+        ) {
+          this.save = {
+            ...this.save,
+            dailyDumpState: {
+              ...this.save.dailyDumpState,
+              lastPlayedDate: this.time.todayKey(),
+              activeRuntime: serializeDailyDumpRuntime(this.dailyDumpRuntime),
+            },
+          }
+        }
+      }
+    }
+
+    this.sessionMissions = ensureSessionMissionsForDay(
+      restoreSessionMissions(this.save.sessionMissions),
+      this.time.todayKey(),
+    )
+    this.syncSessionMissionsToSave()
 
     this.syncMeta(now)
   }
@@ -249,6 +319,7 @@ export class GameEngine {
       eventRuntime: this.eventRuntime,
       dailyDump: this.dailyDumpRuntime,
       frenzyActive,
+      sessionMissions: this.sessionMissions,
     }
   }
 
@@ -267,6 +338,12 @@ export class GameEngine {
       ECONOMY.bathroomBreakMaxCharges,
     )
 
+    if (now - this.lastDailyStateCheckAt >= 30_000) {
+      const production = this.getProduction()
+      this.save = ensureDailyState(this.save, now, production.pps)
+      this.lastDailyStateCheckAt = now
+    }
+
     const production = this.getProduction()
     if (production.pps.gt(0)) {
       this.creditPP(production.pps.mul(dt / 1000), 'idle')
@@ -283,7 +360,7 @@ export class GameEngine {
       activeBoosts: this.save.activeBoosts.filter((b) => b.expiresAt > now),
     }
 
-    this.dailyDumpRuntime = tickDailyDump(this.dailyDumpRuntime, now, dt)
+    this.applyDailyDumpTick(now, dt)
 
     if (this.save.autoBuyUnlocked && this.save.autoBuyEnabled && now - this.lastAutoBuyAt >= 1500) {
       this.lastAutoBuyAt = now
@@ -310,6 +387,15 @@ export class GameEngine {
     this.updateCps(now)
     const production = this.getProduction()
     this.combo = Math.min(production.comboMax, this.combo + 1)
+    
+    // Mark core tutorial complete on first tap
+    if (!this.save.tutorialFlags.core) {
+      this.save = {
+        ...this.save,
+        tutorialFlags: { ...this.save.tutorialFlags, core: true },
+      }
+    }
+    
     const crit = Math.random() < production.critChance
     let gained = production.tapPower
     if (crit) {
@@ -340,6 +426,13 @@ export class GameEngine {
     this.save = progressChallenge(this.save, 'tap_pp', gained.toNumber())
     this.save = progressChallenge(this.save, 'cps', this.rollingCps)
     this.save = progressChallenge(this.save, 'combo', this.combo)
+    
+    this.sessionMissions = ensureSessionMissionsForDay(this.sessionMissions, this.time.todayKey())
+    this.sessionMissions = progressSessionMission(this.sessionMissions, 'taps_50', 1)
+    if (crit) {
+      this.sessionMissions = progressSessionMission(this.sessionMissions, 'crits_3', 1)
+    }
+    this.syncSessionMissionsToSave()
 
     const wasFrenzy = now < this.frenzyActiveUntil
     if (this.rollingCps >= production.frenzyThreshold) {
@@ -409,7 +502,7 @@ export class GameEngine {
       level === 0 &&
       LargeNumber.deserialize(this.save.lifetimePPEarned).lt(def.unlockPP)
     ) {
-      // soft gate using lifetime for unlock visibility
+      return { ok: false, reason: 'pp_locked' }
     }
     if ((def.unlockFlushCount ?? 0) > this.save.flushCount) {
       return { ok: false, reason: 'flush_locked' }
@@ -527,11 +620,13 @@ export class GameEngine {
   }
 
   flush(): ClaimResult {
+    const previousFlushCount = this.save.flushCount
     const result = performFlush(this.save, this.time.now())
     if (!result.ok) return { ok: false, reason: result.reason }
     if (this.save.equippedSkinId === 'corny_poop') this.flushWithCorny += 1
     this.save = result.save
     this.combo = 0
+    this.eventRuntime = null
     this.save = progressChallenge(this.save, 'flush', 1)
     if (this.save.flushCount === 1) this.analytics.track('first_flush', {})
     this.analytics.track('flush', {
@@ -539,10 +634,13 @@ export class GameEngine {
       flushCount: this.save.flushCount,
     })
     this.analytics.track('flush_power_gain', { amount: result.preview.flushPowerGain })
+    const crossedMilestone = FLUSH_MILESTONES.some(
+      (m) => m.flushCount > previousFlushCount && m.flushCount <= this.save.flushCount,
+    )
     this.syncMeta(this.time.now())
     this.persistImmediate()
     this.emit()
-    return { ok: true }
+    return { ok: true, reason: crossedMilestone ? 'milestone' : undefined }
   }
 
   claimOffline(double = false): ClaimResult {
@@ -551,7 +649,7 @@ export class GameEngine {
     }
     const earned = double ? this.offlineReward.earned.mul(2) : this.offlineReward.earned
     this.creditPP(earned, 'reward')
-    this.offlineReward = { ...this.offlineReward, claimed: true }
+    this.offlineReward = null
     this.analytics.track('offline_reward_claim', { double, amount: earned.toNumber() })
     this.persistImmediate()
     this.emit()
@@ -570,7 +668,7 @@ export class GameEngine {
     return {
       ok: result.claimed,
       gtp: result.rewardGtp,
-      reason: result.claimed ? undefined : 'already_claimed',
+      reason: result.claimed ? undefined : (result.reason ?? 'already_claimed'),
     }
   }
 
@@ -713,27 +811,45 @@ export class GameEngine {
     if (!canStartDailyDump(this.save, now)) {
       return { ok: false, reason: 'already_played' }
     }
+
+    if (isResumableDailyDumpRuntime(this.dailyDumpRuntime)) {
+      this.syncDailyDumpRuntimeToSave()
+      this.emit()
+      return { ok: true }
+    }
+
+    const savedRuntime = this.save.dailyDumpState.activeRuntime
+    if (isResumableDailyDumpRuntime(savedRuntime)) {
+      this.dailyDumpRuntime = restoreDailyDumpRuntime(savedRuntime)
+      this.syncDailyDumpRuntimeToSave()
+      this.emit()
+      return { ok: true }
+    }
+
     this.dailyDumpRuntime = startDailyDumpRuntime(now)
     this.save = {
       ...this.save,
       dailyDumpState: {
         ...this.save.dailyDumpState,
-        lastPlayedDate: this.time.todayKey(),
         lastScore: 0,
         lastTier: 'none',
         rewardClaimed: false,
+        lastPlayedDate: this.time.todayKey(),
+        activeRuntime: serializeDailyDumpRuntime(this.dailyDumpRuntime),
       },
     }
     this.analytics.track('daily_dump_start', {})
+    this.persistImmediate()
     this.emit()
     return { ok: true }
   }
 
   tapDailyDumpChallenge(): void {
     const now = this.time.now()
-    this.dailyDumpRuntime = tickDailyDump(this.dailyDumpRuntime, now)
+    this.applyDailyDumpTick(now, 0)
     if (this.dailyDumpRuntime.phase === 'running') {
       this.dailyDumpRuntime = tapDailyDump(this.dailyDumpRuntime, now)
+      this.syncDailyDumpRuntimeToSave()
     }
     this.dirty = true
     this.emit()
@@ -747,15 +863,24 @@ export class GameEngine {
       return { ok: false, reason: 'already_claimed' }
     }
     const { score, rewardTier: tier, gtpReward: gtp } = this.dailyDumpRuntime
+    const weekKey = utcWeekKey(this.time.now())
+    const sameWeek = this.save.dailyDumpState.weeklyBestWeekKey === weekKey
+    const weeklyBestScore = sameWeek
+      ? Math.max(this.save.dailyDumpState.weeklyBestScore, score)
+      : score
     this.save = {
       ...this.save,
       gtp: this.save.gtp + gtp,
       dailyDumpState: {
         ...this.save.dailyDumpState,
+        lastPlayedDate: this.save.dailyDumpState.lastPlayedDate ?? this.time.todayKey(),
         bestScore: Math.max(this.save.dailyDumpState.bestScore, score),
         lastScore: score,
         lastTier: tier,
         rewardClaimed: true,
+        activeRuntime: null,
+        weeklyBestWeekKey: weekKey,
+        weeklyBestScore,
       },
     }
     this.dailyDumpRuntime = createIdleDailyDumpRuntime()
@@ -821,6 +946,8 @@ export class GameEngine {
       }
       this.syncActiveEventFromRuntime()
       this.recordEventCompletion()
+      this.sessionMissions = progressSessionMission(this.sessionMissions, 'events_1', 1)
+      this.syncSessionMissionsToSave()
       this.finishEvent(true)
       this.persistImmediate()
       this.emit()
@@ -838,6 +965,8 @@ export class GameEngine {
       }
       this.syncActiveEventFromRuntime()
       this.recordEventCompletion()
+      this.sessionMissions = progressSessionMission(this.sessionMissions, 'events_1', 1)
+      this.syncSessionMissionsToSave()
       this.finishEvent(true)
       this.persistImmediate()
       this.emit()
@@ -866,10 +995,23 @@ export class GameEngine {
     }
     this.syncActiveEventFromRuntime()
     this.recordEventCompletion()
+    this.sessionMissions = progressSessionMission(this.sessionMissions, 'events_1', 1)
+    this.syncSessionMissionsToSave()
     this.finishEvent(true)
     this.persistImmediate()
     this.emit()
     return { ok: true }
+  }
+
+  skipMysteryReward(): ClaimResult {
+    const runtime = this.eventRuntime
+    if (!runtime || runtime.type !== 'mystery_flush') {
+      return { ok: false, reason: 'inactive' }
+    }
+    if (!runtime.awaitingChoice) {
+      return { ok: false, reason: 'not_ready' }
+    }
+    return this.chooseMysteryReward(0)
   }
 
   setAutoBuyEnabled(enabled: boolean): void {
@@ -900,6 +1042,149 @@ export class GameEngine {
     }
     this.persistImmediate()
     this.emit()
+  }
+
+  acknowledgeTutorial(flag: string): void {
+    this.save = {
+      ...this.save,
+      tutorialFlags: { ...this.save.tutorialFlags, [flag]: true },
+    }
+    this.persistImmediate()
+    this.emit()
+  }
+
+  abandonDailyDump(): void {
+    if (this.dailyDumpRuntime.phase === 'idle') return
+    this.dailyDumpRuntime = createIdleDailyDumpRuntime()
+    this.save = {
+      ...this.save,
+      dailyDumpState: {
+        ...this.save.dailyDumpState,
+        lastPlayedDate: this.time.todayKey(),
+        rewardClaimed: true,
+        activeRuntime: null,
+      },
+    }
+    this.analytics.track('daily_dump_abandon', {})
+    this.persistImmediate()
+    this.emit()
+  }
+
+  canApplyRewarded(placement: RewardedPlacement): ClaimResult {
+    const remaining = this.getRewardedCooldownRemaining(placement)
+    if (remaining > 0) return { ok: false, reason: 'cooldown' }
+    if (
+      (placement === 'event_retry' || placement === 'golden_spawn') &&
+      (this.eventRuntime || this.save.activeEvent)
+    ) {
+      return { ok: false, reason: 'busy' }
+    }
+    return { ok: true }
+  }
+
+  getRewardedCooldownRemaining(placement: RewardedPlacement): number {
+    const at = this.save.rewardedCooldowns[this.rewardedCooldownKey(placement)]
+    return Math.max(0, at + REWARDED_COOLDOWN_MS - this.time.now())
+  }
+
+  applyRewardedIncomeBoost(): ClaimResult {
+    const gate = this.canApplyRewarded('income_boost')
+    if (!gate.ok) return gate
+    const now = this.time.now()
+    this.save = {
+      ...this.save,
+      rewardedCooldowns: { ...this.save.rewardedCooldowns, incomeBoostAt: now },
+      activeBoosts: [
+        ...this.save.activeBoosts,
+        {
+          id: `income_boost_${now}`,
+          label: 'Ad Income Boost',
+          tapMultiplier: 1,
+          idleMultiplier: 2,
+          expiresAt: now + 5 * 60_000,
+        },
+      ],
+    }
+    this.analytics.track('rewarded_ad_complete', { placement: 'income_boost' })
+    this.persistImmediate()
+    this.emit()
+    return { ok: true }
+  }
+
+  applyRewardedInstantPps(): ClaimResult {
+    const gate = this.canApplyRewarded('instant_pps')
+    if (!gate.ok) return gate
+    const now = this.time.now()
+    this.save = {
+      ...this.save,
+      rewardedCooldowns: { ...this.save.rewardedCooldowns, instantPpsAt: now },
+    }
+    const amount = this.getProduction().pps.mul(60)
+    this.creditPP(amount, 'reward')
+    this.analytics.track('rewarded_ad_complete', { placement: 'instant_pps' })
+    this.persistImmediate()
+    this.emit()
+    return { ok: true, pp: amount }
+  }
+
+  /** Speeds next random event after watching event_retry ad (persisted cooldown). */
+  applyRewardedEventRetry(): ClaimResult {
+    const gate = this.canApplyRewarded('event_retry')
+    if (!gate.ok) return gate
+    const now = this.time.now()
+    this.save = {
+      ...this.save,
+      rewardedCooldowns: { ...this.save.rewardedCooldowns, eventRetryAt: now },
+      nextRandomEventAt: now,
+      nextGoldenPoopAt: Math.min(this.save.nextGoldenPoopAt, now + 15_000),
+    }
+    this.analytics.track('rewarded_ad_complete', { placement: 'event_retry' })
+    this.persistImmediate()
+    this.emit()
+    return { ok: true }
+  }
+
+  claimSessionMission(missionId: string): ClaimResult {
+    this.sessionMissions = ensureSessionMissionsForDay(this.sessionMissions, this.time.todayKey())
+    this.syncSessionMissionsToSave()
+
+    const persisted = this.save.sessionMissions.missions.find((m) => m.id === missionId)
+    if (persisted?.claimed) return { ok: false, reason: 'already_claimed' }
+
+    const result = claimSessionMission(this.sessionMissions, missionId)
+    if (!result.ok) return { ok: false, reason: 'not_ready' }
+    this.sessionMissions = result.state
+    this.save = {
+      ...this.save,
+      gtp: this.save.gtp + result.reward,
+      sessionMissions: serializeSessionMissions(this.sessionMissions),
+    }
+    this.analytics.track('session_mission_claim', { missionId, gtp: result.reward })
+    this.persistImmediate()
+    this.emit()
+    return { ok: true, gtp: result.reward }
+  }
+
+  private syncSessionMissionsToSave(): void {
+    const prevSave = this.save.sessionMissions
+    const currRuntime = this.sessionMissions
+    const currSave = serializeSessionMissions(currRuntime)
+    const anyCompleted = currRuntime.missions.some((runtimeMission, i) => {
+      const prevMission = prevSave.missions[i]
+      return (
+        prevMission &&
+        !prevMission.claimed &&
+        runtimeMission.progress >= runtimeMission.target &&
+        (prevMission.progress ?? 0) < runtimeMission.target
+      )
+    })
+    this.save = {
+      ...this.save,
+      sessionMissions: currSave,
+    }
+    if (anyCompleted) {
+      this.persistImmediate()
+    }
   }
 
   applyIapGrant(productId: string): ClaimResult {
@@ -935,6 +1220,12 @@ export class GameEngine {
         completed: r.completed,
         failed: r.failed,
         rewardClaimed: r.rewardClaimed,
+        caughtCount: r.caughtCount,
+        inBandMs: r.inBandMs,
+        bandScore: r.bandScore,
+        awaitingChoice: r.awaitingChoice,
+        mysteryRevealed: r.mysteryRevealed,
+        mysteryOption: r.mysteryOption,
       },
     }
   }
@@ -986,6 +1277,9 @@ export class GameEngine {
     }
     this.save = progressChallenge(this.save, 'events', 1)
     this.analytics.track('event_complete', { id: runtime.defId })
+    this.sessionMissions = ensureSessionMissionsForDay(this.sessionMissions, this.time.todayKey())
+    this.sessionMissions = progressSessionMission(this.sessionMissions, 'events_1', 1)
+    this.syncSessionMissionsToSave()
 
     this.eventRuntime = { ...runtime, completed: true, rewardClaimed: true }
     this.syncActiveEventFromRuntime()
@@ -1014,6 +1308,7 @@ export class GameEngine {
       ...this.save,
       lastEventEndedAt: { ...this.save.lastEventEndedAt, [runtime.defId]: now },
       activeEvent: null,
+      lastEventActivityAt: now,
     }
     this.eventRuntime = null
   }
@@ -1048,8 +1343,19 @@ export class GameEngine {
       return
     }
 
+    const timeSinceLastActivity = now - this.save.lastEventActivityAt
+    if (timeSinceLastActivity >= EVENT_SCHEDULER.pityMs) {
+      this.save = { ...this.save, nextGoldenPoopAt: Math.min(this.save.nextGoldenPoopAt, now) }
+    }
+
     const pick = pickScheduledEvent(this.save, now)
     if (!pick) return
+
+    if (pick.reschedule) {
+      this.save = { ...this.save, nextRandomEventAt: now + 60_000 }
+      this.dirty = true
+      return
+    }
 
     const runtime = createEventRuntime(pick.id, now, this.save.flushCount)
     if (!runtime) return
@@ -1059,6 +1365,7 @@ export class GameEngine {
     this.save = {
       ...this.save,
       tutorialFlags: { ...this.save.tutorialFlags, events: true },
+      lastEventActivityAt: now,
     }
     this.analytics.track('event_start', { id: pick.id })
     this.dirty = true
@@ -1068,6 +1375,10 @@ export class GameEngine {
   spawnEvent(eventId: string): boolean {
     if (this.eventRuntime || this.save.activeEvent) return false
     const now = this.time.now()
+    if (eventId === 'golden_poop') {
+      const gate = this.canApplyRewarded('golden_spawn')
+      if (!gate.ok) return false
+    }
     const runtime = createEventRuntime(eventId, now, this.save.flushCount)
     if (!runtime) return false
     this.eventRuntime = runtime
@@ -1075,8 +1386,21 @@ export class GameEngine {
     this.save = {
       ...this.save,
       tutorialFlags: { ...this.save.tutorialFlags, events: true },
+      lastEventActivityAt: now,
+      ...(eventId === 'golden_poop'
+        ? {
+            rewardedCooldowns: {
+              ...this.save.rewardedCooldowns,
+              goldenSpawnAt: now,
+            },
+          }
+        : {}),
+    }
+    if (eventId === 'golden_poop') {
+      this.analytics.track('rewarded_ad_complete', { placement: 'golden_spawn' })
     }
     this.analytics.track('event_start', { id: eventId })
+    this.persistImmediate()
     this.emit()
     return true
   }
@@ -1124,12 +1448,20 @@ export class GameEngine {
     }
 
     const runPP = LargeNumber.deserialize(this.save.runPPEarned)
+    const nextMilestone = FLUSH_MILESTONES.find((m) => m.flushCount > this.save.flushCount)
     if (!canFlush(this.save)) {
       goals.push({
         kind: 'flush',
         title: 'NEXT FLUSH',
         subtitle: `+${buildFlushPreview(this.save, this.time.now()).flushPowerGain} Flush Power`,
         progress: Math.min(1, runPP.div(ECONOMY.firstFlushRequirement).toNumber()),
+      })
+    } else if (nextMilestone) {
+      goals.push({
+        kind: 'flush',
+        title: 'NEXT MILESTONE',
+        subtitle: nextMilestone.name,
+        progress: Math.min(1, this.save.flushCount / nextMilestone.flushCount),
       })
     } else {
       goals.push({
@@ -1162,7 +1494,7 @@ export class GameEngine {
       })
     }
 
-    return goals.slice(0, 2)
+    return goals.slice(0, 3)
   }
 
   foreground(): void {
@@ -1176,7 +1508,7 @@ export class GameEngine {
       ECONOMY.bathroomBreakIntervalMs,
       ECONOMY.bathroomBreakMaxCharges,
     )
-    if (away > 5_000 && !this.offlineReward) {
+    if (away > 5_000 && (!this.offlineReward || this.offlineReward.claimed)) {
       const production = this.getProduction()
       const capped = Math.min(away, offlineCapMs(production.offlineCapHoursBonus))
       const earned = production.pps.mul(capped / 1000)
@@ -1190,12 +1522,75 @@ export class GameEngine {
     const now = this.time.now()
     if (this.dailyDumpRuntime.phase !== 'idle') {
       const dt = Math.max(0, now - this.lastTickAt)
-      this.dailyDumpRuntime = tickDailyDump(this.dailyDumpRuntime, now, dt)
+      this.applyDailyDumpTick(now, dt)
     }
     this.analytics.track('session_end', { playMs: this.save.totalPlayTimeMs })
     this.save = { ...this.save, lastActiveTimestamp: now }
     this.syncActiveEventFromRuntime()
+    this.syncDailyDumpRuntimeToSave()
     this.persistImmediate()
+  }
+
+  private applyDailyDumpTick(now: number, dt: number): void {
+    if (this.dailyDumpRuntime.phase === 'idle') return
+    const prevPhase = this.dailyDumpRuntime.phase
+    this.dailyDumpRuntime = tickDailyDump(this.dailyDumpRuntime, now, dt)
+    if (this.dailyDumpRuntime.phase === 'finished' && prevPhase !== 'finished') {
+      this.save = {
+        ...this.save,
+        dailyDumpState: {
+          ...this.save.dailyDumpState,
+          lastPlayedDate: this.time.todayKey(),
+          activeRuntime: serializeDailyDumpRuntime(this.dailyDumpRuntime),
+        },
+      }
+      this.dirty = true
+    } else if (this.dailyDumpRuntime.phase !== 'idle') {
+      this.syncDailyDumpRuntimeToSave()
+      this.dirty = true
+    }
+  }
+
+  private syncDailyDumpRuntimeToSave(): void {
+    const activeRuntime = serializeDailyDumpRuntime(this.dailyDumpRuntime)
+    const prev = this.save.dailyDumpState.activeRuntime
+    const unchanged =
+      (prev == null && activeRuntime == null) ||
+      (prev != null &&
+        activeRuntime != null &&
+        prev.phase === activeRuntime.phase &&
+        prev.score === activeRuntime.score &&
+        prev.taps === activeRuntime.taps &&
+        prev.combo === activeRuntime.combo &&
+        prev.peakCombo === activeRuntime.peakCombo &&
+        prev.endsAt === activeRuntime.endsAt &&
+        prev.countdownEndsAt === activeRuntime.countdownEndsAt &&
+        prev.startedAt === activeRuntime.startedAt &&
+        prev.rewardTier === activeRuntime.rewardTier &&
+        prev.gtpReward === activeRuntime.gtpReward)
+    if (unchanged) return
+    this.save = {
+      ...this.save,
+      dailyDumpState: {
+        ...this.save.dailyDumpState,
+        activeRuntime,
+      },
+    }
+  }
+
+  private rewardedCooldownKey(
+    placement: RewardedPlacement,
+  ): keyof PlayerSaveV2['rewardedCooldowns'] {
+    switch (placement) {
+      case 'income_boost':
+        return 'incomeBoostAt'
+      case 'instant_pps':
+        return 'instantPpsAt'
+      case 'event_retry':
+        return 'eventRetryAt'
+      case 'golden_spawn':
+        return 'goldenSpawnAt'
+    }
   }
 
   private maybePersist(now: number): void {
@@ -1207,7 +1602,14 @@ export class GameEngine {
   persistImmediate(): void {
     const now = this.time.now()
     this.syncActiveEventFromRuntime()
-    this.save = { ...this.save, lastSaveTimestamp: now, lastActiveTimestamp: now }
+    this.syncDailyDumpRuntimeToSave()
+    this.syncSessionMissionsToSave()
+    this.save = { 
+      ...this.save, 
+      saveRevision: this.save.saveRevision + 1,
+      lastSaveTimestamp: now, 
+      lastActiveTimestamp: now 
+    }
     this.storage?.setItem(this.storageKey, serializeSave(this.save))
     this.lastPersistAt = now
     this.dirty = false
@@ -1219,7 +1621,7 @@ export class GameEngine {
 
   importSave(raw: unknown): void {
     this.save = migrateSave(raw as PlayerSaveV2, this.time.now())
-    this.bootstrap(this.time.now())
+    this.bootstrap(this.time.now(), { countSession: false })
     this.persistImmediate()
     this.emit()
   }
@@ -1240,12 +1642,22 @@ export class GameEngine {
   }
 }
 
-export function createTestEngine(save?: Partial<PlayerSaveV2>, now = Date.now()): GameEngine {
+export function createTestEngine(
+  save?: Partial<PlayerSaveV2>, 
+  now = Date.now(), 
+  storage: Storage | null = null,
+  fromStorage = false
+): GameEngine {
   const clock = new FixedClock(now)
+  
+  if (fromStorage && storage) {
+    return GameEngine.fromStorage({ clock, storage })
+  }
+  
   const base = createDefaultSave(now)
   return new GameEngine({
     clock,
     save: { ...base, ...save, schemaVersion: base.schemaVersion },
-    storage: null,
+    storage,
   })
 }

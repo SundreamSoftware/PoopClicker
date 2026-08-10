@@ -178,6 +178,7 @@ describe('Streak', () => {
     expect(engine.exportSave().dailyStreak).toBe(1)
     const repeat = engine.claimStreak()
     expect(repeat.ok).toBe(false)
+    expect(repeat.reason).toBe('already_claimed')
     clock.advance(86_400_000)
     const b = engine.claimStreak()
     expect(b.ok).toBe(true)

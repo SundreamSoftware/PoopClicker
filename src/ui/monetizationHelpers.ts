@@ -4,7 +4,7 @@ import { sessionStartMs } from '../state/gameSingleton'
 
 export async function maybeShowInterstitial(
   ads: AdService,
-  context: 'flush' | 'world_change',
+  context: 'flush' | 'world_change' | 'shop',
   opts: {
     eventActive: boolean
     frenzyActive: boolean
@@ -24,5 +24,10 @@ export async function maybeShowInterstitial(
   ) {
     return
   }
+  
+  if (context === 'flush') {
+    await new Promise(resolve => setTimeout(resolve, 1200))
+  }
+  
   await ads.showInterstitial(context)
 }

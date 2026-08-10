@@ -92,6 +92,26 @@ describe('GameEngine integration', () => {
     expect(engine.exportSave().gtp).toBeGreaterThan(beforeGtp)
     expect(engine.getSnapshot().eventRuntime).toBeNull()
     expect(engine.exportSave().eventsCompleted).toBe(1)
+    const eventsMission = engine.getSnapshot().sessionMissions.missions.find((m) => m.id === 'events_1')
+    expect(eventsMission?.progress).toBeGreaterThanOrEqual(1)
+  })
+
+  it('forces golden via pity after long event inactivity', () => {
+    const now = 5_000_000
+    const clock = new FixedClock(now)
+    const engine = new GameEngine({
+      clock,
+      save: {
+        ...createDefaultSave(now),
+        flushCount: 2,
+        lastEventActivityAt: now - 11 * 60_000,
+        nextGoldenPoopAt: now + 999_999,
+        nextRandomEventAt: now + 999_999,
+      },
+      storage: null,
+    })
+    engine.tick(16)
+    expect(engine.getSnapshot().eventRuntime?.type).toBe('golden_poop')
   })
 
   it('applyIapGrant is idempotent for non-consumables', () => {
@@ -108,5 +128,45 @@ describe('GameEngine integration', () => {
       storage: null,
     })
     expect(engine.exportSave().sessionsCount).toBe(1)
+  })
+
+  it('persists rewarded ad cooldowns across serialize/deserialize', () => {
+    const now = Date.UTC(2026, 7, 8, 12)
+    const clock = new FixedClock(now)
+    const memory = new Map<string, string>()
+    const storage = {
+      getItem: (k: string) => memory.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        memory.set(k, v)
+      },
+      removeItem: (k: string) => {
+        memory.delete(k)
+      },
+      clear: () => memory.clear(),
+      key: () => null,
+      length: 0,
+    } as Storage
+
+    const engine = new GameEngine({
+      clock,
+      save: createDefaultSave(now),
+      storage,
+    })
+    expect(engine.canApplyRewarded('income_boost').ok).toBe(true)
+    expect(engine.applyRewardedIncomeBoost().ok).toBe(true)
+    expect(engine.canApplyRewarded('income_boost').ok).toBe(false)
+    expect(engine.getRewardedCooldownRemaining('income_boost')).toBeGreaterThan(0)
+    expect(engine.applyRewardedEventRetry().ok).toBe(true)
+    expect(engine.exportSave().rewardedCooldowns.eventRetryAt).toBe(now)
+
+    const restarted = GameEngine.fromStorage({ storage, clock })
+    expect(restarted.canApplyRewarded('income_boost').ok).toBe(false)
+    expect(restarted.canApplyRewarded('event_retry').ok).toBe(false)
+    expect(restarted.exportSave().rewardedCooldowns.incomeBoostAt).toBe(now)
+    expect(restarted.getRewardedCooldownRemaining('income_boost')).toBe(600_000)
+
+    clock.advance(600_000)
+    expect(restarted.canApplyRewarded('income_boost').ok).toBe(true)
+    expect(restarted.getRewardedCooldownRemaining('income_boost')).toBe(0)
   })
 })

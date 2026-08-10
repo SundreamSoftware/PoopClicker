@@ -78,6 +78,17 @@ describe('eventSystem', () => {
     expect(pickScheduledEvent(save, now)?.id).toBe('golden_poop')
   })
 
+  it('prefers golden over random when both are due', () => {
+    const now = 1_000_000
+    const save = {
+      ...createDefaultSave(now),
+      flushCount: 3,
+      nextGoldenPoopAt: now - 1,
+      nextRandomEventAt: now - 1,
+    }
+    expect(pickScheduledEvent(save, now)?.id).toBe('golden_poop')
+  })
+
   it('includes flush milestone event bonus in rewards', () => {
     const save = {
       ...createDefaultSave(),

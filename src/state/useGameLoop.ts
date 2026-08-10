@@ -1,10 +1,17 @@
 import { useEffect, useEffectEvent } from 'react'
+import { scheduleNotificationReminders } from '../services/notifications'
 import { useGameContext } from './useGameContext'
 
 export function useGameLoop() {
-  const { engine } = useGameContext()
+  const { engine, notifications } = useGameContext()
   const onVisible = useEffectEvent(() => engine.foreground())
-  const onHidden = useEffectEvent(() => engine.background())
+  const onHidden = useEffectEvent(() => {
+    engine.background()
+    const save = engine.getSnapshot().save
+    if (save.settings.notifications) {
+      scheduleNotificationReminders(notifications, save, Date.now())
+    }
+  })
 
   useEffect(() => {
     let frame = 0

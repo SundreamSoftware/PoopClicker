@@ -18,7 +18,10 @@ export type SfxId =
   | 'clog'
   | 'unclog'
   | 'flush'
+  | 'flush_ready'
   | 'mega_flush'
+  | 'milestone'
+  | 'streak_claim'
   | 'frenzy_start'
   | 'overdrive_start'
   | 'event_start'
@@ -162,6 +165,16 @@ class AudioManagerImpl {
         break
       case 'achievement':
         this.playArp([392, 494, 587, 784, 988], 0.08, 'sine', 0.12)
+        break
+      case 'milestone':
+        this.playArp([440, 554, 659, 880, 1108], 0.09, 'sine', 0.13)
+        this.playNoiseBurst(0.05, 0.14, 2500, 0.11)
+        break
+      case 'streak_claim':
+        this.playArp([523, 659, 784, 1046], 0.08, 'triangle', 0.12)
+        break
+      case 'flush_ready':
+        this.playArp([330, 392, 494, 587], 0.1, 'sine', 0.1)
         break
       case 'skin_unlock':
         this.playArp([523, 659, 784, 1046], 0.1, 'triangle', 0.11)

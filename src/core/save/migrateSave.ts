@@ -2,9 +2,12 @@ import { createDefaultSave } from './defaultSave'
 import {
   SAVE_SCHEMA_VERSION,
   type AnySave,
+  type DailyDumpActiveRuntime,
   type PlayerSaveV1,
   type PlayerSaveV2,
+  type RewardedCooldownsSave,
   type SerializedLargeNumber,
+  type SessionMissionsSave,
 } from './saveSchema'
 
 function asNumber(value: unknown, fallback = 0): number {
@@ -37,6 +40,59 @@ function toSerialized(value: unknown): SerializedLargeNumber {
     return { m: value / 10 ** e, e }
   }
   return { m: 0, e: 0 }
+}
+
+const DAILY_DUMP_PHASES = new Set(['countdown', 'running', 'finished'])
+const DAILY_DUMP_TIERS = new Set(['none', 'bronze', 'silver', 'gold', 'diamond'])
+
+function sanitizeDailyDumpActiveRuntime(value: unknown): DailyDumpActiveRuntime | null {
+  if (!value || typeof value !== 'object') return null
+  const raw = value as Record<string, unknown>
+  const phase = asString(raw.phase)
+  if (!DAILY_DUMP_PHASES.has(phase)) return null
+  const rewardTier = asString(raw.rewardTier, 'none')
+  return {
+    phase: phase as DailyDumpActiveRuntime['phase'],
+    startedAt: asNumber(raw.startedAt),
+    endsAt: asNumber(raw.endsAt),
+    countdownEndsAt: asNumber(raw.countdownEndsAt),
+    score: asNumber(raw.score),
+    taps: asNumber(raw.taps),
+    combo: asNumber(raw.combo),
+    peakCombo: asNumber(raw.peakCombo),
+    rewardTier: (DAILY_DUMP_TIERS.has(rewardTier)
+      ? rewardTier
+      : 'none') as DailyDumpActiveRuntime['rewardTier'],
+    gtpReward: asNumber(raw.gtpReward),
+  }
+}
+
+function sanitizeSessionMissions(value: unknown): SessionMissionsSave {
+  const raw = asRecord(value)
+  const missions = Array.isArray(raw.missions)
+    ? raw.missions
+        .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object')
+        .map((entry) => ({
+          id: asString(entry.id),
+          progress: Math.max(0, asNumber(entry.progress)),
+          claimed: asBool(entry.claimed),
+        }))
+        .filter((entry) => entry.id.length > 0)
+    : []
+  return {
+    dateKey: raw.dateKey == null ? null : asString(raw.dateKey),
+    missions,
+  }
+}
+
+function sanitizeRewardedCooldowns(value: unknown): RewardedCooldownsSave {
+  const raw = asRecord(value)
+  return {
+    incomeBoostAt: asNumber(raw.incomeBoostAt),
+    instantPpsAt: asNumber(raw.instantPpsAt),
+    eventRetryAt: asNumber(raw.eventRetryAt),
+    goldenSpawnAt: asNumber(raw.goldenSpawnAt),
+  }
 }
 
 function migrateV1(raw: PlayerSaveV1, now: number): PlayerSaveV2 {
@@ -76,6 +132,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     ...base,
     ...raw,
     schemaVersion: SAVE_SCHEMA_VERSION,
+    saveRevision: asNumber(raw.saveRevision, 0),
     currentPP: toSerialized(raw.currentPP ?? raw.pp),
     runPPEarned: toSerialized(raw.runPPEarned ?? raw.currentPP ?? raw.pp),
     lifetimePPEarned: toSerialized(raw.lifetimePPEarned ?? raw.runPPEarned ?? raw.pp),
@@ -138,7 +195,13 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
         ? (dump.lastTier as PlayerSaveV2['dailyDumpState']['lastTier'])
         : 'none',
       rewardClaimed: asBool(dump.rewardClaimed),
+      activeRuntime: sanitizeDailyDumpActiveRuntime(dump.activeRuntime),
+      weeklyBestWeekKey:
+        dump.weeklyBestWeekKey == null ? null : asString(dump.weeklyBestWeekKey),
+      weeklyBestScore: asNumber(dump.weeklyBestScore),
     },
+    sessionMissions: sanitizeSessionMissions(raw.sessionMissions),
+    rewardedCooldowns: sanitizeRewardedCooldowns(raw.rewardedCooldowns),
     activeBoosts: Array.isArray(raw.activeBoosts)
       ? (raw.activeBoosts as PlayerSaveV2['activeBoosts'])
       : [],
@@ -147,6 +210,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     lastGoldenPoopAt: asNumber(raw.lastGoldenPoopAt),
     nextGoldenPoopAt: asNumber(raw.nextGoldenPoopAt, now + 180_000),
     nextRandomEventAt: asNumber(raw.nextRandomEventAt, now + 270_000),
+    lastEventActivityAt: asNumber(raw.lastEventActivityAt, now),
     autoBuyUnlocked: asBool(raw.autoBuyUnlocked),
     autoBuyEnabled: asBool(raw.autoBuyEnabled),
     autoBuyPreferences: {

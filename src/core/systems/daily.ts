@@ -27,13 +27,14 @@ function mulberry32(seed: number): () => number {
   }
 }
 
-function scaleTarget(
+export function scaleTarget(
   template: ChallengeTemplate,
   save: PlayerSaveV2,
   pps: LargeNumber,
   critChance: number,
 ): number {
-  const ppsNum = Math.max(1, pps.toNumber())
+  const MAX_PPS_FOR_SCALING = 1e12
+  const ppsNum = Math.max(1, Math.min(pps.toNumber(), MAX_PPS_FOR_SCALING))
   const totalGenLevels = Object.values(save.generators).reduce((a, b) => a + b, 0)
   switch (template.scaling) {
     case 'pps':
@@ -141,13 +142,43 @@ export function rerollChallengeAt(
   return { ...save, dailyChallenges }
 }
 
+/**
+ * Pays out completed-but-unclaimed challenges (+ chest if all three were claimed)
+ * before a UTC day rollover so midnight cannot steal rewards.
+ */
+export function settleUnclaimedDailies(
+  save: PlayerSaveV2,
+  now: number,
+): { save: PlayerSaveV2; gtpGranted: number } {
+  let next = save
+  let gtpGranted = 0
+  for (let i = 0; i < next.dailyChallenges.length; i++) {
+    const c = next.dailyChallenges[i]
+    if (!c || !c.completed || c.claimed) continue
+    const result = claimChallenge(next, i, now)
+    if (result.ok) {
+      next = result.save
+      gtpGranted += result.gtp
+    }
+  }
+  if (!next.dailyChestClaimed && next.dailyChallenges.length === 3) {
+    const chest = claimDailyChest(next)
+    if (chest.ok) {
+      next = chest.save
+      gtpGranted += chest.gtp
+    }
+  }
+  return { save: next, gtpGranted }
+}
+
 export function ensureDailyState(save: PlayerSaveV2, now: number, pps: LargeNumber): PlayerSaveV2 {
   const today = toUtcDateKey(now)
   if (save.dailyChallengeDate === today && save.dailyChallenges.length === 3) return save
+  const settled = settleUnclaimedDailies(save, now)
   return {
-    ...save,
+    ...settled.save,
     dailyChallengeDate: today,
-    dailyChallenges: generateDailyChallenges(save, now, pps),
+    dailyChallenges: generateDailyChallenges(settled.save, now, pps),
     dailyChestClaimed: false,
     dailyRerollsUsed: 0,
   }
@@ -242,10 +273,18 @@ export function processStreak(
   rewardGtp: number
   streakBroken: boolean
   saverUsed: boolean
+  reason?: string
 } {
   const today = toUtcDateKey(now)
   if (save.lastDailyClaim === today) {
-    return { save, claimed: false, rewardGtp: 0, streakBroken: false, saverUsed: false }
+    return {
+      save,
+      claimed: false,
+      rewardGtp: 0,
+      streakBroken: false,
+      saverUsed: false,
+      reason: 'already_claimed',
+    }
   }
 
   let streak = save.dailyStreak
@@ -270,7 +309,14 @@ export function processStreak(
         streak = 1
       }
     } else if (gap <= 0) {
-      return { save, claimed: false, rewardGtp: 0, streakBroken: false, saverUsed: false }
+      return {
+        save,
+        claimed: false,
+        rewardGtp: 0,
+        streakBroken: false,
+        saverUsed: false,
+        reason: 'clock_rollback',
+      }
     }
   }
 

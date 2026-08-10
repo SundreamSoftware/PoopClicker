@@ -279,6 +279,12 @@ export interface ActiveEvent {
   completed: boolean
   failed: boolean
   rewardClaimed: boolean
+  caughtCount?: number
+  inBandMs?: number
+  bandScore?: number
+  awaitingChoice?: boolean
+  mysteryRevealed?: boolean
+  mysteryOption?: 0 | 1 | 2
 }
 
 export interface OfflineReward {

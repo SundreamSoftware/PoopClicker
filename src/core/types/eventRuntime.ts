@@ -52,6 +52,8 @@ export const EVENT_SCHEDULER = {
   minIntervalMs: 90_000,
   goldenBaseIntervalMs: 180_000,
   goldenJitterMs: 60_000,
+  /** Guaranteed golden spawn after this idle gap with no event activity. */
+  pityMs: 10 * 60_000,
 } as const
 
 export function scheduleNextRandomEventAt(now: number, luckBonus = 0, flushCount = 0): number {

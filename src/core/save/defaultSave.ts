@@ -3,6 +3,7 @@ import { SAVE_SCHEMA_VERSION, type PlayerSaveV2 } from './saveSchema'
 export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
   return {
     schemaVersion: SAVE_SCHEMA_VERSION,
+    saveRevision: 0,
     currentPP: { m: 0, e: 0 },
     runPPEarned: { m: 0, e: 0 },
     lifetimePPEarned: { m: 0, e: 0 },
@@ -49,6 +50,19 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
       lastScore: 0,
       lastTier: 'none',
       rewardClaimed: false,
+      activeRuntime: null,
+      weeklyBestWeekKey: null,
+      weeklyBestScore: 0,
+    },
+    sessionMissions: {
+      dateKey: null,
+      missions: [],
+    },
+    rewardedCooldowns: {
+      incomeBoostAt: 0,
+      instantPpsAt: 0,
+      eventRetryAt: 0,
+      goldenSpawnAt: 0,
     },
     activeBoosts: [],
     activeEvent: null,
@@ -56,6 +70,7 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
     lastGoldenPoopAt: 0,
     nextGoldenPoopAt: now + 180_000,
     nextRandomEventAt: now + 270_000,
+    lastEventActivityAt: now,
     autoBuyUnlocked: false,
     autoBuyEnabled: false,
     autoBuyPreferences: {
@@ -64,7 +79,7 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
     },
     permanentProductionBonus: 0,
     tutorialFlags: {
-      core: true,
+      core: false,
       generators: false,
       events: false,
       daily: false,

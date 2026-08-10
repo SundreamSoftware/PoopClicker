@@ -1,5 +1,4 @@
-import type { PlayerSaveV2 } from '../save/saveSchema'
-import type { DailyDumpState } from '../save/saveSchema'
+import type { DailyDumpActiveRuntime, DailyDumpState, PlayerSaveV2 } from '../save/saveSchema'
 import { toUtcDateKey } from '../time/TimeService'
 
 export const DAILY_DUMP = {
@@ -59,10 +58,65 @@ export function createIdleDailyDumpRuntime(): DailyDumpRuntime {
   }
 }
 
-/** One attempt per UTC day. */
+export function isResumableDailyDumpRuntime(
+  runtime: Pick<DailyDumpRuntime, 'phase'> | DailyDumpActiveRuntime | null | undefined,
+): boolean {
+  if (!runtime) return false
+  return runtime.phase === 'countdown' || runtime.phase === 'running' || runtime.phase === 'finished'
+}
+
+export function serializeDailyDumpRuntime(
+  runtime: DailyDumpRuntime,
+): DailyDumpActiveRuntime | null {
+  if (!isResumableDailyDumpRuntime(runtime)) return null
+  return {
+    phase: runtime.phase as 'countdown' | 'running' | 'finished',
+    startedAt: runtime.startedAt,
+    endsAt: runtime.endsAt,
+    countdownEndsAt: runtime.countdownEndsAt,
+    score: runtime.score,
+    taps: runtime.taps,
+    combo: runtime.combo,
+    peakCombo: runtime.peakCombo,
+    rewardTier: runtime.rewardTier,
+    gtpReward: runtime.gtpReward,
+  }
+}
+
+export function restoreDailyDumpRuntime(
+  active: DailyDumpActiveRuntime | null | undefined,
+): DailyDumpRuntime {
+  if (!active || !isResumableDailyDumpRuntime(active)) return createIdleDailyDumpRuntime()
+  return {
+    phase: active.phase,
+    startedAt: active.startedAt,
+    endsAt: active.endsAt,
+    countdownEndsAt: active.countdownEndsAt,
+    score: active.score,
+    taps: active.taps,
+    combo: active.combo,
+    peakCombo: active.peakCombo,
+    rollingCps: 0,
+    tapTimestamps: [],
+    rewardTier: active.rewardTier,
+    gtpReward: active.gtpReward,
+  }
+}
+
+/**
+ * One attempt per UTC day. An unfinished/finished-unclaimed `activeRuntime`
+ * for today (or with no day mark yet) can be resumed without burning a new day.
+ */
 export function canStartDailyDump(save: PlayerSaveV2, now: number): boolean {
   const today = toUtcDateKey(now)
-  return save.dailyDumpState.lastPlayedDate !== today
+  const { lastPlayedDate, activeRuntime } = save.dailyDumpState
+  const resumable = isResumableDailyDumpRuntime(activeRuntime)
+
+  if (resumable && (lastPlayedDate === today || lastPlayedDate === null)) {
+    return true
+  }
+
+  return lastPlayedDate !== today
 }
 
 export function tierFromScore(score: number): DailyDumpTier {
@@ -77,6 +131,17 @@ export function gtpForTier(tier: DailyDumpTier): number {
   return DAILY_DUMP.rewards[tier]
 }
 
+/** UTC ISO-week key, e.g. `2026-W32`. */
+export function utcWeekKey(now: number): string {
+  const date = new Date(now)
+  const utc = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+  const day = utc.getUTCDay() || 7
+  utc.setUTCDate(utc.getUTCDate() + 4 - day)
+  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1))
+  const week = Math.ceil(((utc.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7)
+  return `${utc.getUTCFullYear()}-W${String(week).padStart(2, '0')}`
+}
+
 export function startDailyDumpRuntime(now: number): DailyDumpRuntime {
   return {
     ...createIdleDailyDumpRuntime(),
@@ -88,22 +153,26 @@ export function startDailyDumpRuntime(now: number): DailyDumpRuntime {
 }
 
 export function tickDailyDump(runtime: DailyDumpRuntime, now: number, dtMs = 16): DailyDumpRuntime {
-  if (runtime.phase === 'countdown' && now >= runtime.countdownEndsAt) {
-    return {
-      ...runtime,
+  let next = runtime
+
+  if (next.phase === 'countdown' && now >= next.countdownEndsAt) {
+    next = {
+      ...next,
       phase: 'running',
-      endsAt: now + DAILY_DUMP.durationMs,
+      // Anchor the run to countdown end so large dt jumps can finish in one tick.
+      endsAt: next.countdownEndsAt + DAILY_DUMP.durationMs,
       tapTimestamps: [],
     }
   }
-  if (runtime.phase === 'running') {
-    const taps = runtime.tapTimestamps.filter((t) => now - t <= 1000)
+
+  if (next.phase === 'running') {
+    const taps = next.tapTimestamps.filter((t) => now - t <= 1000)
     const rollingCps = taps.length
-    const combo = Math.max(0, runtime.combo - (0.02 * dtMs) / 16)
-    if (now >= runtime.endsAt) {
-      const rewardTier = tierFromScore(runtime.score)
+    const combo = Math.max(0, next.combo - (0.02 * dtMs) / 16)
+    if (now >= next.endsAt) {
+      const rewardTier = tierFromScore(next.score)
       return {
-        ...runtime,
+        ...next,
         phase: 'finished',
         rollingCps,
         combo,
@@ -112,9 +181,10 @@ export function tickDailyDump(runtime: DailyDumpRuntime, now: number, dtMs = 16)
         tapTimestamps: taps,
       }
     }
-    return { ...runtime, rollingCps, combo, tapTimestamps: taps }
+    return { ...next, rollingCps, combo, tapTimestamps: taps }
   }
-  return runtime
+
+  return next
 }
 
 export function tapDailyDump(runtime: DailyDumpRuntime, now: number): DailyDumpRuntime {

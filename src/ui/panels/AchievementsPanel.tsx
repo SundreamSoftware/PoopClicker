@@ -11,10 +11,26 @@ const FILTERS: Array<AchievementCategory | 'all'> = [
   'cps',
   'flush',
   'generators',
+  'golden',
+  'clogs',
   'events',
   'collection',
   'hidden',
 ]
+
+const FILTER_LABELS: Record<AchievementCategory | 'all', string> = {
+  all: 'All',
+  tapping: 'Tapping',
+  pp: 'PP',
+  cps: 'CPS',
+  flush: 'Flush',
+  golden: 'Golden',
+  clogs: 'Clogs',
+  generators: 'Gens',
+  collection: 'Collection',
+  events: 'Events',
+  hidden: 'Hidden',
+}
 
 export function AchievementsPanel() {
   const { engine } = useGameContext()
@@ -28,11 +44,11 @@ export function AchievementsPanel() {
 
   return (
     <div className="panel">
-      <h2>Achievements</h2>
+      <h2>Awards</h2>
       <div className="tabs">
         {FILTERS.map((f) => (
           <button key={f} className={filter === f ? 'active' : ''} onClick={() => setFilter(f)}>
-            {f}
+            {FILTER_LABELS[f] || f}
           </button>
         ))}
       </div>

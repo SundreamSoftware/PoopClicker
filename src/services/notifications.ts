@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { ECONOMY } from '../core/economy/formulas'
+import { LargeNumber } from '../core/numbers/LargeNumber'
 import type { PlayerSaveV2 } from '../core/save/saveSchema'
 
 /**
@@ -63,12 +64,6 @@ export class CapacitorLocalNotificationScheduler implements NotificationSchedule
     try {
       const mod = await import('@capacitor/local-notifications')
       this.plugin = mod.LocalNotifications as unknown as LocalNotificationsLike
-      const plugin = this.plugin
-      try {
-        await plugin.requestPermissions?.()
-      } catch {
-        // Permission denial is fine; schedule may still be a no-op on some OS versions.
-      }
       return true
     } catch (err) {
       console.warn(
@@ -165,15 +160,40 @@ export function scheduleNotificationReminders(
     return
   }
 
+  // Bathroom break reminder
   if (save.bathroomBreakCharges < ECONOMY.bathroomBreakMaxCharges) {
     const fireAt = save.lastBathroomBreakGeneration + ECONOMY.bathroomBreakIntervalMs
     if (fireAt > now) scheduleBathroomBreak(scheduler, fireAt)
   }
 
+  // Daily streak reminder ~2h before midnight UTC
   const utc = new Date(now)
   const nextMidnightUtc = Date.UTC(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate() + 1)
-  if (nextMidnightUtc > now) {
-    scheduleStreakReminder(scheduler, nextMidnightUtc)
+  const twoHoursBefore = nextMidnightUtc - 2 * 60 * 60 * 1000
+  if (twoHoursBefore > now && save.dailyChallenges.some((c) => !c.completed)) {
+    scheduler.schedule(
+      'daily_expiring',
+      twoHoursBefore,
+      'Daily challenges expire soon! Complete them before midnight UTC.',
+    )
+  }
+
+  // Daily streak reminder if not claimed today
+  const todayKey = new Date(now).toISOString().split('T')[0]
+  if (save.lastDailyClaim !== todayKey && twoHoursBefore > now) {
+    scheduleStreakReminder(scheduler, twoHoursBefore)
+  }
+
+  // Offline reward reminder (if idle would accrue significant PP)
+  const production = save.highestPPS ? LargeNumber.deserialize(save.highestPPS).toNumber() : 0
+  if (production > 0) {
+    const eightHours = 8 * 60 * 60 * 1000
+    const fireAt = now + eightHours
+    scheduler.schedule(
+      'offline_reward',
+      fireAt,
+      'Your offline income is piling up! Come back to collect.',
+    )
   }
 }
 

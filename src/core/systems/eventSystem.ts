@@ -275,7 +275,7 @@ export function evaluateEventCompletion(
 export function pickScheduledEvent(
   save: PlayerSaveV2,
   now: number,
-): { kind: 'golden' | 'random'; id: string } | null {
+): { kind: 'golden' | 'random'; id: string; reschedule?: boolean } | null {
   if (save.activeEvent) return null
   if (now >= save.nextGoldenPoopAt) return { kind: 'golden', id: 'golden_poop' }
   if (now >= save.nextRandomEventAt) {
@@ -285,7 +285,9 @@ export function pickScheduledEvent(
         save.flushCount >= e.minFlushCount &&
         now - (save.lastEventEndedAt[e.id] ?? 0) >= e.cooldownMs,
     )
-    if (!candidates.length) return null
+    if (!candidates.length) {
+      return { kind: 'random', id: '', reschedule: true }
+    }
     return { kind: 'random', id: candidates[Math.floor(Math.random() * candidates.length)].id }
   }
   return null

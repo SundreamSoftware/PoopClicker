@@ -35,7 +35,7 @@ describe('authored asset paths', () => {
     expect(existsSync(publicPath(cyberHappy!))).toBe(true)
     expect(existsSync(publicPath(coffee!))).toBe(true)
     expect(cyberHappy).toContain('poop_cyber_happy.svg')
-    expect(resolveSkinExpressionPath('chef_poop', 'normal')).toBeNull()
+    expect(resolveSkinExpressionPath('chef_poop', 'normal')).toContain('poop_spicy_normal.svg')
   })
 
   it('backs every mapped roster skin with normal/happy SVG and a thumbnail', () => {

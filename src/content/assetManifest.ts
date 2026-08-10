@@ -145,13 +145,11 @@ export const ASSET_MANIFEST = {
   },
   /** Raster/illustration finals still outstanding (procedural stand-ins ship). */
   missingFinalArt: [
-    'chef_poop has no authored pack counterpart',
     '7 worlds still using procedural backgrounds',
     'Extra pack skins beyond the current 46-slot roster are not yet content entries',
   ],
   /** Explicit missing slots reserved for future art pipeline. */
   missingSlots: {
-    chef_authored_skin: { status: 'MISSING' },
     remaining_world_illustrations: { status: 'MISSING' },
   },
 } as const

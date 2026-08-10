@@ -35,7 +35,7 @@ describe('DailyPanel expectations', () => {
     expect(second.reason).toBe('not_finished')
   })
 
-  it('blocks second daily dump start same UTC day', () => {
+  it('blocks a new daily dump after claim same UTC day', () => {
     const clock = new FixedClock(Date.UTC(2026, 7, 8, 12))
     const engine = new GameEngine({
       clock,
@@ -43,6 +43,12 @@ describe('DailyPanel expectations', () => {
       storage: null,
     })
     expect(engine.startDailyDump().ok).toBe(true)
+    expect(engine.startDailyDump().ok).toBe(true)
+    for (let i = 0; i < 70; i++) {
+      clock.advance(1000)
+      engine.tick()
+    }
+    expect(engine.claimDailyDumpReward().ok).toBe(true)
     expect(engine.startDailyDump().ok).toBe(false)
   })
 })

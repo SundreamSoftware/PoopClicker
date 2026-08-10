@@ -161,6 +161,7 @@ export class CapacitorBillingService implements BillingService {
   private native: NativePurchasesLike | null = null
   private usingStub = false
   private readonly stub = new StubBillingService()
+  private cachedEntitlements: Entitlements | null = null
 
   async init(): Promise<void> {
     try {
@@ -204,7 +205,16 @@ export class CapacitorBillingService implements BillingService {
   }
 
   getEntitlements(): Entitlements {
+    if (this.cachedEntitlements) {
+      return this.cachedEntitlements
+    }
     return this.stub.getEntitlements()
+  }
+
+  private updateEntitlements(productIds: string[]): void {
+    const uniqueIds = Array.from(new Set(productIds))
+    const removeAds = uniqueIds.some((id) => Boolean(IAP_BY_ID[id]?.grants.removeAds))
+    this.cachedEntitlements = { removeAds, ownedProductIds: uniqueIds }
   }
 
   async purchase(productId: string): Promise<PurchaseResult> {
@@ -220,6 +230,12 @@ export class CapacitorBillingService implements BillingService {
         productIdentifier: def.storeId,
         isConsumable: def.kind === 'consumable',
       })
+      
+      if (isNonConsumable(def.kind)) {
+        const current = this.cachedEntitlements?.ownedProductIds ?? []
+        this.updateEntitlements([...current, productId])
+      }
+      
       return { ok: true, productId, grant: def.grants }
     } catch (err) {
       const message = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()
@@ -245,11 +261,16 @@ export class CapacitorBillingService implements BillingService {
       await this.native.restorePurchases()
       const { purchases } = await this.native.getPurchases()
       const results: PurchaseResult[] = []
+      const productIds: string[] = []
       for (const purchase of purchases) {
         const def = IAP_BY_STORE_ID[purchase.productIdentifier]
         if (!def) continue
         results.push({ ok: true, productId: def.id, grant: def.grants })
+        if (isNonConsumable(def.kind)) {
+          productIds.push(def.id)
+        }
       }
+      this.updateEntitlements(productIds)
       return results
     } catch (err) {
       console.warn('[billing] restore failed', err)

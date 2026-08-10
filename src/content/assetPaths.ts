@@ -60,7 +60,7 @@ const SKIN_SLUGS: Partial<Record<string, AuthoredSkinSlug>> = {
   schrodingers_poop: 'cat',
   the_final_poop: 'god',
   toilet_tycoon: 'prestige',
-  // chef_poop has no authored pack counterpart yet
+  chef_poop: 'spicy',
 }
 
 export const AUTHORED_WORLD_IDS = new Set([

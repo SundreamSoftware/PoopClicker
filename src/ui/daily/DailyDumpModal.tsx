@@ -8,26 +8,10 @@ export interface DailyDumpModalProps {
   onTap: () => void
   onClaim: () => void
   onClose: () => void
+  onAbandon: () => void
+  onToast?: (message: string) => void
+  weeklyBestScore?: number
   now?: number
-}
-
-const backdrop: CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  zIndex: 40,
-  background: 'rgba(10, 16, 22, 0.72)',
-  display: 'grid',
-  placeItems: 'center',
-  padding: 16,
-}
-
-const modal: CSSProperties = {
-  width: 'min(420px, 100%)',
-  borderRadius: 20,
-  background: 'linear-gradient(180deg, #fff8e6, #f0d7a8)',
-  color: '#1d2a32',
-  padding: 18,
-  boxShadow: '0 16px 40px rgba(0,0,0,0.35)',
 }
 
 const primaryBtn: CSSProperties = {
@@ -66,14 +50,35 @@ export function DailyDumpModal({
   onTap,
   onClaim,
   onClose,
+  onAbandon,
+  onToast,
+  weeklyBestScore = 0,
   now = Date.now(),
 }: DailyDumpModalProps) {
   const timeLeft =
     runtime.phase === 'running' ? Math.max(0, runtime.endsAt - now) : DAILY_DUMP.durationMs
+  
+  const handleShare = async () => {
+    const text = `My Daily Dump: ${runtime.score} (${tierLabel(runtime.rewardTier)}) in Poop Clicker!`
+    if (navigator.share) {
+      try {
+        await navigator.share({ text })
+      } catch {
+        // User cancelled or error
+      }
+    } else if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(text)
+        if (onToast) onToast('Score copied to clipboard!')
+      } catch {
+        // Clipboard API failed
+      }
+    }
+  }
 
   return (
-    <div style={backdrop} role="dialog" aria-modal="true" aria-label="Daily Dump">
-      <div style={modal}>
+    <div className="modal-backdrop modal-layer-dump" role="dialog" aria-modal="true" aria-label="Daily Dump">
+      <div className="modal modal-sheet">
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
           <div>
             <div style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 24, fontWeight: 700 }}>
@@ -81,9 +86,29 @@ export function DailyDumpModal({
             </div>
             <div style={{ fontSize: 13, color: '#5d6d76' }}>60s local tap trial</div>
           </div>
-          <button type="button" style={ghostBtn} onClick={onClose} aria-label="Close">
-            ✕
-          </button>
+          {runtime.phase === 'idle' && (
+            <button type="button" style={ghostBtn} onClick={onClose} aria-label="Close">
+              ✕
+            </button>
+          )}
+          {(runtime.phase === 'countdown' || runtime.phase === 'running') && (
+            <button
+              type="button"
+              style={ghostBtn}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    'Abandon this Daily Dump run? You cannot retry until tomorrow. Your progress will be lost.',
+                  )
+                ) {
+                  onAbandon()
+                }
+              }}
+              aria-label="Abandon"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {runtime.phase === 'idle' && (
@@ -93,6 +118,11 @@ export function DailyDumpModal({
               {DAILY_DUMP.tiers.bronze}+ · Silver {DAILY_DUMP.tiers.silver}+ · Gold{' '}
               {DAILY_DUMP.tiers.gold}+ · Diamond {DAILY_DUMP.tiers.diamond}+.
             </p>
+            {weeklyBestScore > 0 && (
+              <p style={{ margin: '0 0 12px', fontSize: 13, color: '#5d6d76' }}>
+                This week&apos;s best: {weeklyBestScore}
+              </p>
+            )}
             <button type="button" style={{ ...primaryBtn, width: '100%' }} onClick={onStart}>
               START DAILY DUMP
             </button>
@@ -113,6 +143,21 @@ export function DailyDumpModal({
             >
               {countdownValue(runtime, now)}
             </div>
+            <button
+              type="button"
+              style={{ ...ghostBtn, marginTop: 16 }}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    'Abandon this Daily Dump run? You cannot retry until tomorrow. Your progress will be lost.',
+                  )
+                ) {
+                  onAbandon()
+                }
+              }}
+            >
+              Abandon
+            </button>
           </div>
         )}
 
@@ -159,6 +204,21 @@ export function DailyDumpModal({
             >
               TAP!
             </button>
+            <button
+              type="button"
+              style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    'Abandon this Daily Dump run? You cannot retry until tomorrow. Your progress will be lost.',
+                  )
+                ) {
+                  onAbandon()
+                }
+              }}
+            >
+              Abandon
+            </button>
           </div>
         )}
 
@@ -186,7 +246,21 @@ export function DailyDumpModal({
               style={{ ...primaryBtn, width: '100%', marginTop: 16 }}
               onClick={onClaim}
             >
-              CLAIM REWARD
+              CLAIM & CLOSE
+            </button>
+            <button
+              type="button"
+              style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
+              onClick={handleShare}
+            >
+              Share Score
+            </button>
+            <button
+              type="button"
+              style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
+              onClick={onClose}
+            >
+              Close
             </button>
           </div>
         )}
