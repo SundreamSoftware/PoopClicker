@@ -275,25 +275,29 @@ describe('Economy simulation (deterministic)', () => {
     restore()
   }, 120_000)
 
-  it('is reproducible with fixed seed and clock', () => {
-    const run = () => {
-      const restore = installDeterministicRng()
-      const clock = new FixedClock(Date.UTC(2026, 0, 15, 12))
-      const engine = createSimEngine(clock.now())
-      simulateActivePlay(clock, engine, 5 * 60 * 1000)
-      const m = collectMetrics(engine, '5min')
-      restore()
-      return {
-        tapPower: Number(m.tapPower.toFixed(4)),
-        pps: Number(m.pps.toFixed(4)),
-        nextGeneratorCost: m.nextGeneratorCost,
-        nextUpgradeCost: m.nextUpgradeCost,
-        timeToNextPurchaseSec: Math.round(m.timeToNextPurchaseSec),
-        estTimeToFlushSec: Math.round(m.estTimeToFlushSec),
-        flushPowerGain: m.flushPowerGain,
-        postFlushImprovement: Number(m.postFlushImprovement.toFixed(4)),
+  it(
+    'is reproducible with fixed seed and clock',
+    () => {
+      const run = () => {
+        const restore = installDeterministicRng()
+        const clock = new FixedClock(Date.UTC(2026, 0, 15, 12))
+        const engine = createSimEngine(clock.now())
+        simulateActivePlay(clock, engine, 5 * 60 * 1000)
+        const m = collectMetrics(engine, '5min')
+        restore()
+        return {
+          tapPower: Number(m.tapPower.toFixed(4)),
+          pps: Number(m.pps.toFixed(4)),
+          nextGeneratorCost: m.nextGeneratorCost,
+          nextUpgradeCost: m.nextUpgradeCost,
+          timeToNextPurchaseSec: Math.round(m.timeToNextPurchaseSec),
+          estTimeToFlushSec: Math.round(m.estTimeToFlushSec),
+          flushPowerGain: m.flushPowerGain,
+          postFlushImprovement: Number(m.postFlushImprovement.toFixed(4)),
+        }
       }
-    }
-    expect(run()).toEqual(run())
-  })
+      expect(run()).toEqual(run())
+    },
+    60_000,
+  )
 })

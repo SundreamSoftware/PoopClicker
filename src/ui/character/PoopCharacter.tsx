@@ -1,8 +1,9 @@
 import { type CSSProperties, type PointerEventHandler, useEffect, useState } from 'react'
 import {
-  resolveCharacterAuraPath,
+  isMaskedFaceSkin,
+  resolveSharedExpressionPathForPlay,
+  resolveSkinBodyPath,
   resolveSkinExpressionPath,
-  resolveToiletPath,
 } from '../../content/assetPaths'
 import { ASSET_MANIFEST } from '../../content/assetManifest'
 import { SKIN_BY_ID } from '../../content/skins'
@@ -19,8 +20,12 @@ export interface PoopCharacterProps {
   skinId: string
   tapState: CharacterTapState
   face: CharacterFace
+  /** Rolling taps/sec — drives P4 expression ladder. */
+  rollingCps?: number
   squish: boolean
   reducedMotion: boolean
+  /** Prestige suck-down animation (no toilet overlay; bowl is in the world art). */
+  flushing?: boolean
   onPointerDown?: PointerEventHandler<HTMLButtonElement>
 }
 
@@ -30,6 +35,8 @@ export function resolveFaceFromTapState(
   opts?: { eventActive?: boolean; dizzy?: boolean },
 ): CharacterFace {
   if (opts?.dizzy) return 'dizzy'
+  // Idle always wins — events must not keep a "happy"/excited face after tapping stops.
+  if (tapState === 'idle') return 'normal'
   if (opts?.eventActive) return 'event'
   switch (tapState) {
     case 'overdrive':
@@ -42,7 +49,6 @@ export function resolveFaceFromTapState(
       return 'happy'
     case 'slow':
       return 'normal'
-    case 'idle':
     default:
       return 'normal'
   }
@@ -838,8 +844,10 @@ export function PoopCharacter({
   skinId,
   tapState,
   face,
+  rollingCps = 0,
   squish,
   reducedMotion,
+  flushing = false,
   onPointerDown,
 }: PoopCharacterProps) {
   const manifest =
@@ -853,55 +861,63 @@ export function PoopCharacter({
   const eyes = eyeOffsets(face)
   const skinClass = `skin-${skinId.replace(/[^a-z0-9_]/gi, '_')}`
   const animVariant = skinDef?.animationVariant ?? manifest.variant
-  const authoredCharacter = resolveSkinExpressionPath(skinId, face)
-  const authoredAura = resolveCharacterAuraPath(face)
-  const authoredToilet = resolveToiletPath(
-    squish
-      ? 'bounce'
-      : tapState === 'frenzy' || tapState === 'overdrive' || tapState === 'fast'
-        ? 'shake'
-        : 'idle',
-  )
+  const authoredBody = resolveSkinBodyPath(skinId)
+  const authoredExpression = resolveSharedExpressionPathForPlay(rollingCps, tapState)
+  const authoredLegacy = resolveSkinExpressionPath(skinId, face)
+  const maskedFace = isMaskedFaceSkin(skinId)
   const [failedAsset, setFailedAsset] = useState<string | null>(null)
 
   useEffect(() => {
     setFailedAsset(null)
-  }, [authoredCharacter, authoredToilet])
+  }, [authoredBody, authoredExpression, authoredLegacy])
 
-  if (authoredCharacter && failedAsset !== authoredCharacter && failedAsset !== authoredToilet) {
+  const layeredOk =
+    authoredBody != null &&
+    failedAsset !== authoredBody &&
+    failedAsset !== authoredExpression
+  const legacyOk =
+    !layeredOk && authoredLegacy != null && failedAsset !== authoredLegacy
+
+  if (layeredOk || legacyOk) {
     return (
       <button
         type="button"
-        className={`poop-stage authored-poop-stage ${reducedMotion ? 'reduced' : ''}`}
+        className={`poop-stage authored-poop-stage no-toilet ${reducedMotion ? 'reduced' : ''}`}
         onPointerDown={onPointerDown}
         aria-label={`Tap ${skinDef?.name ?? 'poop'}`}
         data-anim={animVariant}
       >
-        {authoredAura && (
+        {layeredOk ? (
+          <div
+            className={`authored-character-stack state-${tapState} ${squish ? 'squish' : ''} ${flushing ? 'flushing' : ''} ${skinClass}`}
+          >
+            <img
+              className="authored-character-body"
+              src={authoredBody!}
+              alt=""
+              draggable={false}
+              aria-hidden
+              onError={() => setFailedAsset(authoredBody!)}
+            />
+            <img
+              className={`authored-character-expr p4-expr${maskedFace ? ' masked-face' : ''}`}
+              src={authoredExpression}
+              alt=""
+              draggable={false}
+              aria-hidden
+              onError={() => setFailedAsset(authoredExpression)}
+            />
+          </div>
+        ) : (
           <img
-            className="authored-character-aura"
-            src={authoredAura}
+            className={`authored-character state-${tapState} ${squish ? 'squish' : ''} ${flushing ? 'flushing' : ''} ${skinClass}`}
+            src={authoredLegacy!}
             alt=""
             draggable={false}
             aria-hidden
+            onError={() => setFailedAsset(authoredLegacy!)}
           />
         )}
-        <img
-          className={`authored-toilet authored-toilet-${tapState}`}
-          src={authoredToilet}
-          alt=""
-          draggable={false}
-          aria-hidden
-          onError={() => setFailedAsset(authoredToilet)}
-        />
-        <img
-          className={`authored-character state-${tapState} ${squish ? 'squish' : ''} ${skinClass}`}
-          src={authoredCharacter}
-          alt=""
-          draggable={false}
-          aria-hidden
-          onError={() => setFailedAsset(authoredCharacter)}
-        />
       </button>
     )
   }
@@ -909,7 +925,7 @@ export function PoopCharacter({
   return (
     <button
       type="button"
-      className={`poop-stage ${reducedMotion ? 'reduced' : ''}`}
+      className={`poop-stage no-toilet ${reducedMotion ? 'reduced' : ''}`}
       style={
         {
           ['--skin' as string]: color,
@@ -921,17 +937,6 @@ export function PoopCharacter({
       aria-label={`Tap ${skinDef?.name ?? 'poop'}`}
       data-anim={animVariant}
     >
-      <div
-        className={`toilet-base react-${tapState} ${reducedMotion ? 'reduced' : ''}`}
-        aria-hidden
-      >
-        <div className="toilet-tank" />
-        <div className="toilet-bowl">
-          <div className="toilet-water" />
-        </div>
-        <div className="toilet-seat" />
-      </div>
-
       <div
         className={`character-root state-${tapState} ${squish ? 'squish' : ''} ${reducedMotion ? 'reduced' : ''} ${skinClass}`}
       >

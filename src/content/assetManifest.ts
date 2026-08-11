@@ -5,7 +5,7 @@
  * FINAL = authored file integrated at runtime; PROCEDURAL_FINAL = intentional runtime fallback.
  */
 
-import { authoredSkinSlug } from './assetPaths'
+import { resolveP4Material } from './assetPaths'
 
 export type AssetStatus = 'FINAL' | 'PROCEDURAL_FINAL' | 'TEMPORARY' | 'MISSING'
 
@@ -17,15 +17,12 @@ type SkinManifestEntry = {
 }
 
 function skinEntry(variant: string, color: string, skinId: string): SkinManifestEntry {
-  const slug = authoredSkinSlug(skinId)
-  if (!slug) {
-    return { variant, color, status: 'PROCEDURAL_FINAL' }
-  }
+  const material = resolveP4Material(skinId)
   return {
     variant,
     color,
     status: 'FINAL',
-    path: `P1_skins/${slug}/poop_${slug}_normal.svg`,
+    path: `P4_skins/${material}.png`,
   }
 }
 
@@ -105,48 +102,44 @@ export const ASSET_MANIFEST = {
   },
   events: {
     golden_poop: { status: 'FINAL', path: 'P1_events/golden_poop/golden_poop_target.svg' },
-    clogged_toilet: { status: 'FINAL', path: 'P1_events/clogged_toilet/clogged_stage_0.svg' },
-    burrito_rush: { status: 'FINAL', path: 'P1_events/burrito_rush/burrito_rush.svg' },
-    toilet_paper_storm: {
-      status: 'FINAL',
-      path: 'P1_events/toilet_paper/toilet_paper.svg',
-    },
     plumber_inspection: {
       status: 'FINAL',
       path: 'P1_events/plumber/plumber_cps_gauge.svg',
     },
     mega_clog: { status: 'FINAL', path: 'P1_events/mega_clog/mega_clog_phase_1.svg' },
-    toilet_quake: { status: 'FINAL', path: 'P1_events/toilet_quake/toilet_quake.svg' },
-    golden_rain: { status: 'FINAL', path: 'P1_events/golden_rain/golden_rain_m.svg' },
-    mystery_flush: { status: 'FINAL', path: 'P1_events/mystery_flush/mystery_flush.svg' },
+    golden_rain: {
+      status: 'FINAL',
+      path: 'P4_misc/golden_poop_shower/golden_poop_01.png',
+    },
+  },
+  chests: {
+    regular_chest: { status: 'FINAL', path: 'P4_misc/regular_chest.png' },
+    silver_chest: { status: 'FINAL', path: 'P4_misc/silver_chest.png' },
+    golden_chest: { status: 'FINAL', path: 'P4_misc/golden_chest.png' },
+    regular_key: { status: 'FINAL', path: 'P4_misc/regular_key.png' },
+    silver_key: { status: 'FINAL', path: 'P4_misc/silver_key.png' },
+    golden_key: { status: 'FINAL', path: 'P4_misc/golden_key.png' },
+    gtp: { status: 'FINAL', path: 'P4_misc/golden_toilet_paper.png' },
   },
   worlds: {
-    home_bathroom: {
-      status: 'FINAL',
-      path: 'P1_worlds/home_bathroom/world_home_bathroom_full.webp',
-    },
-    office_toilet: {
-      status: 'FINAL',
-      path: 'P1_worlds/office_toilet/world_office_toilet_full.webp',
-    },
-    gas_station_restroom: { status: 'PROCEDURAL_FINAL' },
-    stadium_loo: { status: 'PROCEDURAL_FINAL' },
-    space_loo: { status: 'FINAL', path: 'P1_worlds/space_loo/world_space_loo_full.webp' },
-    quantum_bathroom: {
-      status: 'FINAL',
-      path: 'P1_worlds/quantum_bathroom/world_quantum_bathroom_full.webp',
-    },
-    chrono_chamber: { status: 'PROCEDURAL_FINAL' },
-    neon_arcade_stall: { status: 'PROCEDURAL_FINAL' },
-    volcanic_spa_toilet: { status: 'PROCEDURAL_FINAL' },
-    cloud_restroom: { status: 'PROCEDURAL_FINAL' },
-    void_washroom: { status: 'PROCEDURAL_FINAL' },
-    omni_throne: { status: 'FINAL', path: 'P1_worlds/omni_throne/world_omni_throne_full.webp' },
+    home_bathroom: { status: 'FINAL', path: 'P4_environments/L1.png' },
+    office_toilet: { status: 'FINAL', path: 'P4_environments/L2.png' },
+    gas_station_restroom: { status: 'FINAL', path: 'P4_environments/L3.png' },
+    stadium_loo: { status: 'FINAL', path: 'P4_environments/L4.png' },
+    space_loo: { status: 'FINAL', path: 'P4_environments/L5.png' },
+    quantum_bathroom: { status: 'FINAL', path: 'P4_environments/L6.png' },
+    chrono_chamber: { status: 'FINAL', path: 'P4_environments/L7.png' },
+    neon_arcade_stall: { status: 'FINAL', path: 'P4_environments/L8.png' },
+    volcanic_spa_toilet: { status: 'FINAL', path: 'P4_environments/L9.png' },
+    cloud_restroom: { status: 'FINAL', path: 'P4_environments/L10.png' },
+    void_washroom: { status: 'FINAL', path: 'P4_environments/L10.png' },
+    omni_throne: { status: 'FINAL', path: 'P4_environments/L5.png' },
   },
   /** Raster/illustration finals still outstanding (procedural stand-ins ship). */
   missingFinalArt: [
-    '7 worlds still using procedural backgrounds',
-    'Extra pack skins beyond the current 46-slot roster are not yet content entries',
+    'P4 has 10 material bodies shared across the 46-slot roster (not unique costumes yet)',
+    'void_washroom / omni_throne reuse P4 environment levels until unique art lands',
+    'Extra costume pack skins beyond material set are not yet content entries',
   ],
   /** Explicit missing slots reserved for future art pipeline. */
   missingSlots: {

@@ -1,5 +1,10 @@
 import { type ReactNode, useState } from 'react'
-import { AUTHORED_WORLD_IDS, worldLayerPath, type WorldLayer } from '../../content/assetPaths'
+import {
+  AUTHORED_WORLD_IDS,
+  resolveWorldBackdropPath,
+  worldLayerPath,
+  type WorldLayer,
+} from '../../content/assetPaths'
 import { WORLD_BY_ID } from '../../content/worlds'
 import './worlds.css'
 
@@ -29,7 +34,11 @@ export function WorldStage({ worldId, children, reducedMotion = false }: WorldSt
   const fx = WORLD_FX[worldId] ?? WORLD_FX.home_bathroom!
   const safeId = world?.id ?? 'home_bathroom'
   const [failedWorldId, setFailedWorldId] = useState<string | null>(null)
-  const authored = AUTHORED_WORLD_IDS.has(safeId) && failedWorldId !== safeId
+  const backdrop = resolveWorldBackdropPath(safeId)
+  const useBackdrop = Boolean(backdrop) && failedWorldId !== safeId
+  const useLayers =
+    !useBackdrop && AUTHORED_WORLD_IDS.has(safeId) && failedWorldId !== safeId
+  const authored = useBackdrop || useLayers
   const layers: WorldLayer[] = ['background', 'midground', 'foreground', 'vfx']
 
   return (
@@ -38,7 +47,18 @@ export function WorldStage({ worldId, children, reducedMotion = false }: WorldSt
       data-world={safeId}
       aria-label={world?.name ?? 'Bathroom'}
     >
-      {authored ? (
+      {useBackdrop ? (
+        <div className="world-art world-art-backdrop-wrap" aria-hidden>
+          <img
+            className="world-art-layer world-art-backdrop"
+            src={backdrop ?? undefined}
+            alt=""
+            draggable={false}
+            loading="eager"
+            onError={() => setFailedWorldId(safeId)}
+          />
+        </div>
+      ) : useLayers ? (
         <div className="world-art" aria-hidden>
           {layers.map((layer) => (
             <img
@@ -62,10 +82,6 @@ export function WorldStage({ worldId, children, reducedMotion = false }: WorldSt
           <span className="env-prop env-prop-right" />
         </div>
       )}
-      <div className="world-label">
-        <span className="world-label-dot" aria-hidden />
-        {world?.name ?? 'Home Bathroom'}
-      </div>
       <div className="world-fx" aria-hidden>
         {fx.flatMap((group) =>
           Array.from({ length: group.count }, (_, i) => (

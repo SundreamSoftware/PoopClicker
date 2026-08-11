@@ -2,15 +2,22 @@ import { existsSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
   AUTHORED_WORLD_IDS,
+  P4_MATERIAL_IDS,
+  SHARED_EXPRESSION_IDS,
   assetUrl,
-  authoredSkinSlug,
-  resolveSkinExpressionPath,
+  resolveP4Material,
+  resolveSharedExpressionIdForPlay,
+  resolveSharedExpressionIdFromCps,
+  resolveSharedExpressionPathForPlay,
+  resolveSkinBodyPath,
   resolveSkinThumbnailPath,
   resolveToiletPath,
+  resolveWorldBackdropPath,
   worldLayerPath,
 } from '../../src/content/assetPaths'
 import { ASSET_MANIFEST } from '../../src/content/assetManifest'
 import { SKINS } from '../../src/content/skins'
+import { WORLDS } from '../../src/content/worlds'
 
 function publicPath(runtimeUrl: string): string {
   return runtimeUrl.replace(/^(?:\.\/|\/)?assets\//, 'public/assets/')
@@ -23,38 +30,67 @@ describe('authored asset paths', () => {
     )
   })
 
-  it('maps roster skins to the authored pack with happy/normal expressions', () => {
-    const classic = resolveSkinExpressionPath('classic_poop', 'panic')
-    const cyberHappy = resolveSkinExpressionPath('cyber_poop', 'frenzy')
-    const coffee = resolveSkinExpressionPath('coffee_poop', 'normal')
+  it('maps CPS onto all six P4 expression levels (lv1–lv6)', () => {
+    expect(resolveSharedExpressionIdFromCps(0)).toBe('expr_01')
+    expect(resolveSharedExpressionIdFromCps(1)).toBe('expr_01')
+    expect(resolveSharedExpressionIdFromCps(2)).toBe('expr_02')
+    expect(resolveSharedExpressionIdFromCps(5)).toBe('expr_02')
+    expect(resolveSharedExpressionIdFromCps(6)).toBe('expr_03')
+    expect(resolveSharedExpressionIdFromCps(9)).toBe('expr_03')
+    expect(resolveSharedExpressionIdFromCps(10)).toBe('expr_04')
+    expect(resolveSharedExpressionIdFromCps(12)).toBe('expr_04')
+    expect(resolveSharedExpressionIdFromCps(13)).toBe('expr_05')
+    expect(resolveSharedExpressionIdFromCps(16)).toBe('expr_05')
+    expect(resolveSharedExpressionIdFromCps(16.1)).toBe('expr_06')
+    expect(resolveSharedExpressionIdFromCps(40)).toBe('expr_06')
 
-    expect(classic).not.toBeNull()
-    expect(cyberHappy).not.toBeNull()
-    expect(coffee).not.toBeNull()
-    expect(existsSync(publicPath(classic!))).toBe(true)
-    expect(existsSync(publicPath(cyberHappy!))).toBe(true)
-    expect(existsSync(publicPath(coffee!))).toBe(true)
-    expect(cyberHappy).toContain('poop_cyber_happy.svg')
-    expect(resolveSkinExpressionPath('chef_poop', 'normal')).toContain('poop_spicy_normal.svg')
+    // Higher tap states floor to higher levels; CPS can raise further (lv5 inside frenzy).
+    expect(resolveSharedExpressionIdForPlay(11, 'frenzy')).toBe('expr_04')
+    expect(resolveSharedExpressionIdForPlay(14, 'frenzy')).toBe('expr_05')
+    expect(resolveSharedExpressionIdForPlay(12, 'overdrive')).toBe('expr_06')
+    expect(resolveSharedExpressionIdForPlay(20, 'fast')).toBe('expr_06')
+
+    for (const id of SHARED_EXPRESSION_IDS) {
+      expect(existsSync(`public/assets/P4_expressions/${id}.png`), id).toBe(true)
+    }
+    expect(existsSync(publicPath(resolveSharedExpressionPathForPlay(20, 'overdrive')))).toBe(true)
   })
 
-  it('backs every mapped roster skin with normal/happy SVG and a thumbnail', () => {
+  it('maps roster skins to P4 material body PNGs', () => {
+    expect(resolveP4Material('classic_poop')).toBe('basic')
+    expect(resolveP4Material('diamond_poop')).toBe('diamond')
+    expect(resolveP4Material('king_poop')).toBe('gold')
+    expect(resolveSkinBodyPath('classic_poop')).toContain('P4_skins/basic.png')
+    expect(existsSync(publicPath(resolveSkinBodyPath('classic_poop')!))).toBe(true)
+
+    for (const material of P4_MATERIAL_IDS) {
+      expect(existsSync(`public/assets/P4_skins/${material}.png`), material).toBe(true)
+      expect(existsSync(`public/assets/P4_skins/_thumbnails/${material}_192.png`), material).toBe(
+        true,
+      )
+    }
+  })
+
+  it('backs every roster skin with a P4 body and thumbnail', () => {
     for (const skin of SKINS) {
-      const slug = authoredSkinSlug(skin.id)
-      if (!slug) continue
-      const normal = resolveSkinExpressionPath(skin.id, 'normal')
-      const happy = resolveSkinExpressionPath(skin.id, 'happy')
+      const body = resolveSkinBodyPath(skin.id)
       const thumb = resolveSkinThumbnailPath(skin.id)
-      expect(normal, skin.id).not.toBeNull()
-      expect(happy, skin.id).not.toBeNull()
+      expect(body, skin.id).not.toBeNull()
       expect(thumb, skin.id).not.toBeNull()
-      expect(existsSync(publicPath(normal!)), `${skin.id} normal`).toBe(true)
-      expect(existsSync(publicPath(happy!)), `${skin.id} happy`).toBe(true)
+      expect(existsSync(publicPath(body!)), `${skin.id} body`).toBe(true)
       expect(existsSync(publicPath(thumb!)), `${skin.id} thumb`).toBe(true)
     }
   })
 
-  it('provides every layer for each authored world', () => {
+  it('maps every world to a P4 environment backdrop', () => {
+    for (const world of WORLDS) {
+      const path = resolveWorldBackdropPath(world.id)
+      expect(path, world.id).not.toBeNull()
+      expect(existsSync(publicPath(path!)), world.id).toBe(true)
+    }
+  })
+
+  it('still provides layered WebP sets for legacy authored worlds', () => {
     for (const worldId of AUTHORED_WORLD_IDS) {
       for (const layer of ['background', 'midground', 'foreground', 'vfx'] as const) {
         const path = worldLayerPath(worldId, layer)

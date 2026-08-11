@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { ACHIEVEMENTS } from '../../content/achievements'
 import { ASSET_MANIFEST } from '../../content/assetManifest'
 import {
-  resolveSkinExpressionPath,
+  resolveSkinBodyPath,
   resolveSkinThumbnailPath,
 } from '../../content/assetPaths'
 import { EVENTS } from '../../content/events'
@@ -105,7 +105,7 @@ export function CollectionPanel() {
           const color =
             ASSET_MANIFEST.skins[skin.id as keyof typeof ASSET_MANIFEST.skins]?.color ?? '#8B5A2B'
           const authoredPreview =
-            resolveSkinThumbnailPath(skin.id) ?? resolveSkinExpressionPath(skin.id, 'happy')
+            resolveSkinThumbnailPath(skin.id) ?? resolveSkinBodyPath(skin.id)
           const unlockText =
             skin.unlock.type === 'gtp'
               ? `${skin.unlock.amount} GTP`

@@ -38,16 +38,7 @@
   background: #0b1b22;
 }
 
-.world-stage.authored-world::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 44%, transparent 42%, rgba(2, 8, 12, 0.22) 100%),
-    linear-gradient(180deg, rgba(4, 12, 18, 0.03), rgba(4, 12, 18, 0.18));
-}
+/* No center spotlight / vignette wash over authored world plates. */
 
 .world-art {
   position: absolute;
@@ -55,6 +46,27 @@
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+.world-art-backdrop-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.world-art-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* Only home: toilet in the plate sat too high — nudge framing down without gaps. */
+.world-home_bathroom .world-art-backdrop {
+  transform: scale(1.14);
+  transform-origin: center top;
 }
 
 .world-art-layer {
