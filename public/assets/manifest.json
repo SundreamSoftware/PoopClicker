@@ -1,1661 +1,752 @@
 {
-  "pack": "Poop Clicker Asset Pack",
-  "version": "1.0.0",
-  "coordinate_space": {
-    "character_rig": "512x512",
-    "icons": "128x128",
-    "backgrounds": "1440x2560",
-    "frames": "512x512"
+  "canvas": {
+    "width": 512,
+    "height": 512
   },
-  "assets": [
-    {
-      "file": "P1_worlds/home_bathroom/world_home_bathroom_full.webp",
-      "type": "background",
-      "world": "home_bathroom",
-      "layer": "full",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_background.webp",
-      "type": "background_layer",
-      "world": "home_bathroom",
-      "layer": "background",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_midground.webp",
-      "type": "background_layer",
-      "world": "home_bathroom",
-      "layer": "midground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_foreground.webp",
-      "type": "background_layer",
-      "world": "home_bathroom",
-      "layer": "foreground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_vfx.webp",
-      "type": "background_layer",
-      "world": "home_bathroom",
-      "layer": "vfx",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/office_toilet/world_office_toilet_full.webp",
-      "type": "background",
-      "world": "office_toilet",
-      "layer": "full",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/office_toilet/layers/world_office_toilet_background.webp",
-      "type": "background_layer",
-      "world": "office_toilet",
-      "layer": "background",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/office_toilet/layers/world_office_toilet_midground.webp",
-      "type": "background_layer",
-      "world": "office_toilet",
-      "layer": "midground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/office_toilet/layers/world_office_toilet_foreground.webp",
-      "type": "background_layer",
-      "world": "office_toilet",
-      "layer": "foreground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/office_toilet/layers/world_office_toilet_vfx.webp",
-      "type": "background_layer",
-      "world": "office_toilet",
-      "layer": "vfx",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/omni_throne/world_omni_throne_full.webp",
-      "type": "background",
-      "world": "omni_throne",
-      "layer": "full",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/omni_throne/layers/world_omni_throne_background.webp",
-      "type": "background_layer",
-      "world": "omni_throne",
-      "layer": "background",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/omni_throne/layers/world_omni_throne_midground.webp",
-      "type": "background_layer",
-      "world": "omni_throne",
-      "layer": "midground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/omni_throne/layers/world_omni_throne_foreground.webp",
-      "type": "background_layer",
-      "world": "omni_throne",
-      "layer": "foreground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/omni_throne/layers/world_omni_throne_vfx.webp",
-      "type": "background_layer",
-      "world": "omni_throne",
-      "layer": "vfx",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/world_quantum_bathroom_full.webp",
-      "type": "background",
-      "world": "quantum_bathroom",
-      "layer": "full",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_background.webp",
-      "type": "background_layer",
-      "world": "quantum_bathroom",
-      "layer": "background",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_midground.webp",
-      "type": "background_layer",
-      "world": "quantum_bathroom",
-      "layer": "midground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_foreground.webp",
-      "type": "background_layer",
-      "world": "quantum_bathroom",
-      "layer": "foreground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_vfx.webp",
-      "type": "background_layer",
-      "world": "quantum_bathroom",
-      "layer": "vfx",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/space_loo/world_space_loo_full.webp",
-      "type": "background",
-      "world": "space_loo",
-      "layer": "full",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/space_loo/layers/world_space_loo_background.webp",
-      "type": "background_layer",
-      "world": "space_loo",
-      "layer": "background",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/space_loo/layers/world_space_loo_midground.webp",
-      "type": "background_layer",
-      "world": "space_loo",
-      "layer": "midground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/space_loo/layers/world_space_loo_foreground.webp",
-      "type": "background_layer",
-      "world": "space_loo",
-      "layer": "foreground",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P1_worlds/space_loo/layers/world_space_loo_vfx.webp",
-      "type": "background_layer",
-      "world": "space_loo",
-      "layer": "vfx",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P3_spritesheets/tap_burst_sheet.png",
-      "type": "spritesheet",
-      "name": "tap_burst",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/tap_burst_sheet.png",
-      "sheet_webp": "P3_spritesheets/tap_burst_sheet.webp",
-      "fps_suggested": 24,
-      "loop": false
-    },
-    {
-      "file": "P3_spritesheets/crit_burst_sheet.png",
-      "type": "spritesheet",
-      "name": "crit_burst",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/crit_burst_sheet.png",
-      "sheet_webp": "P3_spritesheets/crit_burst_sheet.webp",
-      "fps_suggested": 24,
-      "loop": false
-    },
-    {
-      "file": "P3_spritesheets/floating_pp_sheet.png",
-      "type": "spritesheet",
-      "name": "floating_pp",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/floating_pp_sheet.png",
-      "sheet_webp": "P3_spritesheets/floating_pp_sheet.webp",
-      "fps_suggested": 24,
-      "loop": true
-    },
-    {
-      "file": "P3_spritesheets/flush_vortex_sheet.png",
-      "type": "spritesheet",
-      "name": "flush_vortex",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/flush_vortex_sheet.png",
-      "sheet_webp": "P3_spritesheets/flush_vortex_sheet.webp",
-      "fps_suggested": 24,
-      "loop": true
-    },
-    {
-      "file": "P3_spritesheets/toilet_paper_sheet.png",
-      "type": "spritesheet",
-      "name": "toilet_paper",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/toilet_paper_sheet.png",
-      "sheet_webp": "P3_spritesheets/toilet_paper_sheet.webp",
-      "fps_suggested": 24,
-      "loop": true
-    },
-    {
-      "file": "P2_store/screenshots/png/screenshot_events_1080x1920.png",
-      "type": "screenshot",
-      "width": 1080,
-      "height": 1920
-    },
-    {
-      "file": "P2_store/screenshots/png/screenshot_prestige_1080x1920.png",
-      "type": "screenshot",
-      "width": 1080,
-      "height": 1920
-    },
-    {
-      "file": "P2_store/screenshots/png/screenshot_tap_1080x1920.png",
-      "type": "screenshot",
-      "width": 1080,
-      "height": 1920
-    },
-    {
-      "file": "P2_store/screenshots/png/screenshot_upgrade_1080x1920.png",
-      "type": "screenshot",
-      "width": 1080,
-      "height": 1920
-    },
-    {
-      "file": "P2_store/screenshots/png/screenshot_worlds_1080x1920.png",
-      "type": "screenshot",
-      "width": 1080,
-      "height": 1920
-    },
-    {
-      "file": "P2_store/png/feature_graphic_1024x500.png",
-      "type": "store_graphic",
-      "width": 1024,
-      "height": 500
-    },
-    {
-      "file": "P2_store/png/key_art_1920x1080.png",
-      "type": "key_art",
-      "width": 1920,
-      "height": 1080
-    },
-    {
-      "file": "P2_store/webp/splash_1440x2560.webp",
-      "type": "splash",
-      "width": 1440,
-      "height": 2560
-    },
-    {
-      "file": "P0_character/expressions/poop_classic_dizzy.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/expressions/poop_classic_effort.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/expressions/poop_classic_frenzy.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/expressions/poop_classic_happy.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/expressions/poop_classic_normal.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/expressions/poop_classic_overdrive.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/expressions/poop_classic_panic.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/poop_classic_frenzy_aura.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/poop_classic_layered.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/poop_classic_master.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_character/poop_classic_overdrive_aura.svg",
-      "type": "svg",
-      "group": "P0_character",
-      "note": "512x512 rig, pivot (256,402) base centre"
-    },
-    {
-      "file": "P0_environment/home_bathroom_full.svg",
-      "type": "svg",
-      "group": "P0_environment",
-      "note": ""
-    },
-    {
-      "file": "P0_environment/layers/home_bathroom_background.svg",
-      "type": "svg",
-      "group": "P0_environment",
-      "note": ""
-    },
-    {
-      "file": "P0_environment/layers/home_bathroom_foreground.svg",
-      "type": "svg",
-      "group": "P0_environment",
-      "note": ""
-    },
-    {
-      "file": "P0_environment/layers/home_bathroom_midground.svg",
-      "type": "svg",
-      "group": "P0_environment",
-      "note": ""
-    },
-    {
-      "file": "P0_environment/layers/home_bathroom_vfx.svg",
-      "type": "svg",
-      "group": "P0_environment",
-      "note": ""
-    },
-    {
-      "file": "P0_toilet/parts/toilet_part_base.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_toilet/parts/toilet_part_handle.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_toilet/parts/toilet_part_seat.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_toilet/parts/toilet_part_tank.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_toilet/parts/toilet_part_water.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_toilet/toilet_bounce.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_toilet/toilet_clogged.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_toilet/toilet_flush.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_toilet/toilet_idle.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_toilet/toilet_shake.svg",
-      "type": "svg",
-      "group": "P0_toilet",
-      "note": "512x512, pivot (256,428) floor contact"
-    },
-    {
-      "file": "P0_vfx/aura_frenzy.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/aura_overdrive.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/crit_burst.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/floating_pp.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/flush_splash.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/flush_vortex.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/crit_burst/crit_burst_00.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/crit_burst/crit_burst_01.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/crit_burst/crit_burst_02.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/crit_burst/crit_burst_03.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/crit_burst/crit_burst_04.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/crit_burst/crit_burst_05.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/crit_burst/crit_burst_06.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/crit_burst/crit_burst_07.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/floating_pp/floating_pp_00.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/floating_pp/floating_pp_01.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/floating_pp/floating_pp_02.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/floating_pp/floating_pp_03.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/floating_pp/floating_pp_04.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/floating_pp/floating_pp_05.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/floating_pp/floating_pp_06.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/floating_pp/floating_pp_07.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/flush_vortex/flush_vortex_00.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/flush_vortex/flush_vortex_01.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/flush_vortex/flush_vortex_02.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/flush_vortex/flush_vortex_03.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/flush_vortex/flush_vortex_04.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/flush_vortex/flush_vortex_05.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/flush_vortex/flush_vortex_06.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/flush_vortex/flush_vortex_07.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/tap_burst/tap_burst_00.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/tap_burst/tap_burst_01.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/tap_burst/tap_burst_02.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/tap_burst/tap_burst_03.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/tap_burst/tap_burst_04.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/tap_burst/tap_burst_05.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/tap_burst/tap_burst_06.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/frames/tap_burst/tap_burst_07.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/tap_burst.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P0_vfx/unlock_reward.svg",
-      "type": "svg",
-      "group": "P0_vfx",
-      "note": "512x512, pivot (256,256)"
-    },
-    {
-      "file": "P1_accessories/body/body_armor.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/body/body_bowtie.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/body/body_cape.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/body/body_scarf.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/body/body_tie.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/eyewear/eyew_eyepatch.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/eyewear/eyew_monocle.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/eyewear/eyew_nerd.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/eyewear/eyew_sunglasses.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/eyewear/eyew_vr.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/gear/gear_headset.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/gear/gear_stethoscope.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/hats/hats_astronaut.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/hats/hats_cap.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/hats/hats_crown.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/hats/hats_helmet.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/hats/hats_pirate.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/hats/hats_tophat.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/hats/hats_viking.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/hats/hats_wizard.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/horns_halo_aura/horn_aura_ring.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/horns_halo_aura/horn_halo.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/horns_halo_aura/horn_horns.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/particles/particles_bubbles.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/particles/particles_digital.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/particles/particles_embers.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/particles/particles_hearts.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/particles/particles_snow.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/particles/particles_sparkle.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/textures/texture_camo.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/textures/texture_circuit.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/textures/texture_dots.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/textures/texture_lava.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_accessories/textures/texture_stripes.svg",
-      "type": "svg",
-      "group": "P1_accessories",
-      "note": "512x512 rig overlay, drop straight on any skin"
-    },
-    {
-      "file": "P1_events/burrito_rush/burrito_rush.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/clogged_toilet/clogged_stage_0.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/clogged_toilet/clogged_stage_1.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/clogged_toilet/clogged_stage_2.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/clogged_toilet/clogged_stage_3.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/golden_poop/golden_poop_target.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/golden_rain/golden_rain_l.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/golden_rain/golden_rain_m.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/golden_rain/golden_rain_s.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/mega_clog/mega_clog_phase_1.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/mega_clog/mega_clog_phase_2.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/mega_clog/mega_clog_phase_3.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/mystery_flush/mystery_flush.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/plumber/plumber_cps_gauge.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/plumber/plumber_cps_gauge_idle.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_paper/frames/toilet_paper_00.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_paper/frames/toilet_paper_01.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_paper/frames/toilet_paper_02.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_paper/frames/toilet_paper_03.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_paper/frames/toilet_paper_04.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_paper/frames/toilet_paper_05.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_paper/frames/toilet_paper_06.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_paper/frames/toilet_paper_07.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_paper/toilet_paper.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_events/toilet_quake/toilet_quake.svg",
-      "type": "svg",
-      "group": "P1_events",
-      "note": ""
-    },
-    {
-      "file": "P1_skins/404/poop_404_frenzy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/404/poop_404_happy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/404/poop_404_normal.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/blackhole/poop_blackhole_frenzy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/blackhole/poop_blackhole_happy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/blackhole/poop_blackhole_normal.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/classic/poop_classic_frenzy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/classic/poop_classic_happy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/classic/poop_classic_normal.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/corny/poop_corny_frenzy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/corny/poop_corny_happy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/corny/poop_corny_normal.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/cyber/poop_cyber_frenzy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/cyber/poop_cyber_happy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/cyber/poop_cyber_normal.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/diamond/poop_diamond_frenzy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/diamond/poop_diamond_happy.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_skins/diamond/poop_diamond_normal.svg",
-      "type": "svg",
-      "group": "P1_skins",
-      "note": "512x512 rig, identical to master"
-    },
-    {
-      "file": "P1_ui/buttons/button_buy.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/buttons/button_danger.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/buttons/button_disabled.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/buttons/button_primary.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/buttons/button_secondary.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/category/cat_auto.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/category/cat_cps_boost.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/category/cat_manual.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/category/cat_power.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/category/cat_prestige.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/category/cat_utility.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/currency/icon_flush_power.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/currency/icon_gtp.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/currency/icon_pp.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/frames/achievement_bronze.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/frames/achievement_gold.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/frames/achievement_silver.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/frames/rarity_common.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/frames/rarity_epic.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/frames/rarity_legendary.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/frames/rarity_mythic.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/frames/rarity_rare.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/modal/close_button.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/modal/modal_ornament.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/modal/modal_panel.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/modal/modal_ribbon.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/nav/nav_events.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/nav/nav_home.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/nav/nav_shop.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/nav/nav_toilets.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/nav/nav_upgrades.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/utility/icon_ad.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/utility/icon_claim.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/utility/icon_lock.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_ui/utility/icon_reward.svg",
-      "type": "svg",
-      "group": "P1_ui",
-      "note": "128x128 icons / 256x256 frames / 360x120 buttons"
-    },
-    {
-      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_background.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_foreground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_midground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/home_bathroom/layers/world_home_bathroom_vfx.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/home_bathroom/world_home_bathroom_full.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/office_toilet/layers/world_office_toilet_background.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/office_toilet/layers/world_office_toilet_foreground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/office_toilet/layers/world_office_toilet_midground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/office_toilet/layers/world_office_toilet_vfx.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/office_toilet/world_office_toilet_full.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/omni_throne/layers/world_omni_throne_background.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/omni_throne/layers/world_omni_throne_foreground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/omni_throne/layers/world_omni_throne_midground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/omni_throne/layers/world_omni_throne_vfx.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/omni_throne/world_omni_throne_full.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_background.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_foreground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_midground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/layers/world_quantum_bathroom_vfx.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/quantum_bathroom/world_quantum_bathroom_full.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/space_loo/layers/world_space_loo_background.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/space_loo/layers/world_space_loo_foreground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/space_loo/layers/world_space_loo_midground.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/space_loo/layers/world_space_loo_vfx.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P1_worlds/space_loo/world_space_loo_full.svg",
-      "type": "svg",
-      "group": "P1_worlds",
-      "note": ""
-    },
-    {
-      "file": "P2_store/app_icon_adaptive_background.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/app_icon_adaptive_foreground.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/app_icon_legacy.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/key_art_1920x1080.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/play_feature_graphic_1024x500.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/screenshots/screenshot_events.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/screenshots/screenshot_prestige.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/screenshots/screenshot_tap.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/screenshots/screenshot_upgrade.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/screenshots/screenshot_worlds.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
-    },
-    {
-      "file": "P2_store/splash_screen.svg",
-      "type": "svg",
-      "group": "P2_store",
-      "note": ""
+  "anchor": {
+    "faceCenterX": 256,
+    "eyeLineY": 174
+  },
+  "faceBox": {
+    "x": 116,
+    "y": 120,
+    "width": 280,
+    "height": 206
+  },
+  "expressions": [
+    {
+      "id": "expr_01_idle",
+      "label": "idle - 0 CPS",
+      "note": "Neutral, blinking.",
+      "file": "P1_expressions/expr_01_idle.svg"
+    },
+    {
+      "id": "expr_02_focus",
+      "label": "focus - 1-2 CPS",
+      "note": "Brows raised.",
+      "file": "P1_expressions/expr_02_focus.svg"
+    },
+    {
+      "id": "expr_03_effort",
+      "label": "effort - 2-5 CPS",
+      "note": "Sweat drop, wider eyes.",
+      "file": "P1_expressions/expr_03_effort.svg"
+    },
+    {
+      "id": "expr_04_strain",
+      "label": "strain - 5-8 CPS",
+      "note": "Blush in, open mouth.",
+      "file": "P1_expressions/expr_04_strain.svg"
+    },
+    {
+      "id": "expr_05_max",
+      "label": "max - 8-12 CPS",
+      "note": "Full strain.",
+      "file": "P1_expressions/expr_05_max.svg"
+    },
+    {
+      "id": "expr_06_overdrive",
+      "label": "overdrive - 12+ CPS",
+      "note": "Frenzy peak, two sweat drops.",
+      "file": "P1_expressions/expr_06_overdrive.svg"
     }
   ],
-  "spritesheets": [
+  "skins": [
     {
-      "name": "tap_burst",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/tap_burst_sheet.png",
-      "sheet_webp": "P3_spritesheets/tap_burst_sheet.webp",
-      "fps_suggested": 24,
-      "loop": false
+      "id": "404",
+      "body": "P1_skins/404/poop_404_body.svg",
+      "tone": "#3AA0A8",
+      "outline": "#12464A",
+      "accessory": "antenna",
+      "maskedFace": false
     },
     {
-      "name": "crit_burst",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/crit_burst_sheet.png",
-      "sheet_webp": "P3_spritesheets/crit_burst_sheet.webp",
-      "fps_suggested": 24,
-      "loop": false
+      "id": "alien",
+      "body": "P1_skins/alien/poop_alien_body.svg",
+      "tone": "#78D63C",
+      "outline": "#26550F",
+      "accessory": "antenna",
+      "maskedFace": false
     },
     {
-      "name": "floating_pp",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/floating_pp_sheet.png",
-      "sheet_webp": "P3_spritesheets/floating_pp_sheet.webp",
-      "fps_suggested": 24,
-      "loop": true
+      "id": "angel",
+      "body": "P1_skins/angel/poop_angel_body.svg",
+      "tone": "#F4F0DC",
+      "outline": "#B8AE88",
+      "accessory": "halo",
+      "maskedFace": false
     },
     {
-      "name": "flush_vortex",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/flush_vortex_sheet.png",
-      "sheet_webp": "P3_spritesheets/flush_vortex_sheet.webp",
-      "fps_suggested": 24,
-      "loop": true
+      "id": "astronaut",
+      "body": "P1_skins/astronaut/poop_astronaut_body.svg",
+      "tone": "#E8ECF4",
+      "outline": "#8C94A8",
+      "accessory": "helmet",
+      "maskedFace": true
     },
     {
-      "name": "toilet_paper",
-      "frames": 8,
-      "frame_width": 256,
-      "frame_height": 256,
-      "sheet": "P3_spritesheets/toilet_paper_sheet.png",
-      "sheet_webp": "P3_spritesheets/toilet_paper_sheet.webp",
-      "fps_suggested": 24,
-      "loop": true
+      "id": "beach",
+      "body": "P1_skins/beach/poop_beach_body.svg",
+      "tone": "#F4C77A",
+      "outline": "#9A6E28",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "bee",
+      "body": "P1_skins/bee/poop_bee_body.svg",
+      "tone": "#FFC531",
+      "outline": "#6B4A00",
+      "accessory": "antenna",
+      "maskedFace": false
+    },
+    {
+      "id": "billionaire",
+      "body": "P1_skins/billionaire/poop_billionaire_body.svg",
+      "tone": "#2E3A4E",
+      "outline": "#101822",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "blackhole",
+      "body": "P1_skins/blackhole/poop_blackhole_body.svg",
+      "tone": "#1A1024",
+      "outline": "#000000",
+      "accessory": null,
+      "maskedFace": true
+    },
+    {
+      "id": "burrito",
+      "body": "P1_skins/burrito/poop_burrito_body.svg",
+      "tone": "#D8A860",
+      "outline": "#8A5A20",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "business",
+      "body": "P1_skins/business/poop_business_body.svg",
+      "tone": "#4A5668",
+      "outline": "#1C222C",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "cactus",
+      "body": "P1_skins/cactus/poop_cactus_body.svg",
+      "tone": "#4FA85A",
+      "outline": "#1A4A20",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "cat",
+      "body": "P1_skins/cat/poop_cat_body.svg",
+      "tone": "#C08A4E",
+      "outline": "#5A3A16",
+      "accessory": "ears",
+      "maskedFace": false
+    },
+    {
+      "id": "ceo",
+      "body": "P1_skins/ceo/poop_ceo_body.svg",
+      "tone": "#38424E",
+      "outline": "#141A22",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "classic",
+      "body": "P1_skins/classic/poop_classic_body.svg",
+      "tone": "#95602F",
+      "outline": "#3B2009",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "cloud",
+      "body": "P1_skins/cloud/poop_cloud_body.svg",
+      "tone": "#E8F0FA",
+      "outline": "#A0B4C8",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "coffee",
+      "body": "P1_skins/coffee/poop_coffee_body.svg",
+      "tone": "#7A4A28",
+      "outline": "#331A08",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "corny",
+      "body": "P1_skins/corny/poop_corny_body.svg",
+      "tone": "#F0C838",
+      "outline": "#8A6A0C",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "cosmic",
+      "body": "P1_skins/cosmic/poop_cosmic_body.svg",
+      "tone": "#6B3FA0",
+      "outline": "#1A0B2E",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "cowboy",
+      "body": "P1_skins/cowboy/poop_cowboy_body.svg",
+      "tone": "#B4834A",
+      "outline": "#5A3A18",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "crypto",
+      "body": "P1_skins/crypto/poop_crypto_body.svg",
+      "tone": "#F0A828",
+      "outline": "#6B4400",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "cyber",
+      "body": "P1_skins/cyber/poop_cyber_body.svg",
+      "tone": "#2ED0E0",
+      "outline": "#0A3A44",
+      "accessory": "band",
+      "maskedFace": false
+    },
+    {
+      "id": "deepsea",
+      "body": "P1_skins/deepsea/poop_deepsea_body.svg",
+      "tone": "#1E7A96",
+      "outline": "#062A3A",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "demon",
+      "body": "P1_skins/demon/poop_demon_body.svg",
+      "tone": "#B02A2A",
+      "outline": "#3A0A0A",
+      "accessory": "horns",
+      "maskedFace": false
+    },
+    {
+      "id": "detective",
+      "body": "P1_skins/detective/poop_detective_body.svg",
+      "tone": "#8A7A5E",
+      "outline": "#3A3020",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "diamond",
+      "body": "P1_skins/diamond/poop_diamond_body.svg",
+      "tone": "#9AE8F4",
+      "outline": "#3A8A9A",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "dinosaur",
+      "body": "P1_skins/dinosaur/poop_dinosaur_body.svg",
+      "tone": "#5AA83A",
+      "outline": "#1E4A14",
+      "accessory": "horns",
+      "maskedFace": false
+    },
+    {
+      "id": "disco",
+      "body": "P1_skins/disco/poop_disco_body.svg",
+      "tone": "#D63CC8",
+      "outline": "#4A0F44",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "dj",
+      "body": "P1_skins/dj/poop_dj_body.svg",
+      "tone": "#2A2A3A",
+      "outline": "#0C0C14",
+      "accessory": "band",
+      "maskedFace": false
+    },
+    {
+      "id": "doctor",
+      "body": "P1_skins/doctor/poop_doctor_body.svg",
+      "tone": "#F0F4F8",
+      "outline": "#A8B4C0",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "dog",
+      "body": "P1_skins/dog/poop_dog_body.svg",
+      "tone": "#C89A5E",
+      "outline": "#5A3E1A",
+      "accessory": "ears",
+      "maskedFace": false
+    },
+    {
+      "id": "dragon",
+      "body": "P1_skins/dragon/poop_dragon_body.svg",
+      "tone": "#3A8A4A",
+      "outline": "#0E3018",
+      "accessory": "horns",
+      "maskedFace": false
+    },
+    {
+      "id": "easter",
+      "body": "P1_skins/easter/poop_easter_body.svg",
+      "tone": "#F4B8D0",
+      "outline": "#B8708C",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "emerald",
+      "body": "P1_skins/emerald/poop_emerald_body.svg",
+      "tone": "#2ED08A",
+      "outline": "#0A4A2E",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "emperor",
+      "body": "P1_skins/emperor/poop_emperor_body.svg",
+      "tone": "#8A2A5A",
+      "outline": "#2A0A18",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "fire",
+      "body": "P1_skins/fire/poop_fire_body.svg",
+      "tone": "#E2542B",
+      "outline": "#5A1400",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "frog",
+      "body": "P1_skins/frog/poop_frog_body.svg",
+      "tone": "#5AC83C",
+      "outline": "#1A5010",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "frozen",
+      "body": "P1_skins/frozen/poop_frozen_body.svg",
+      "tone": "#7FD8F0",
+      "outline": "#1D5C74",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "galaxy",
+      "body": "P1_skins/galaxy/poop_galaxy_body.svg",
+      "tone": "#6B3FA0",
+      "outline": "#1A0B2E",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "gamer",
+      "body": "P1_skins/gamer/poop_gamer_body.svg",
+      "tone": "#5A4AD0",
+      "outline": "#1A1450",
+      "accessory": "band",
+      "maskedFace": false
+    },
+    {
+      "id": "ghost",
+      "body": "P1_skins/ghost/poop_ghost_body.svg",
+      "tone": "#E4EAF4",
+      "outline": "#9AA4B8",
+      "accessory": null,
+      "maskedFace": true
+    },
+    {
+      "id": "god",
+      "body": "P1_skins/god/poop_god_body.svg",
+      "tone": "#FFE27A",
+      "outline": "#8A6A00",
+      "accessory": "halo",
+      "maskedFace": false
+    },
+    {
+      "id": "golden",
+      "body": "P1_skins/golden/poop_golden_body.svg",
+      "tone": "#FFC531",
+      "outline": "#6B3F00",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "hacker",
+      "body": "P1_skins/hacker/poop_hacker_body.svg",
+      "tone": "#2ED04A",
+      "outline": "#0A3A14",
+      "accessory": "band",
+      "maskedFace": false
+    },
+    {
+      "id": "infinity",
+      "body": "P1_skins/infinity/poop_infinity_body.svg",
+      "tone": "#8A5AD0",
+      "outline": "#2A1050",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "king",
+      "body": "P1_skins/king/poop_king_body.svg",
+      "tone": "#C89A2E",
+      "outline": "#5A3A00",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "knight",
+      "body": "P1_skins/knight/poop_knight_body.svg",
+      "tone": "#A8B0BC",
+      "outline": "#3E4650",
+      "accessory": "helmet",
+      "maskedFace": true
+    },
+    {
+      "id": "lava",
+      "body": "P1_skins/lava/poop_lava_body.svg",
+      "tone": "#E2542B",
+      "outline": "#3A0D00",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "mafia",
+      "body": "P1_skins/mafia/poop_mafia_body.svg",
+      "tone": "#3A3440",
+      "outline": "#141018",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "mecha",
+      "body": "P1_skins/mecha/poop_mecha_body.svg",
+      "tone": "#8A94A0",
+      "outline": "#2A3038",
+      "accessory": "antenna",
+      "maskedFace": true
+    },
+    {
+      "id": "money",
+      "body": "P1_skins/money/poop_money_body.svg",
+      "tone": "#4AA85A",
+      "outline": "#144A20",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "moon",
+      "body": "P1_skins/moon/poop_moon_body.svg",
+      "tone": "#D8D8E4",
+      "outline": "#8A8A9A",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "mummy",
+      "body": "P1_skins/mummy/poop_mummy_body.svg",
+      "tone": "#E0D8BC",
+      "outline": "#9A8E68",
+      "accessory": null,
+      "maskedFace": true
+    },
+    {
+      "id": "mushroom",
+      "body": "P1_skins/mushroom/poop_mushroom_body.svg",
+      "tone": "#D65A5A",
+      "outline": "#5A1414",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "ninja",
+      "body": "P1_skins/ninja/poop_ninja_body.svg",
+      "tone": "#3E3230",
+      "outline": "#161010",
+      "accessory": "band",
+      "maskedFace": true
+    },
+    {
+      "id": "nutty",
+      "body": "P1_skins/nutty/poop_nutty_body.svg",
+      "tone": "#C08A4E",
+      "outline": "#5A3A16",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "obsidian",
+      "body": "P1_skins/obsidian/poop_obsidian_body.svg",
+      "tone": "#2A2430",
+      "outline": "#0A0810",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "oktoberfest",
+      "body": "P1_skins/oktoberfest/poop_oktoberfest_body.svg",
+      "tone": "#D89A28",
+      "outline": "#6B4400",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "omni",
+      "body": "P1_skins/omni/poop_omni_body.svg",
+      "tone": "#F0E4FF",
+      "outline": "#8A6ACF",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "pirate",
+      "body": "P1_skins/pirate/poop_pirate_body.svg",
+      "tone": "#A9642B",
+      "outline": "#3B2009",
+      "accessory": "band",
+      "maskedFace": false
+    },
+    {
+      "id": "plumber",
+      "body": "P1_skins/plumber/poop_plumber_body.svg",
+      "tone": "#3A6AC8",
+      "outline": "#0E2050",
+      "accessory": "cap",
+      "maskedFace": false
+    },
+    {
+      "id": "prestige",
+      "body": "P1_skins/prestige/poop_prestige_body.svg",
+      "tone": "#FFD766",
+      "outline": "#8A6A00",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "pumpkin",
+      "body": "P1_skins/pumpkin/poop_pumpkin_body.svg",
+      "tone": "#E28028",
+      "outline": "#5A2A00",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "punk",
+      "body": "P1_skins/punk/poop_punk_body.svg",
+      "tone": "#D63C7A",
+      "outline": "#4A0F28",
+      "accessory": "band",
+      "maskedFace": false
+    },
+    {
+      "id": "radioactive",
+      "body": "P1_skins/radioactive/poop_radioactive_body.svg",
+      "tone": "#8CD62B",
+      "outline": "#26450A",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "rainbow",
+      "body": "P1_skins/rainbow/poop_rainbow_body.svg",
+      "tone": "#F07A9A",
+      "outline": "#8A2A4A",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "rgb",
+      "body": "P1_skins/rgb/poop_rgb_body.svg",
+      "tone": "#4A8AF0",
+      "outline": "#0E2050",
+      "accessory": "band",
+      "maskedFace": false
+    },
+    {
+      "id": "robot",
+      "body": "P1_skins/robot/poop_robot_body.svg",
+      "tone": "#9AA7B4",
+      "outline": "#2A323A",
+      "accessory": "antenna",
+      "maskedFace": true
+    },
+    {
+      "id": "rockstar",
+      "body": "P1_skins/rockstar/poop_rockstar_body.svg",
+      "tone": "#3A2A3A",
+      "outline": "#140C14",
+      "accessory": "band",
+      "maskedFace": false
+    },
+    {
+      "id": "royalflush",
+      "body": "P1_skins/royalflush/poop_royalflush_body.svg",
+      "tone": "#C82A3C",
+      "outline": "#4A0A12",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "ruby",
+      "body": "P1_skins/ruby/poop_ruby_body.svg",
+      "tone": "#E23C5A",
+      "outline": "#5A0A18",
+      "accessory": "crown",
+      "maskedFace": false
+    },
+    {
+      "id": "samurai",
+      "body": "P1_skins/samurai/poop_samurai_body.svg",
+      "tone": "#B44A3A",
+      "outline": "#3A100A",
+      "accessory": "helmet",
+      "maskedFace": true
+    },
+    {
+      "id": "santa",
+      "body": "P1_skins/santa/poop_santa_body.svg",
+      "tone": "#D63C3C",
+      "outline": "#4A0F0F",
+      "accessory": "cap",
+      "maskedFace": false
+    },
+    {
+      "id": "scientist",
+      "body": "P1_skins/scientist/poop_scientist_body.svg",
+      "tone": "#EAF0F4",
+      "outline": "#A0AAB4",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "shark",
+      "body": "P1_skins/shark/poop_shark_body.svg",
+      "tone": "#6E96B4",
+      "outline": "#1E3A50",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "skeleton",
+      "body": "P1_skins/skeleton/poop_skeleton_body.svg",
+      "tone": "#EAE6DC",
+      "outline": "#9A9484",
+      "accessory": null,
+      "maskedFace": true
+    },
+    {
+      "id": "spicy",
+      "body": "P1_skins/spicy/poop_spicy_body.svg",
+      "tone": "#D63C28",
+      "outline": "#4A0F00",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "storm",
+      "body": "P1_skins/storm/poop_storm_body.svg",
+      "tone": "#5A6A88",
+      "outline": "#1A2438",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "taco",
+      "body": "P1_skins/taco/poop_taco_body.svg",
+      "tone": "#E0B858",
+      "outline": "#8A6420",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "tourist",
+      "body": "P1_skins/tourist/poop_tourist_body.svg",
+      "tone": "#5AC0D8",
+      "outline": "#144A5A",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "toxic",
+      "body": "P1_skins/toxic/poop_toxic_body.svg",
+      "tone": "#8CD62B",
+      "outline": "#26450A",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "tree",
+      "body": "P1_skins/tree/poop_tree_body.svg",
+      "tone": "#5A8A3A",
+      "outline": "#1E3A14",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "unicorn",
+      "body": "P1_skins/unicorn/poop_unicorn_body.svg",
+      "tone": "#F0AEE0",
+      "outline": "#9A4A8A",
+      "accessory": "horns",
+      "maskedFace": false
+    },
+    {
+      "id": "valentine",
+      "body": "P1_skins/valentine/poop_valentine_body.svg",
+      "tone": "#F06A8A",
+      "outline": "#8A1E3E",
+      "accessory": null,
+      "maskedFace": false
+    },
+    {
+      "id": "vampire",
+      "body": "P1_skins/vampire/poop_vampire_body.svg",
+      "tone": "#8A2A3A",
+      "outline": "#2A0A10",
+      "accessory": "cap",
+      "maskedFace": false
+    },
+    {
+      "id": "viking",
+      "body": "P1_skins/viking/poop_viking_body.svg",
+      "tone": "#B48A4A",
+      "outline": "#4A3210",
+      "accessory": "helmet",
+      "maskedFace": false
+    },
+    {
+      "id": "witch",
+      "body": "P1_skins/witch/poop_witch_body.svg",
+      "tone": "#6B3FA0",
+      "outline": "#1A0B2E",
+      "accessory": "hat",
+      "maskedFace": false
+    },
+    {
+      "id": "zombie",
+      "body": "P1_skins/zombie/poop_zombie_body.svg",
+      "tone": "#7AA85A",
+      "outline": "#2A4A18",
+      "accessory": null,
+      "maskedFace": false
     }
-  ],
-  "counts": {
-    "svg": 214,
-    "webp": 36,
-    "png": 20
-  }
+  ]
 }
