@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<title>cactus - body (no face)</title>
+<desc>Poop Clicker P1 skin body, face removed. Face anchor cx=256 (50%), eye line y=174 (34%). Face box x116-396 y120-326. Overlay expr_XX.svg on the same viewBox, no offset.</desc>
+<g id="body">
+<ellipse id="arm-l" cx="70" cy="374" rx="54" ry="26" fill="#4FA85A" stroke="#1A4A20" stroke-width="14"></ellipse>
+<ellipse id="arm-r" cx="442" cy="374" rx="54" ry="26" fill="#4FA85A" stroke="#1A4A20" stroke-width="14"></ellipse>
+<ellipse id="lobe-bottom" cx="256" cy="428" rx="222" ry="76" fill="#397941" stroke="#1A4A20" stroke-width="14"></ellipse>
+<ellipse id="lobe-mid" cx="256" cy="328" rx="166" ry="72" fill="#4FA85A" stroke="#1A4A20" stroke-width="14"></ellipse>
+<ellipse id="lobe-top" cx="256" cy="230" rx="102" ry="68" fill="#7dbf85" stroke="#1A4A20" stroke-width="14"></ellipse>
+<path id="tip" d="M256 168 C238 150 244 128 262 122 C280 116 292 132 286 148 C282 160 270 168 256 168 Z" fill="#7dbf85" stroke="#1A4A20" stroke-width="12" stroke-linejoin="round"></path>
+</g>
+
+</svg>

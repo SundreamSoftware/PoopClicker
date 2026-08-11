@@ -13,20 +13,22 @@ Status vocabulary:
 | `TEMPORARY`        | Placeholder                                  |
 | `MISSING`          | Reserved slot without authored runtime asset |
 
-## Authored pack v1.0
+## Authored pack — P4 PNG skins & environments
 
-`public/assets/` has been technically audited and integrated with procedural fallback:
+See `public/assets/P4_README.md`. Re-process source drops with `py scripts/processP4Assets.py`.
 
-- **FINAL:** 45/46 roster skins mapped to `P1_skins/<slug>/` (normal + happy SVG; classic extra
-  faces from `P0_character/expressions/`). Only `chef_poop` remains procedural.
-- **FINAL:** Home, Office, Space, Quantum and Omni world layer sets.
-- **FINAL:** event target/boss/banner art for all runtime event types.
-- **FINAL:** Classic expressions, toilet states, currency/nav icons and core sprite sheets.
-- **PROCEDURAL_FINAL:** 7 worlds without authored files.
+- **Layer model:** `P4_skins/<material>.png` (transparent body) + shared
+  `P4_expressions/expr_01.png` … `expr_06.png` on the upper coils.
+- **FINAL (runtime):** 46 roster skins map onto 10 materials; face follows the CPS ladder
+  (`idle` → `overdrive`).
+- **FINAL:** all 12 worlds use full-bleed `P4_environments/L1.png` … `L10.png`
+  (void/omni reuse levels until unique art lands).
+- **FINAL:** event target/boss/banner art, toilet states, currency/nav icons, sprite sheets.
+- **Fallback:** procedural SVG character if a PNG fails to load; legacy P1 WebP layers remain
+  as secondary world fallback.
 
-Runtime paths are centralized in `src/content/assetPaths.ts`. Large worlds use WebP layers;
-characters/events/UI use SVG through `<img>`, avoiding inline gradient/filter id collisions.
-Poopdex uses `_thumbnails/<slug>_192.png` when present.
+Runtime paths are centralized in `src/content/assetPaths.ts`. Characters/events/UI load through
+`<img>`. Poopdex uses `P4_skins/_thumbnails/<material>_192.png`.
 
 ## Skins
 
@@ -44,8 +46,8 @@ without authored files retain the CSS renderer. Unlocks still use `src/content/w
 
 ## Missing final art
 
-`ASSET_MANIFEST.missingFinalArt` lists `chef_poop`, unused extra pack skins beyond the current
-roster, and 7 world illustrations. Procedural stand-ins remain intentional fallbacks.
+`ASSET_MANIFEST.missingFinalArt` notes that P4 currently ships **10 shared materials** (not
+unique costumes per roster skin) and that two worlds reuse environment levels.
 
 ## Production bundle and Android
 
