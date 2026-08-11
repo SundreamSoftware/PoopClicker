@@ -55,4 +55,5 @@ npm run simulate:economy
 
 ## Assets
 
-Gameplay uses procedural/CSS character variants keyed by `ASSET_MANIFEST`. Final illustration art is not bundled; see `missingFinalArt` in the manifest and [docs/ASSETS.md](docs/ASSETS.md).
+Play uses P4 PNG materials + shared face expressions and full-bleed environments
+(`public/assets/P4_README.md`). Details: [docs/ASSETS.md](docs/ASSETS.md).

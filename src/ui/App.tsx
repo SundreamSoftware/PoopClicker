@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type PointerEventHandler, type ReactNode, useEffect, useRef, useState } from 'react'
 import { UI_ASSETS } from '../content/assetPaths'
 import { formatDuration, formatMultiplier, formatNumber } from '../core/numbers/formatNumber'
 import { ECONOMY } from '../core/economy/formulas'
@@ -28,9 +28,9 @@ import { WorldStage } from './world/WorldStage'
 import { ModalHost } from './overlays/ModalHost'
 import './styles.css'
 
-type Tab = 'play' | 'shop' | 'daily' | 'achieve' | 'collection' | 'flush' | 'settings'
+type Tab = 'play' | 'shop' | 'daily' | 'achieve' | 'collection' | 'settings' | 'flush'
 
-function NavIcon({ id }: { id: Exclude<Tab, 'flush' | 'settings'> }) {
+function NavIcon({ id }: { id: Exclude<Tab, 'flush'> }) {
   const authored =
     id === 'play'
       ? UI_ASSETS.nav.play
@@ -43,7 +43,7 @@ function NavIcon({ id }: { id: Exclude<Tab, 'flush' | 'settings'> }) {
     return <img className="nav-icon nav-icon-authored" src={authored} alt="" aria-hidden />
   }
 
-  const paths: Record<Exclude<Tab, 'flush' | 'settings'>, ReactNode> = {
+  const paths: Record<Exclude<Tab, 'flush'>, ReactNode> = {
     play: (
       <path d="M8 4.5c2-3 8-1 6 2.5 3-.5 5 4 2 5.5 2 4-1 7-5.5 7S3 17 4.5 13C1 11 3 6.5 6 7c-.5-1 .2-2 2-2.5Z" />
     ),
@@ -53,6 +53,12 @@ function NavIcon({ id }: { id: Exclude<Tab, 'flush' | 'settings'> }) {
       <path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9L12 3Z" />
     ),
     collection: <path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V4Zm3 0v16m3-12h5m-5 4h5" />,
+    settings: (
+      <>
+        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+      </>
+    ),
   }
   return (
     <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden>
@@ -69,52 +75,50 @@ function GameScreen() {
   const { items, push } = useFloatingNumbers()
   const [tab, setTab] = useState<Tab>('play')
   const [squish, setSquish] = useState(false)
-  const [tapFx, setTapFx] = useState<{ id: number; crit: boolean } | null>(null)
   const [flushOpen, setFlushOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [flushAnimating, setFlushAnimating] = useState(false)
   const [dumpModalOpen, setDumpModalOpen] = useState(false)
-  const [objectivesExpanded, setObjectivesExpanded] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimeoutRef = useRef<number | null>(null)
+  const flushAnimTimeoutRef = useRef<number | null>(null)
 
   const reducedMotion = snap.save.settings.reducedMotion
   const eventActive = Boolean(snap.eventRuntime)
   const face = resolveFaceFromTapState(snap.tapState, { eventActive })
-  // Global mystery UI when awaiting a pick off-Play, or anytime awaitingChoice (blocks event pipeline).
-  const showMysteryOverlay =
-    snap.eventRuntime?.type === 'mystery_flush' &&
-    !snap.eventRuntime.rewardClaimed &&
-    (snap.eventRuntime.awaitingChoice || tab !== 'play')
 
-  const stateLabel =
-    snap.tapState === 'frenzy'
-      ? 'POOP FRENZY!'
-      : snap.tapState === 'overdrive'
-        ? 'MAXIMUM POOPACITY'
-        : snap.tapState.toUpperCase()
-
+  const playFlushAnimation = () => {
+    setTab('play')
+    setFlushOpen(false)
+    setFlushAnimating(true)
+    if (flushAnimTimeoutRef.current !== null) {
+      window.clearTimeout(flushAnimTimeoutRef.current)
+    }
+    flushAnimTimeoutRef.current = window.setTimeout(() => {
+      setFlushAnimating(false)
+      flushAnimTimeoutRef.current = null
+    }, reducedMotion ? 400 : 1100)
+  }
   const showDumpModal = snap.dailyDump.phase !== 'idle' || dumpModalOpen
-  const showFrenzyBanner = snap.tapState === 'frenzy' || snap.tapState === 'overdrive'
 
   // Escape key handling for modals
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
-      
-      if (settingsOpen) {
-        setSettingsOpen(false)
-      } else if (showDumpModal && snap.dailyDump.phase === 'idle') {
+
+      if (showDumpModal && snap.dailyDump.phase === 'idle') {
         setDumpModalOpen(false)
       } else if (flushOpen) {
         setFlushOpen(false)
       } else if (snap.offlineReward && !snap.offlineReward.claimed) {
         engine.claimOffline(false)
+      } else if (tab !== 'play') {
+        setTab('play')
       }
     }
-    
+
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [settingsOpen, showDumpModal, flushOpen, snap.dailyDump.phase, snap.offlineReward, engine])
+  }, [showDumpModal, flushOpen, snap.dailyDump.phase, snap.offlineReward, engine, tab])
 
   // Capacitor back button handling
   useEffect(() => {
@@ -122,16 +126,14 @@ function GameScreen() {
       try {
         const { App } = await import('@capacitor/app')
         const listener = await App.addListener('backButton', () => {
-          const activeTutorial = 
+          const activeTutorial =
             !suppressTutorial &&
             ['core', 'generators', 'flush', 'daily', 'collection'].find(
-              flag => !snap.save.tutorialFlags[flag]
+              (flag) => !snap.save.tutorialFlags[flag],
             )
-          
+
           if (activeTutorial) {
             engine.acknowledgeTutorial(activeTutorial)
-          } else if (settingsOpen) {
-            setSettingsOpen(false)
           } else if (showDumpModal) {
             if (snap.dailyDump.phase === 'idle') {
               setDumpModalOpen(false)
@@ -161,7 +163,7 @@ function GameScreen() {
       }
     }
     void loadApp()
-  }, [settingsOpen, flushOpen, showDumpModal, snap.offlineReward, snap.dailyDump.phase, tab, engine])
+  }, [flushOpen, showDumpModal, snap.offlineReward, snap.dailyDump.phase, tab, engine])
 
   // Toast helper
   const showToast = (message: string) => {
@@ -203,10 +205,9 @@ function GameScreen() {
     prevCanFlush.current = snap.canFlush
   }, [snap.canFlush, snap.save.settings.sfx])
 
-  const onTap = () => {
+  const onTap: PointerEventHandler<HTMLButtonElement> = (event) => {
     const result = engine.tap()
     push(`+${formatNumber(result.gained)}`, result.crit)
-    setTapFx({ id: Date.now(), crit: result.crit })
     setSquish(true)
     window.setTimeout(() => setSquish(false), 230)
     if (snap.save.settings.haptics) void tapHaptic(result.crit)
@@ -214,70 +215,45 @@ function GameScreen() {
       AudioManager.play('tap_fart')
       if (result.crit) AudioManager.play('crit')
     }
+    event.currentTarget.blur()
   }
 
-  const suppressTutorial = 
-    (snap.offlineReward && !snap.offlineReward.claimed) || 
-    settingsOpen || 
-    showDumpModal
+  const suppressTutorial =
+    (snap.offlineReward && !snap.offlineReward.claimed) || showDumpModal
 
   return (
     <div className={`app-shell ${reducedMotion ? 'reduced' : ''}`}>
       {!suppressTutorial && <TutorialOverlay />}
 
-      {showMysteryOverlay && (
-        <EventOverlay
-          runtime={snap.eventRuntime}
-          rollingCps={snap.rollingCps}
-          reducedMotion={reducedMotion}
-          onCatchTarget={(id) => engine.catchEventTarget(id)}
-          onMysteryPick={(option) => engine.chooseMysteryReward(option)}
-          onSkip={() => engine.skipMysteryReward()}
-        />
-      )}
-
       <header className="top-bar">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden>
-            PC
-          </div>
-          <div>
-            <div className="brand">Poop Clicker</div>
-            <div className="tempo-line">
-              <span>{formatNumber(snap.production.pps)} / SEC</span>
-              {showFrenzyBanner && (
-                <>
-                  <span>CPS {snap.rollingCps.toFixed(1)}</span>
-                  <span>COMBO {Math.floor(snap.combo)}</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="currency-stack">
+        <div className="currency-stack currency-stack-main">
           <div className="currency-primary">
             <img className="currency-icon" src={UI_ASSETS.currency.pp} alt="" aria-hidden />
             <span className="pp-value">{formatNumber(snap.save.currentPP)}</span>
             <span className="pp-label">PP</span>
           </div>
-          <div className="currency-meta">
-            <span>
-              <img src={UI_ASSETS.currency.gtp} alt="" aria-hidden />
-              {snap.save.gtp} GTP
-            </span>
-            <span>
+          <div className="currency-gtp">
+            <img src={UI_ASSETS.currency.gtp} alt="" aria-hidden />
+            <span className="gtp-value">{snap.save.gtp}</span>
+            <span className="gtp-label">GTP</span>
+          </div>
+        </div>
+        <div className="stat-stack">
+          <div className="stat-row">
+            <span className="stat-pill stat-cps">CPS {snap.rollingCps.toFixed(1)}</span>
+            <span className="stat-pill">{formatNumber(snap.production.pps)} /s</span>
+            {snap.combo >= 2 && (
+              <span className="stat-pill">COMBO {Math.floor(snap.combo)}</span>
+            )}
+            <span className="stat-pill" title="Flush Power — permanent prestige for Royal Flush">
               <img src={UI_ASSETS.currency.flushPower} alt="" aria-hidden />
-              {snap.save.flushPower} FP
+              {snap.save.flushPower} Flush
             </span>
+          </div>
+          <div className="stat-row stat-row-secondary">
             <span>{formatMultiplier(snap.production.globalMultiplier)}</span>
           </div>
         </div>
-        <button className="ghost-btn" onClick={() => setSettingsOpen(true)} aria-label="Settings">
-          <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden>
-            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
-          </svg>
-        </button>
       </header>
 
       <ModalHost
@@ -311,61 +287,36 @@ function GameScreen() {
         )}
       </ModalHost>
 
-      {snap.save.bathroomBreakCharges > 0 && tab === 'play' && (
-        <div className="bathroom-badge" role="status">
-          <strong>
-            Break ×{snap.save.bathroomBreakCharges}/{ECONOMY.bathroomBreakMaxCharges}
-          </strong>
-          <button
-            className="primary-btn"
-            onClick={() => {
-              const result = engine.claimBathroomBreak('pp')
-              if (result.ok) void maybePromptNotifications()
-            }}
-          >
-            +15m PP
-          </button>
-          <button
-            className="ghost-btn"
-            onClick={() => {
-              const result = engine.claimBathroomBreak('tap_boost')
-              if (result.ok) void maybePromptNotifications()
-            }}
-          >
-            ×2 Tap
-          </button>
-        </div>
-      )}
-
       {tab === 'play' && (
         <>
           <WorldStage worldId={snap.save.currentWorldId} reducedMotion={reducedMotion}>
             <div className="hero-stage">
-              {showFrenzyBanner && <div className="state-banner">{stateLabel}</div>}
               <PoopCharacter
                 skinId={snap.save.equippedSkinId}
-                tapState={snap.tapState}
-                face={face}
+                tapState={flushAnimating ? 'idle' : snap.tapState}
+                face={flushAnimating ? 'normal' : face}
+                rollingCps={flushAnimating ? 0 : snap.instantCps}
                 squish={squish}
+                flushing={flushAnimating}
                 reducedMotion={reducedMotion}
-                onPointerDown={onTap}
+                onPointerDown={flushAnimating ? undefined : onTap}
               />
-              {tapFx && (
-                <div className="authored-tap-vfx" key={tapFx.id}>
+              {flushAnimating && (
+                <div className="flush-vfx-layer" aria-hidden>
                   <SpriteSheetPlayer
-                    name={tapFx.crit ? 'crit_burst' : 'tap_burst'}
+                    name="flush_vortex"
+                    frames={8}
+                    fps={16}
                     reducedMotion={reducedMotion}
                   />
                 </div>
               )}
-              {snap.eventRuntime && !showMysteryOverlay && (
+              {snap.eventRuntime && !flushAnimating && (
                 <EventOverlay
                   runtime={snap.eventRuntime}
                   rollingCps={snap.rollingCps}
                   reducedMotion={reducedMotion}
                   onCatchTarget={(id) => engine.catchEventTarget(id)}
-                  onMysteryPick={(option) => engine.chooseMysteryReward(option)}
-                  onSkip={() => engine.skipMysteryReward()}
                 />
               )}
               <div className="float-layer">
@@ -377,69 +328,6 @@ function GameScreen() {
               </div>
             </div>
           </WorldStage>
-
-          <button 
-            className="objectives-chip" 
-            onClick={() => setObjectivesExpanded(!objectivesExpanded)}
-            aria-expanded={objectivesExpanded}
-          >
-            <strong>OBJECTIVES {objectivesExpanded ? '▼' : '▶'}</strong>
-            {objectivesExpanded && (
-              <div className="goals-row" style={{ marginTop: 8 }}>
-                {snap.nextGoals.slice(0, 3).map((goal) => (
-                  <div className="goal-card" key={`${goal.kind}-${goal.title}`}>
-                    <div className="goal-title">{goal.title}</div>
-                    <div className="goal-sub">{goal.subtitle}</div>
-                    <div className="progress">
-                      <span style={{ width: `${Math.round(goal.progress * 100)}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </button>
-
-          {(() => {
-            const open = snap.sessionMissions.missions.filter((m) => !m.claimed)
-            if (!open.length) return null
-            const claimable = open.filter((m) => m.progress >= m.target)
-            const inProgress = open
-              .filter((m) => m.progress < m.target)
-              .sort((a, b) => b.progress / b.target - a.progress / a.target)[0]
-            const claimedCount = snap.sessionMissions.missions.filter((m) => m.claimed).length
-            const total = snap.sessionMissions.missions.length
-            return (
-              <div className="session-missions-strip">
-                <div className="missions-chip">
-                  Missions {claimedCount}/{total}
-                  {claimable.length > 0
-                    ? ` · ${claimable.length} ready`
-                    : inProgress
-                      ? ` · ${inProgress.title} ${inProgress.progress}/${inProgress.target}`
-                      : ''}
-                </div>
-                {claimable.map((mission) => (
-                  <div key={mission.id} className="mission-card">
-                    <div>
-                      <strong>{mission.title}</strong>
-                      <div className="meta-line">
-                        {mission.progress}/{mission.target}
-                      </div>
-                    </div>
-                    <button
-                      className="ghost-btn"
-                      onClick={() => {
-                        const result = engine.claimSessionMission(mission.id)
-                        if (result.ok) showToast(`+${result.gtp} GTP`)
-                      }}
-                    >
-                      Claim
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )
-          })()}
 
           <div className="play-actions">
             <button
@@ -461,7 +349,7 @@ function GameScreen() {
               if (claimableCount > 0) {
                 return (
                   <button className="ghost-btn" onClick={() => setTab('daily')}>
-                    Daily · {claimableCount} ready
+                    Missions · {claimableCount} ready
                   </button>
                 )
               }
@@ -485,7 +373,8 @@ function GameScreen() {
       )}
       {tab === 'achieve' && <AchievementsPanel />}
       {tab === 'collection' && <CollectionPanel />}
-      
+      {tab === 'settings' && <SettingsPanel />}
+
       {flushOpen && (
         <div className="modal-backdrop modal-layer-sheet" role="dialog" aria-modal="true">
           <FlushPanel
@@ -493,18 +382,10 @@ function GameScreen() {
             onClose={() => {
               setFlushOpen(false)
             }}
+            onFlushed={playFlushAnimation}
           />
         </div>
       )}
-      
-      <ModalHost
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        title="Settings"
-        layerClass="modal-layer-settings"
-      >
-        <SettingsPanel />
-      </ModalHost>
 
       {showDumpModal && (
         <DailyDumpModal
@@ -550,9 +431,10 @@ function GameScreen() {
           [
             ['play', 'Play'],
             ['shop', 'Shop'],
-            ['daily', 'Daily'],
+            ['daily', 'Missions'],
             ['achieve', 'Awards'],
             ['collection', 'Collection'],
+            ['settings', 'Settings'],
           ] as const
         ).map(([id, label]) => (
           <button

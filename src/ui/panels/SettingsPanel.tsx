@@ -11,6 +11,7 @@ export function SettingsPanel() {
 
   return (
     <div className="panel settings-sheet">
+      <h2>Settings</h2>
       <div className="meta-line" style={{ marginBottom: 16 }}>
         Audio, haptics, motion, and notification preferences
       </div>

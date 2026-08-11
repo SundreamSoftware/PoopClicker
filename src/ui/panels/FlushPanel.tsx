@@ -9,7 +9,15 @@ import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 import { maybeShowInterstitial } from '../monetizationHelpers'
 
-export function FlushPanel({ onClose, canFlush }: { onClose: () => void; canFlush: boolean }) {
+export function FlushPanel({
+  onClose,
+  onFlushed,
+  canFlush,
+}: {
+  onClose: () => void
+  onFlushed?: () => void
+  canFlush: boolean
+}) {
   const { engine, ads } = useGameContext()
   const snap = useGameSnapshot()
   const preview = snap.flushPreview
@@ -24,6 +32,7 @@ export function FlushPanel({ onClose, canFlush }: { onClose: () => void; canFlus
       if (result.reason === 'milestone') AudioManager.play('milestone')
     }
     setConfirmStep(false)
+    onFlushed?.()
     onClose()
     await maybeShowInterstitial(ads, 'flush', {
       eventActive: Boolean(snap.eventRuntime),

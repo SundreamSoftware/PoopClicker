@@ -47,12 +47,79 @@ export function DailyPanel({ onOpenDailyDump, onToast }: DailyPanelProps) {
     }
   }
 
+  const missions = snap.sessionMissions.missions
+  const claimedMissions = missions.filter((m) => m.claimed).length
+
   return (
     <div className="panel">
       <h2>Daily Challenges</h2>
       <div className="meta-line">
         {completed} / 3 · Streak Day {snap.save.dailyStreak} · Saver {snap.save.streakSaverCharges}
       </div>
+
+      <div className="goal-card session-missions-panel" style={{ marginTop: 12 }}>
+        <div className="goal-title">SESSION MISSIONS</div>
+        <div className="goal-sub">
+          {claimedMissions} / {missions.length} claimed
+        </div>
+        {missions.length === 0 ? (
+          <div className="meta-line" style={{ marginTop: 6 }}>
+            Keep tapping — new missions appear each session.
+          </div>
+        ) : (
+          <div className="session-missions-list" style={{ marginTop: 8 }}>
+            {missions.map((mission) => {
+              const ready = !mission.claimed && mission.progress >= mission.target
+              const pct = Math.min(100, Math.round((mission.progress / mission.target) * 100))
+              return (
+                <div className="list-row" key={mission.id} style={{ alignItems: 'stretch' }}>
+                  <div style={{ flex: 1 }}>
+                    <strong>{mission.title}</strong>
+                    <div className="progress">
+                      <span style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="meta-line">
+                      {Math.min(mission.progress, mission.target)} / {mission.target}
+                      {mission.claimed ? ' · CLAIMED' : ready ? ' · READY' : ''}
+                    </div>
+                  </div>
+                  <button
+                    className="primary-btn"
+                    disabled={!ready}
+                    onClick={() => {
+                      const result = engine.claimSessionMission(mission.id)
+                      if (result.ok) onToast?.(`+${result.gtp} GTP`)
+                    }}
+                  >
+                    {mission.claimed ? 'Done' : ready ? `+${mission.reward} GTP` : 'In progress'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {snap.nextGoals.length > 0 && (
+        <div className="objectives-list" aria-label="Next objectives">
+          <div className="goal-title" style={{ marginBottom: 8 }}>
+            NEXT OBJECTIVES
+          </div>
+          <ul className="objectives-list-items">
+            {snap.nextGoals.slice(0, 3).map((goal) => (
+              <li key={`${goal.kind}-${goal.title}`} className="objectives-list-item">
+                <div>
+                  <strong>{goal.title}</strong>
+                  <div className="meta-line">{goal.subtitle}</div>
+                </div>
+                <div className="progress" aria-hidden>
+                  <span style={{ width: `${Math.round(goal.progress * 100)}%` }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {snap.save.dailyChallenges.map((challenge, index) => {
         const pct = Math.min(100, Math.round((challenge.progress / challenge.target) * 100))
