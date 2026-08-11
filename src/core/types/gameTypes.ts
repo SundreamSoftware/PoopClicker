@@ -98,14 +98,13 @@ export type RoyalFlushCategory = 'pressure' | 'plumbing' | 'combo' | 'idle' | 'l
 
 export type EventType =
   | 'golden_poop'
-  | 'clogged_toilet'
-  | 'burrito_rush'
-  | 'toilet_paper_storm'
   | 'plumber_inspection'
   | 'mega_clog'
-  | 'toilet_quake'
   | 'golden_rain'
-  | 'mystery_flush'
+
+export type ChestTier = 'regular' | 'silver' | 'golden'
+
+export type ChestInventory = Record<ChestTier, number>
 
 export type SkinUnlockRequirement =
   | { type: 'default' }
@@ -280,11 +279,9 @@ export interface ActiveEvent {
   failed: boolean
   rewardClaimed: boolean
   caughtCount?: number
+  spawnedCount?: number
   inBandMs?: number
   bandScore?: number
-  awaitingChoice?: boolean
-  mysteryRevealed?: boolean
-  mysteryOption?: 0 | 1 | 2
 }
 
 export interface OfflineReward {

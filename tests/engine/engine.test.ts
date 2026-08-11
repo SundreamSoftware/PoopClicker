@@ -35,6 +35,7 @@ describe('GameEngine integration', () => {
     const clock = new FixedClock(now)
     const save = {
       ...createDefaultSave(now),
+      lastEventActivityAt: now - 60_000,
       nextGoldenPoopAt: now - 1,
       nextRandomEventAt: now + 999_999,
     }
@@ -70,27 +71,25 @@ describe('GameEngine integration', () => {
     expect(engine.exportSave().dailyDumpState.rewardClaimed).toBe(true)
   })
 
-  it('completes mystery flush after player choice', () => {
+  it('completes golden shower after duration with at least one catch', () => {
     const now = 3_000_000
     const clock = new FixedClock(now)
     const engine = new GameEngine({
       clock,
-      save: { ...createDefaultSave(now), flushCount: 5 },
+      save: { ...createDefaultSave(now), flushCount: 0 },
       storage: null,
     })
-    engine.spawnEvent('mystery_flush')
+    expect(engine.spawnEvent('golden_rain')).toBe(true)
+    const target = engine.getSnapshot().eventRuntime!.targets[0]
+    expect(engine.catchEventTarget(target.id).ok).toBe(true)
+
     const endsAt = engine.getSnapshot().eventRuntime!.endsAt
+    const beforeGtp = engine.exportSave().gtp
     clock.set(endsAt + 1)
     engine.tick(16)
 
-    const runtime = engine.getSnapshot().eventRuntime
-    expect(runtime?.awaitingChoice || runtime?.type === 'mystery_flush').toBeTruthy()
-
-    const beforeGtp = engine.exportSave().gtp
-    const result = engine.chooseMysteryReward(1)
-    expect(result.ok).toBe(true)
-    expect(engine.exportSave().gtp).toBeGreaterThan(beforeGtp)
     expect(engine.getSnapshot().eventRuntime).toBeNull()
+    expect(engine.exportSave().gtp).toBeGreaterThan(beforeGtp)
     expect(engine.exportSave().eventsCompleted).toBe(1)
     const eventsMission = engine.getSnapshot().sessionMissions.missions.find((m) => m.id === 'events_1')
     expect(eventsMission?.progress).toBeGreaterThanOrEqual(1)

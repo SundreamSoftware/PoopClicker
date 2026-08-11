@@ -9,6 +9,45 @@ import {
   type SerializedLargeNumber,
   type SessionMissionsSave,
 } from './saveSchema'
+import type { ActiveEvent, ChestInventory, EventType } from '../types/gameTypes'
+
+const VALID_EVENT_TYPES = new Set<EventType>([
+  'golden_poop',
+  'plumber_inspection',
+  'mega_clog',
+  'golden_rain',
+])
+
+function sanitizeChestInventory(value: unknown): ChestInventory {
+  const raw = asRecord(value)
+  return {
+    regular: Math.max(0, Math.floor(asNumber(raw.regular))),
+    silver: Math.max(0, Math.floor(asNumber(raw.silver))),
+    golden: Math.max(0, Math.floor(asNumber(raw.golden))),
+  }
+}
+
+function sanitizeActiveEvent(value: unknown): ActiveEvent | null {
+  if (!value || typeof value !== 'object') return null
+  const raw = value as Record<string, unknown>
+  const type = asString(raw.type) as EventType
+  if (!VALID_EVENT_TYPES.has(type)) return null
+  return {
+    defId: asString(raw.defId, type),
+    type,
+    startedAt: asNumber(raw.startedAt),
+    endsAt: asNumber(raw.endsAt),
+    taps: asNumber(raw.taps),
+    tapTarget: asNumber(raw.tapTarget),
+    completed: asBool(raw.completed),
+    failed: asBool(raw.failed),
+    rewardClaimed: asBool(raw.rewardClaimed),
+    caughtCount: asNumber(raw.caughtCount),
+    spawnedCount: asNumber(raw.spawnedCount),
+    inBandMs: asNumber(raw.inBandMs),
+    bandScore: asNumber(raw.bandScore),
+  }
+}
 
 function asNumber(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
@@ -151,6 +190,8 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     flushPower: asNumber(raw.flushPower),
     royalFlushLevels: (raw.royalFlushLevels as Record<string, number>) ?? {},
     gtp: asNumber(raw.gtp),
+    inventoryChests: sanitizeChestInventory(raw.inventoryChests),
+    inventoryKeys: sanitizeChestInventory(raw.inventoryKeys),
     removeAds: asBool(raw.removeAds),
     ownedIapProducts: Array.isArray(raw.ownedIapProducts) ? raw.ownedIapProducts.map(String) : [],
     ownedSkins: Array.isArray(raw.ownedSkins)
@@ -205,7 +246,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     activeBoosts: Array.isArray(raw.activeBoosts)
       ? (raw.activeBoosts as PlayerSaveV2['activeBoosts'])
       : [],
-    activeEvent: (raw.activeEvent as PlayerSaveV2['activeEvent']) ?? null,
+    activeEvent: sanitizeActiveEvent(raw.activeEvent),
     lastEventEndedAt: (raw.lastEventEndedAt as Record<string, number>) ?? {},
     lastGoldenPoopAt: asNumber(raw.lastGoldenPoopAt),
     nextGoldenPoopAt: asNumber(raw.nextGoldenPoopAt, now + 180_000),

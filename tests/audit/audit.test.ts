@@ -70,8 +70,6 @@ describe('Quality Audit Fixes', () => {
           inBandMs: 5000,
           bandScore: 0.75,
           caughtCount: 0,
-          awaitingChoice: false,
-          mysteryRevealed: false,
         },
       }
       storage.setItem('poop_clicker_save_v2', serializeSave(save))
@@ -96,17 +94,16 @@ describe('Quality Audit Fixes', () => {
           defId: 'golden_rain',
           type: 'golden_rain' as const,
           startedAt: now,
-          endsAt: now + 60_000,
+          endsAt: now + 30_000,
           taps: 4,
-          tapTarget: 8,
+          tapTarget: 120,
           completed: false,
           failed: false,
           rewardClaimed: false,
           caughtCount: 4,
+          spawnedCount: 40,
           inBandMs: 0,
           bandScore: 0,
-          awaitingChoice: false,
-          mysteryRevealed: false,
         },
       }
       storage.setItem('poop_clicker_save_v2', serializeSave(save))
@@ -218,15 +215,16 @@ describe('Quality Audit Fixes', () => {
     })
   })
 
-  describe('AUD-07: mystery doors disabled until awaitingChoice', () => {
-    it('should show Wait state when not awaiting choice', () => {
+  describe('AUD-07: golden shower starts with one live target', () => {
+    it('should spawn a catchable golden shower target immediately', () => {
       const now = new Date('2026-01-15T12:00:00Z').getTime()
-      const runtime = createEventRuntime('mystery_flush', now, 10)
-      
+      const runtime = createEventRuntime('golden_rain', now, 0)
+
       expect(runtime).not.toBeNull()
       if (runtime) {
-        expect(runtime.awaitingChoice).toBe(false)
-        expect(runtime.mysteryRevealed).toBe(false)
+        expect(runtime.targets.length).toBeGreaterThan(0)
+        expect(runtime.spawnedCount).toBe(1)
+        expect(runtime.completed).toBe(false)
       }
     })
   })

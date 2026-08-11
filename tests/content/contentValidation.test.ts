@@ -264,7 +264,7 @@ describe('Content validation', () => {
     expect(GENERATORS.length).toBeGreaterThanOrEqual(20)
     expect(SKINS.length).toBeGreaterThanOrEqual(40)
     expect(ACHIEVEMENTS.length).toBeGreaterThanOrEqual(80)
-    expect(EVENTS.length).toBeGreaterThanOrEqual(8)
+    expect(EVENTS.length).toBeGreaterThanOrEqual(4)
     expect(ROYAL_FLUSH_NODES.length).toBeGreaterThanOrEqual(25)
   })
 

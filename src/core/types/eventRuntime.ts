@@ -2,7 +2,7 @@ import type { EventType } from './gameTypes'
 
 export interface FloatingTarget {
   id: string
-  kind: 'golden' | 'tp_roll'
+  kind: 'golden'
   x: number
   y: number
   vx: number
@@ -10,6 +10,8 @@ export interface FloatingTarget {
   bornAt: number
   expiresAt: number
   caught: boolean
+  /** Golden shower sprite frame 1–6. */
+  frame: number
 }
 
 export interface EventRuntime {
@@ -28,44 +30,51 @@ export interface ActiveEventRuntime {
   completed: boolean
   failed: boolean
   rewardClaimed: boolean
-  /** Floating catchables for Golden / Golden Rain / TP Storm */
+  /** Floating catchables for Golden / Golden Rain */
   targets: FloatingTarget[]
   caughtCount: number
+  /** How many shower poops have been spawned so far. */
+  spawnedCount: number
   /** Plumber Inspection: ms spent in CPS band */
   inBandMs: number
   lastCpsSampleAt: number
   /** Mega Clog phase 1..3 */
   phase: number
   phaseTapTarget: number
-  /** Mystery Flush reveal state */
-  mysteryRevealed: boolean
-  mysteryOption?: 0 | 1 | 2
-  /** True when event ended and player must pick a reward */
-  awaitingChoice: boolean
   /** Perfect-band ratio for plumber (0..1) */
   bandScore: number
 }
 
+/** Global event pacing: at most one event per minute; next gap is random 1–4 minutes. */
 export const EVENT_SCHEDULER = {
-  baseIntervalMs: 180_000,
-  jitterMs: 90_000,
-  minIntervalMs: 90_000,
-  goldenBaseIntervalMs: 180_000,
-  goldenJitterMs: 60_000,
+  minIntervalMs: 60_000,
+  maxIntervalMs: 240_000,
   /** Guaranteed golden spawn after this idle gap with no event activity. */
   pityMs: 10 * 60_000,
 } as const
 
-export function scheduleNextRandomEventAt(now: number, luckBonus = 0, flushCount = 0): number {
-  const shrink = Math.min(0.45, luckBonus * 0.5 + flushCount * 0.005)
-  const base = EVENT_SCHEDULER.baseIntervalMs * (1 - shrink)
-  const jitter = (Math.random() * 2 - 1) * EVENT_SCHEDULER.jitterMs
-  return now + Math.max(EVENT_SCHEDULER.minIntervalMs, base + jitter)
+/** Uniform random delay in [1 min, 4 min]. */
+export function scheduleNextEventGapMs(random = Math.random): number {
+  const { minIntervalMs, maxIntervalMs } = EVENT_SCHEDULER
+  return minIntervalMs + random() * (maxIntervalMs - minIntervalMs)
 }
 
-export function scheduleNextGoldenAt(now: number, goldenChanceBonus = 0): number {
-  const shrink = Math.min(0.6, goldenChanceBonus)
-  const base = EVENT_SCHEDULER.goldenBaseIntervalMs * (1 - shrink)
-  const jitter = (Math.random() * 2 - 1) * EVENT_SCHEDULER.goldenJitterMs
-  return now + Math.max(60_000, base + jitter)
+export function scheduleNextRandomEventAt(
+  now: number,
+  _luckBonus = 0,
+  _flushCount = 0,
+  random = Math.random,
+): number {
+  void _luckBonus
+  void _flushCount
+  return now + scheduleNextEventGapMs(random)
+}
+
+export function scheduleNextGoldenAt(
+  now: number,
+  _goldenChanceBonus = 0,
+  random = Math.random,
+): number {
+  void _goldenChanceBonus
+  return now + scheduleNextEventGapMs(random)
 }

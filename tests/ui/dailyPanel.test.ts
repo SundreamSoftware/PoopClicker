@@ -68,7 +68,7 @@ describe('Event overlay catch path', () => {
 
   it('catchEventTarget rejects invalid target id', () => {
     const engine = createTestEngine({ flushCount: 1 })
-    engine.spawnEvent('toilet_paper_storm')
+    engine.spawnEvent('golden_rain')
     expect(engine.catchEventTarget('missing_target').ok).toBe(false)
   })
 })

@@ -110,14 +110,6 @@ export function computeProduction(
     }
   }
 
-  if (save.activeEvent?.type === 'burrito_rush' && save.activeEvent.endsAt > now) {
-    boostTap *= 3
-  }
-  if (save.activeEvent?.type === 'toilet_quake' && save.activeEvent.endsAt > now) {
-    boostTap *= 1.5
-    boostIdle *= 2
-  }
-
   const globalMultiplier = flushMult * worldBonus * permanent * (1 + globalBonus) * boostIdle
 
   let generatorPps = LargeNumber.zero()
@@ -163,25 +155,31 @@ export function computeProduction(
   }
 }
 
+/**
+ * Visual tap-speed bands aligned with P4 expression levels (lv1–lv6):
+ * 0–1 slow, 2–5 active, 6–9 fast, 10–12 frenzy, 13–16 frenzy (expr_05), 16+ overdrive.
+ * `frenzyThreshold` is kept for API compatibility (gameplay frenzy uses production separately).
+ */
 export function resolveTapSpeedState(
   rollingCps: number,
   previous: TapSpeedState,
-  frenzyThreshold: number,
+  _frenzyThreshold = 10,
 ): TapSpeedState {
-  // Hysteresis bands to avoid flicker
+  void _frenzyThreshold
+  // Hysteresis bands to avoid flicker — edges match expression CPS ladder.
   const enter = {
     slow: 0.5,
-    active: 2.5,
+    active: 2,
     fast: 6,
-    frenzy: frenzyThreshold,
-    overdrive: Math.max(frenzyThreshold + 3, ECONOMY.overdriveCpsThreshold),
+    frenzy: 10,
+    overdrive: 16.05,
   }
   const exit = {
     slow: 0.2,
-    active: 1.8,
+    active: 1.5,
     fast: 5,
-    frenzy: frenzyThreshold - 1,
-    overdrive: Math.max(frenzyThreshold + 2, ECONOMY.overdriveCpsThreshold - 1),
+    frenzy: 9,
+    overdrive: 15.5,
   }
 
   const order: TapSpeedState[] = ['idle', 'slow', 'active', 'fast', 'frenzy', 'overdrive']
@@ -191,11 +189,7 @@ export function resolveTapSpeedState(
   if (rollingCps >= enter.frenzy)
     return previous === 'overdrive' && rollingCps >= exit.overdrive ? 'overdrive' : 'frenzy'
   if (rollingCps >= enter.fast)
-    return idx >= order.indexOf('frenzy') && rollingCps >= exit.frenzy
-      ? previous === 'overdrive'
-        ? 'frenzy'
-        : 'frenzy'
-      : 'fast'
+    return idx >= order.indexOf('frenzy') && rollingCps >= exit.frenzy ? 'frenzy' : 'fast'
   if (rollingCps >= enter.active)
     return idx >= order.indexOf('fast') && rollingCps >= exit.fast ? 'fast' : 'active'
   if (rollingCps >= enter.slow)

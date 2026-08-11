@@ -42,6 +42,7 @@ import {
   progressChallenge,
   rerollChallengeAt,
 } from './systems/daily'
+import { GOLDEN_SHOWER } from '../content/events'
 import {
   afterEventSchedule,
   bossTap,
@@ -51,8 +52,9 @@ import {
   evaluateEventCompletion,
   pickScheduledEvent,
   tickEventRuntime,
-  totalEventRewardMultiplier,
 } from './systems/eventSystem'
+import { buyChestShopOfferByIndex, openChest } from './systems/chestSystem'
+import type { ChestTier } from './types/gameTypes'
 import { buildFlushPreview, canFlush, performFlush } from './systems/flush'
 import { computeProduction, resolveTapSpeedState } from './systems/production'
 import { equipSkin, grantEligibleSkins, purchaseSkin } from './systems/skins'
@@ -87,6 +89,8 @@ export interface EngineSnapshot {
   production: ReturnType<typeof computeProduction>
   combo: number
   rollingCps: number
+  /** Taps in the last 1s — drives P4 expression levels (snappier than rollingCps). */
+  instantCps: number
   tapState: TapSpeedState
   offlineReward: OfflineReward | null
   nextGoals: NextGoal[]
@@ -105,8 +109,12 @@ export class GameEngine {
   private readonly time: TimeService
   private combo = 0
   private rollingCps = 0
+  private instantCps = 0
   private tapState: TapSpeedState = 'idle'
   private tapTimestamps: number[] = []
+  /** Wall-clock of last successful tap; used to return to idle after inactivity. */
+  private lastTapAt = 0
+  private static readonly TAP_IDLE_AFTER_MS = 3_000
   private offlineReward: OfflineReward | null = null
   private goldenInSession = 0
   private absenceMs = 0
@@ -246,11 +254,9 @@ export class GameEngine {
           rewardClaimed: this.save.activeEvent.rewardClaimed,
           endsAt: this.save.activeEvent.endsAt,
           caughtCount: this.save.activeEvent.caughtCount ?? hydrated.caughtCount,
+          spawnedCount: this.save.activeEvent.spawnedCount ?? hydrated.spawnedCount,
           inBandMs: this.save.activeEvent.inBandMs ?? hydrated.inBandMs,
           bandScore: this.save.activeEvent.bandScore ?? hydrated.bandScore,
-          awaitingChoice: this.save.activeEvent.awaitingChoice ?? hydrated.awaitingChoice,
-          mysteryRevealed: this.save.activeEvent.mysteryRevealed ?? hydrated.mysteryRevealed,
-          mysteryOption: this.save.activeEvent.mysteryOption ?? hydrated.mysteryOption,
         }
       }
     }
@@ -311,6 +317,7 @@ export class GameEngine {
       production,
       combo: this.combo,
       rollingCps: this.rollingCps,
+      instantCps: this.instantCps,
       tapState: this.tapState,
       offlineReward: this.offlineReward,
       nextGoals: this.computeNextGoals(production),
@@ -329,8 +336,10 @@ export class GameEngine {
     this.lastTickAt = now
     if (dt <= 0) return
 
-    this.combo = Math.max(0, this.combo - (this.getProduction().comboDecay * dt) / 1000)
+    const production = this.getProduction()
+    this.combo = Math.max(0, this.combo - (production.comboDecay * dt) / 1000)
     this.updateCps(now)
+    this.refreshTapState(now, production.frenzyThreshold)
     this.save = generateBathroomBreakCharges(
       this.save,
       now,
@@ -339,12 +348,10 @@ export class GameEngine {
     )
 
     if (now - this.lastDailyStateCheckAt >= 30_000) {
-      const production = this.getProduction()
       this.save = ensureDailyState(this.save, now, production.pps)
       this.lastDailyStateCheckAt = now
     }
 
-    const production = this.getProduction()
     if (production.pps.gt(0)) {
       this.creditPP(production.pps.mul(dt / 1000), 'idle')
     }
@@ -383,6 +390,7 @@ export class GameEngine {
 
   tap(): TapResult {
     const now = this.time.now()
+    this.lastTapAt = now
     this.tapTimestamps.push(now)
     this.updateCps(now)
     const production = this.getProduction()
@@ -404,10 +412,7 @@ export class GameEngine {
       this.save = progressChallenge(this.save, 'crit_taps', 1)
     }
 
-    if (
-      this.eventRuntime &&
-      (this.eventRuntime.type === 'clogged_toilet' || this.eventRuntime.type === 'mega_clog')
-    ) {
+    if (this.eventRuntime && this.eventRuntime.type === 'mega_clog') {
       this.eventRuntime = bossTap(this.eventRuntime)
       this.syncActiveEventFromRuntime()
       if (this.eventRuntime.completed && !this.eventRuntime.rewardClaimed) {
@@ -453,11 +458,24 @@ export class GameEngine {
     }
     this.analytics.track('tap', {})
 
-    this.tapState = resolveTapSpeedState(this.rollingCps, this.tapState, production.frenzyThreshold)
+    this.refreshTapState(now)
     this.syncMeta(now)
     this.dirty = true
     this.emit()
     return { gained, crit, combo: this.combo, state: this.tapState }
+  }
+
+  private refreshTapState(now: number, frenzyThreshold?: number): void {
+    if (this.lastTapAt > 0 && now - this.lastTapAt >= GameEngine.TAP_IDLE_AFTER_MS) {
+      this.rollingCps = 0
+      this.instantCps = 0
+      this.tapTimestamps = []
+      this.tapState = 'idle'
+      return
+    }
+    const threshold = frenzyThreshold ?? this.getProduction().frenzyThreshold
+    // Use instant CPS so lv4–lv6 expression bands track real tap rate.
+    this.tapState = resolveTapSpeedState(this.instantCps, this.tapState, threshold)
   }
 
   private creditPP(amount: LargeNumber, source: 'tap' | 'idle' | 'reward'): void {
@@ -484,6 +502,7 @@ export class GameEngine {
     const windowMs = 1000
     this.tapTimestamps = this.tapTimestamps.filter((t) => now - t <= windowMs)
     const instant = this.tapTimestamps.length
+    this.instantCps = instant
     this.rollingCps = this.rollingCps * 0.7 + instant * 0.3
   }
 
@@ -902,6 +921,18 @@ export class GameEngine {
       this.save = progressChallenge(this.save, 'golden_poops', 1)
     }
 
+    if (runtime.type === 'golden_rain') {
+      const production = this.getProduction()
+      const gained = production.tapPower.mul(GOLDEN_SHOWER.catchTapMultiplier)
+      this.creditPP(gained, 'reward')
+      this.save = {
+        ...this.save,
+        goldenPoopsCaught: this.save.goldenPoopsCaught + 1,
+        lastGoldenPoopAt: now,
+      }
+      this.goldenInSession += 1
+    }
+
     if (runtime.completed && !runtime.rewardClaimed) {
       return this.grantEventSuccess()
     }
@@ -921,97 +952,48 @@ export class GameEngine {
     return this.catchEventTarget(target.id)
   }
 
-  chooseMysteryReward(option: 0 | 1 | 2): ClaimResult {
-    const runtime = this.eventRuntime
-    if (!runtime || runtime.type !== 'mystery_flush' || runtime.rewardClaimed) {
-      return { ok: false, reason: 'inactive' }
-    }
-    if (!runtime.awaitingChoice && this.time.now() < runtime.endsAt) {
-      return { ok: false, reason: 'not_ready' }
-    }
-
-    const production = this.getProduction()
-    const mult = totalEventRewardMultiplier(this.save, production.eventRewardBonus)
-    const now = this.time.now()
-
-    if (option === 0) {
-      const pp = production.pps.mul(10 * 60).mul(mult)
-      this.creditPP(pp, 'reward')
-      this.eventRuntime = {
-        ...runtime,
-        mysteryRevealed: true,
-        mysteryOption: option,
-        rewardClaimed: true,
-        completed: true,
-      }
-      this.syncActiveEventFromRuntime()
-      this.recordEventCompletion()
-      this.sessionMissions = progressSessionMission(this.sessionMissions, 'events_1', 1)
-      this.syncSessionMissionsToSave()
-      this.finishEvent(true)
-      this.persistImmediate()
-      this.emit()
-      return { ok: true, pp }
-    }
-    if (option === 1) {
-      const gtp = Math.floor(25 * mult)
-      this.save = { ...this.save, gtp: this.save.gtp + gtp }
-      this.eventRuntime = {
-        ...runtime,
-        mysteryRevealed: true,
-        mysteryOption: option,
-        rewardClaimed: true,
-        completed: true,
-      }
-      this.syncActiveEventFromRuntime()
-      this.recordEventCompletion()
-      this.sessionMissions = progressSessionMission(this.sessionMissions, 'events_1', 1)
-      this.syncSessionMissionsToSave()
-      this.finishEvent(true)
-      this.persistImmediate()
-      this.emit()
-      return { ok: true, gtp }
-    }
-
-    this.save = {
-      ...this.save,
-      activeBoosts: [
-        ...this.save.activeBoosts,
-        {
-          id: `mystery_${now}`,
-          label: 'Mystery Boost',
-          tapMultiplier: 3,
-          idleMultiplier: 2,
-          expiresAt: now + 10 * 60_000,
-        },
-      ],
-    }
-    this.eventRuntime = {
-      ...runtime,
-      mysteryRevealed: true,
-      mysteryOption: option,
-      rewardClaimed: true,
-      completed: true,
-    }
-    this.syncActiveEventFromRuntime()
-    this.recordEventCompletion()
-    this.sessionMissions = progressSessionMission(this.sessionMissions, 'events_1', 1)
-    this.syncSessionMissionsToSave()
-    this.finishEvent(true)
+  buyChestShopOffer(index: number): ClaimResult {
+    const result = buyChestShopOfferByIndex(this.save, index)
+    if (!result.ok) return { ok: false, reason: result.reason }
+    this.save = result.save
+    this.analytics.track('chest_shop_buy', { index })
     this.persistImmediate()
     this.emit()
     return { ok: true }
   }
 
-  skipMysteryReward(): ClaimResult {
-    const runtime = this.eventRuntime
-    if (!runtime || runtime.type !== 'mystery_flush') {
-      return { ok: false, reason: 'inactive' }
+  openInventoryChest(tier: ChestTier): ClaimResult & {
+    label?: string
+    startedShower?: boolean
+  } {
+    if (this.eventRuntime || this.save.activeEvent) {
+      return { ok: false, reason: 'event_busy' }
     }
-    if (!runtime.awaitingChoice) {
-      return { ok: false, reason: 'not_ready' }
+    const production = this.getProduction()
+    const result = openChest(this.save, tier, production)
+    if (!result.ok || !result.reward) return { ok: false, reason: result.reason }
+    this.save = result.save
+    if (result.ppGranted && result.ppGranted.gt(0)) {
+      this.creditPP(result.ppGranted, 'reward')
     }
-    return this.chooseMysteryReward(0)
+    let startedShower = false
+    if (result.startGoldenShower) {
+      startedShower = this.spawnEvent('golden_rain')
+    }
+    this.analytics.track('chest_open', {
+      tier,
+      reward: result.reward.kind,
+      startedShower,
+    })
+    this.persistImmediate()
+    this.emit()
+    return {
+      ok: true,
+      gtp: result.reward.kind === 'gtp' ? result.reward.amount : undefined,
+      pp: result.ppGranted,
+      label: result.reward.label,
+      startedShower,
+    }
   }
 
   setAutoBuyEnabled(enabled: boolean): void {
@@ -1135,8 +1117,12 @@ export class GameEngine {
     this.save = {
       ...this.save,
       rewardedCooldowns: { ...this.save.rewardedCooldowns, eventRetryAt: now },
-      nextRandomEventAt: now,
-      nextGoldenPoopAt: Math.min(this.save.nextGoldenPoopAt, now + 15_000),
+      // Ad can hurry the next event, but still respects the 1-minute global floor.
+      nextRandomEventAt: Math.max(now, this.save.lastEventActivityAt + EVENT_SCHEDULER.minIntervalMs),
+      nextGoldenPoopAt: Math.max(
+        this.save.nextGoldenPoopAt,
+        this.save.lastEventActivityAt + EVENT_SCHEDULER.minIntervalMs,
+      ),
     }
     this.analytics.track('rewarded_ad_complete', { placement: 'event_retry' })
     this.persistImmediate()
@@ -1221,28 +1207,11 @@ export class GameEngine {
         failed: r.failed,
         rewardClaimed: r.rewardClaimed,
         caughtCount: r.caughtCount,
+        spawnedCount: r.spawnedCount,
         inBandMs: r.inBandMs,
         bandScore: r.bandScore,
-        awaitingChoice: r.awaitingChoice,
-        mysteryRevealed: r.mysteryRevealed,
-        mysteryOption: r.mysteryOption,
       },
     }
-  }
-
-  private recordEventCompletion(): void {
-    const runtime = this.eventRuntime
-    if (!runtime) return
-    this.save = {
-      ...this.save,
-      eventsCompleted: this.save.eventsCompleted + 1,
-      eventCompletions: {
-        ...this.save.eventCompletions,
-        [runtime.defId]: (this.save.eventCompletions[runtime.defId] ?? 0) + 1,
-      },
-    }
-    this.save = progressChallenge(this.save, 'events', 1)
-    this.analytics.track('event_complete', { id: runtime.defId })
   }
 
   private grantEventSuccess(): ClaimResult {
@@ -1263,7 +1232,7 @@ export class GameEngine {
       },
     }
 
-    if (runtime.type === 'golden_poop' || runtime.type === 'golden_rain') {
+    if (runtime.type === 'golden_poop') {
       this.goldenInSession += 1
       this.save = {
         ...this.save,
@@ -1271,7 +1240,7 @@ export class GameEngine {
         lastGoldenPoopAt: this.time.now(),
       }
     }
-    if (runtime.type === 'clogged_toilet' || runtime.type === 'mega_clog') {
+    if (runtime.type === 'mega_clog') {
       this.save = { ...this.save, clogsCompleted: this.save.clogsCompleted + 1 }
       this.save = progressChallenge(this.save, 'clogs', 1)
     }
@@ -1297,7 +1266,7 @@ export class GameEngine {
     const production = this.getProduction()
 
     if (!success) {
-      if (runtime.type === 'clogged_toilet' || runtime.type === 'mega_clog') {
+      if (runtime.type === 'mega_clog') {
         this.save = { ...this.save, clogsFailed: this.save.clogsFailed + 1 }
       }
       this.analytics.track('event_fail', { id: runtime.defId })
@@ -1331,10 +1300,6 @@ export class GameEngine {
       this.eventRuntime = tickEventRuntime(this.eventRuntime, now, this.rollingCps, dt)
       this.syncActiveEventFromRuntime()
       const status = evaluateEventCompletion(this.eventRuntime, now)
-      if (status.awaitingChoice) {
-        this.eventRuntime = { ...this.eventRuntime, awaitingChoice: true }
-        return
-      }
       if (status.completed && !this.eventRuntime.rewardClaimed) {
         this.completeEventRuntime(true)
       } else if (status.failed) {
@@ -1352,7 +1317,10 @@ export class GameEngine {
     if (!pick) return
 
     if (pick.reschedule) {
-      this.save = { ...this.save, nextRandomEventAt: now + 60_000 }
+      this.save = {
+        ...this.save,
+        nextRandomEventAt: now + EVENT_SCHEDULER.minIntervalMs,
+      }
       this.dirty = true
       return
     }
@@ -1372,10 +1340,10 @@ export class GameEngine {
     this.emit(true)
   }
 
-  spawnEvent(eventId: string): boolean {
+  spawnEvent(eventId: string, options?: { rewarded?: boolean }): boolean {
     if (this.eventRuntime || this.save.activeEvent) return false
     const now = this.time.now()
-    if (eventId === 'golden_poop') {
+    if (options?.rewarded) {
       const gate = this.canApplyRewarded('golden_spawn')
       if (!gate.ok) return false
     }
@@ -1387,7 +1355,7 @@ export class GameEngine {
       ...this.save,
       tutorialFlags: { ...this.save.tutorialFlags, events: true },
       lastEventActivityAt: now,
-      ...(eventId === 'golden_poop'
+      ...(options?.rewarded
         ? {
             rewardedCooldowns: {
               ...this.save.rewardedCooldowns,
@@ -1396,7 +1364,7 @@ export class GameEngine {
           }
         : {}),
     }
-    if (eventId === 'golden_poop') {
+    if (options?.rewarded) {
       this.analytics.track('rewarded_ad_complete', { placement: 'golden_spawn' })
     }
     this.analytics.track('event_start', { id: eventId })

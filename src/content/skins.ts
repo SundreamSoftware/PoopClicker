@@ -3,8 +3,8 @@ import type { SkinDef } from '../core/types/gameTypes'
 export const SKINS: SkinDef[] = [
   {
     id: 'classic_poop',
-    name: 'Classic Poop',
-    description: 'The original swirl celebrity.',
+    name: 'Basic',
+    description: 'The classic brown swirl. Reliable. Iconic. Soft.',
     rarity: 'common',
     unlock: { type: 'default' },
     asset: 'skins/classic_poop',
@@ -146,7 +146,7 @@ export const SKINS: SkinDef[] = [
     name: 'Disco Poop',
     description: 'Stays alive. On the seat.',
     rarity: 'epic',
-    unlock: { type: 'event', eventId: 'burrito_rush', count: 3 },
+    unlock: { type: 'event', eventId: 'golden_rain', count: 3 },
     asset: 'skins/disco_poop',
     animationVariant: 'disco',
     vfx: 'mirrorball',

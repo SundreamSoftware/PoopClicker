@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CHEST_SHOP_OFFERS } from '../../content/chests'
 import { GENERATORS } from '../../content/generators'
 import { UPGRADES } from '../../content/upgrades'
+import { assetUrl, CHEST_ASSETS, UI_ASSETS } from '../../content/assetPaths'
 import {
   ECONOMY,
   geometricCost,
@@ -9,12 +11,15 @@ import {
 } from '../../core/economy/formulas'
 import { LargeNumber } from '../../core/numbers/LargeNumber'
 import { formatNumber } from '../../core/numbers/formatNumber'
+import type { ChestTier } from '../../core/types/gameTypes'
 import type { StoreProduct } from '../../services/billing'
 import AudioManager from '../../audio/AudioManager'
 import { billing } from '../../state/gameSingleton'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 import { maybeShowInterstitial } from '../monetizationHelpers'
+
+const CHEST_TIERS: ChestTier[] = ['regular', 'silver', 'golden']
 
 function formatCooldown(ms: number): string {
   const seconds = Math.ceil(ms / 1000)
@@ -26,10 +31,13 @@ function formatCooldown(ms: number): string {
 export function ShopPanel() {
   const { engine, ads } = useGameContext()
   const snap = useGameSnapshot()
-  const [section, setSection] = useState<'generators' | 'upgrades' | 'boosts' | 'iap'>('generators')
+  const [section, setSection] = useState<
+    'generators' | 'upgrades' | 'boosts' | 'chests' | 'iap'
+  >('generators')
   const [products, setProducts] = useState<StoreProduct[]>([])
   const [iapLoading, setIapLoading] = useState(false)
   const [iapBusy, setIapBusy] = useState<string | null>(null)
+  const [chestToast, setChestToast] = useState<string | null>(null)
   const balance = LargeNumber.deserialize(snap.save.currentPP)
   const lifetimePP = LargeNumber.deserialize(snap.save.lifetimePPEarned)
   const multLabel =
@@ -151,6 +159,12 @@ export function ShopPanel() {
         >
           Boosts
         </button>
+        <button
+          className={section === 'chests' ? 'active' : ''}
+          onClick={() => setSection('chests')}
+        >
+          Chests
+        </button>
         <button className={section === 'iap' ? 'active' : ''} onClick={() => setSection('iap')}>
           Store
         </button>
@@ -197,9 +211,13 @@ export function ShopPanel() {
           </div>
           <div className="list-row">
             <div>
-              <strong>Golden Poop (Ad)</strong>
-              <div className="meta-line">Spawn golden poop event now</div>
-              {snap.eventRuntime && <div className="meta-line" style={{ color: '#ff6b6b' }}>Event busy</div>}
+              <strong>Golden Poop Shower (Ad)</strong>
+              <div className="meta-line">120 golden poops in 30s — each catch is 20× tap</div>
+              {snap.eventRuntime && (
+                <div className="meta-line" style={{ color: '#ff6b6b' }}>
+                  Event busy
+                </div>
+              )}
             </div>
             <button
               className="ghost-btn"
@@ -208,7 +226,7 @@ export function ShopPanel() {
                 const canApply = engine.canApplyRewarded('golden_spawn')
                 if (!canApply.ok) return
                 const ad = await ads.showRewarded('golden_spawn')
-                if (ad.ok) engine.spawnEvent('golden_poop')
+                if (ad.ok) engine.spawnEvent('golden_rain', { rewarded: true })
               }}
             >
               {goldenSpawnCooldown > 0 ? `Ready in ${formatCooldown(goldenSpawnCooldown)}` : 'Watch Ad'}
@@ -232,6 +250,104 @@ export function ShopPanel() {
               {eventRetryCooldown > 0 ? `Ready in ${formatCooldown(eventRetryCooldown)}` : 'Watch Ad'}
             </button>
           </div>
+        </>
+      )}
+
+      {section === 'chests' && (
+        <>
+          <h3 style={{ marginTop: 16, marginBottom: 8 }}>Your stash</h3>
+          {chestToast && <div className="meta-line" style={{ marginBottom: 8 }}>{chestToast}</div>}
+          {CHEST_TIERS.map((tier) => {
+            const chests = snap.save.inventoryChests[tier] ?? 0
+            const keys = snap.save.inventoryKeys[tier] ?? 0
+            const canOpen = chests > 0 && keys > 0 && !snap.eventRuntime
+            const chestSrc =
+              tier === 'regular'
+                ? CHEST_ASSETS.regular_chest
+                : tier === 'silver'
+                  ? CHEST_ASSETS.silver_chest
+                  : CHEST_ASSETS.golden_chest
+            const keySrc =
+              tier === 'regular'
+                ? CHEST_ASSETS.regular_key
+                : tier === 'silver'
+                  ? CHEST_ASSETS.silver_key
+                  : CHEST_ASSETS.golden_key
+            return (
+              <div className="list-row" key={tier}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <img src={chestSrc} alt="" width={40} height={40} />
+                  <img src={keySrc} alt="" width={28} height={28} />
+                  <div>
+                    <strong style={{ textTransform: 'capitalize' }}>{tier} chest</strong>
+                    <div className="meta-line">
+                      {chests} chest · {keys} key
+                    </div>
+                  </div>
+                </div>
+                <button
+                  className="ghost-btn"
+                  disabled={!canOpen}
+                  onClick={() => {
+                    const result = engine.openInventoryChest(tier)
+                    if (result.ok) {
+                      setChestToast(
+                        result.startedShower
+                          ? `${result.label ?? 'Reward'} — shower started!`
+                          : (result.label ?? 'Opened!'),
+                      )
+                    } else if (result.reason === 'event_busy') {
+                      setChestToast('Finish the current event first')
+                    }
+                  }}
+                >
+                  Open
+                </button>
+              </div>
+            )
+          })}
+
+          <h3 style={{ marginTop: 20, marginBottom: 8 }}>
+            Buy with GTP{' '}
+            <img
+              src={UI_ASSETS.currency.gtp}
+              alt=""
+              width={18}
+              height={18}
+              style={{ verticalAlign: 'middle' }}
+            />
+          </h3>
+          <div className="meta-line" style={{ marginBottom: 8 }}>
+            Chests are cheap. Keys are the real cost.
+          </div>
+          {CHEST_SHOP_OFFERS.map((offer, index) => {
+            const src = assetUrl(offer.asset)
+            const afford = snap.save.gtp >= offer.gtpCost
+            return (
+              <div
+                className={`list-row shop-card ${afford ? 'can-afford' : 'cannot-afford'}`}
+                key={`${offer.kind}-${offer.tier}`}
+              >
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <img src={src} alt="" width={40} height={40} />
+                  <div>
+                    <strong>{offer.name}</strong>
+                    <div className="meta-line">{offer.description}</div>
+                  </div>
+                </div>
+                <button
+                  className="ghost-btn"
+                  disabled={!afford}
+                  onClick={() => {
+                    const result = engine.buyChestShopOffer(index)
+                    if (result.ok) setChestToast(`Bought ${offer.name}`)
+                  }}
+                >
+                  {offer.gtpCost} GTP
+                </button>
+              </div>
+            )
+          })}
         </>
       )}
 

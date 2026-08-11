@@ -1,4 +1,9 @@
-import type { ActiveBoost, ActiveEvent, DailyChallengeInstance } from '../types/gameTypes'
+import type {
+  ActiveBoost,
+  ActiveEvent,
+  ChestInventory,
+  DailyChallengeInstance,
+} from '../types/gameTypes'
 
 export const SAVE_SCHEMA_VERSION = 2
 
@@ -78,6 +83,8 @@ export interface PlayerSaveV2 {
   flushPower: number
   royalFlushLevels: Record<string, number>
   gtp: number
+  inventoryChests: ChestInventory
+  inventoryKeys: ChestInventory
   removeAds: boolean
   ownedIapProducts: string[]
   ownedSkins: string[]

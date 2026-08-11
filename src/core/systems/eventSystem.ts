@@ -1,13 +1,16 @@
-import { EVENT_BY_ID, EVENTS } from '../../content/events'
+import { EVENT_BY_ID, EVENTS, GOLDEN_SHOWER } from '../../content/events'
 import { LargeNumber } from '../numbers/LargeNumber'
 import type { PlayerSaveV2 } from '../save/saveSchema'
 import type { ActiveEventRuntime, FloatingTarget } from '../types/eventRuntime'
-import { scheduleNextGoldenAt, scheduleNextRandomEventAt } from '../types/eventRuntime'
+import {
+  EVENT_SCHEDULER,
+  scheduleNextGoldenAt,
+  scheduleNextRandomEventAt,
+} from '../types/eventRuntime'
 import type { EventType } from '../types/gameTypes'
 import { milestoneEventBonus } from './flush'
 import type { ProductionBreakdown } from './production'
 
-const TP_STORM_POOL_MAX = 12
 const PLUMBER_BAND_MIN = 4
 const PLUMBER_BAND_MAX = 6
 const PLUMBER_SUCCESS_RATIO = 0.55
@@ -16,12 +19,8 @@ const PLUMBER_SUCCESS_RATIO = 0.55
 export const EVENT_UI_PRESENTATIONS_SUPPORTED = [
   'floating_target',
   'boss_bar',
-  'banner_boost',
-  'falling_objects',
   'cps_meter',
-  'screen_shake_boost',
   'multi_target',
-  'choice_cards',
 ] as const
 
 export type EventUiPresentation = (typeof EVENT_UI_PRESENTATIONS_SUPPORTED)[number]
@@ -29,42 +28,28 @@ export type EventUiPresentation = (typeof EVENT_UI_PRESENTATIONS_SUPPORTED)[numb
 /** Maps content uiPresentation strings to event types that implement them. */
 export const EVENT_TYPES_BY_UI_PRESENTATION: Record<EventUiPresentation, EventType[]> = {
   floating_target: ['golden_poop'],
-  boss_bar: ['clogged_toilet', 'mega_clog'],
-  banner_boost: ['burrito_rush'],
-  falling_objects: ['toilet_paper_storm'],
+  boss_bar: ['mega_clog'],
   cps_meter: ['plumber_inspection'],
-  screen_shake_boost: ['toilet_quake'],
   multi_target: ['golden_rain'],
-  choice_cards: ['mystery_flush'],
 }
 
 function uid(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`
 }
 
-function spawnFloating(
-  kind: FloatingTarget['kind'],
-  now: number,
-  lifeMs: number,
-  index = 0,
-): FloatingTarget {
+function spawnFloating(now: number, lifeMs: number, index = 0): FloatingTarget {
   return {
-    id: uid(kind),
-    kind,
+    id: uid('golden'),
+    kind: 'golden',
     x: 12 + ((index * 17 + Math.random() * 40) % 76),
-    y: kind === 'tp_roll' ? -8 - Math.random() * 20 : 18 + Math.random() * 55,
-    vx: (Math.random() - 0.5) * 0.08,
-    vy: kind === 'tp_roll' ? 0.04 + Math.random() * 0.05 : (Math.random() - 0.5) * 0.03,
+    y: -8 - Math.random() * 18,
+    vx: (Math.random() - 0.5) * 0.06,
+    vy: 0.035 + Math.random() * 0.045,
     bornAt: now,
     expiresAt: now + lifeMs,
     caught: false,
+    frame: 1 + Math.floor(Math.random() * GOLDEN_SHOWER.frameCount),
   }
-}
-
-function trimTargetPool(targets: FloatingTarget[], max: number, now: number): FloatingTarget[] {
-  const live = targets.filter((t) => !t.caught && t.expiresAt > now)
-  if (live.length <= max) return targets
-  return [...targets.filter((t) => t.caught), ...live.slice(0, max)]
 }
 
 export function createEventRuntime(
@@ -87,40 +72,35 @@ export function createEventRuntime(
     rewardClaimed: false,
     targets: [],
     caughtCount: 0,
+    spawnedCount: 0,
     inBandMs: 0,
     lastCpsSampleAt: now,
     phase: 1,
     phaseTapTarget: def.tapTarget ?? 0,
-    mysteryRevealed: false,
-    awaitingChoice: false,
     bandScore: 0,
   }
 
   switch (def.type) {
     case 'golden_poop':
-      return { ...base, targets: [spawnFloating('golden', now, def.durationMs)] }
-    case 'golden_rain':
       return {
         ...base,
-        tapTarget: def.tapTarget ?? 5,
-        targets: Array.from({ length: 5 }, (_, i) =>
-          spawnFloating('golden', now, 5_000 + i * 800, i),
-        ),
+        spawnedCount: 1,
+        targets: [spawnFloating(now, def.durationMs)],
       }
-    case 'toilet_paper_storm':
+    case 'golden_rain': {
+      const first = spawnFloating(now, 4_500, 0)
       return {
         ...base,
-        tapTarget: def.tapTarget ?? 20,
-        targets: Array.from({ length: 6 }, (_, i) =>
-          spawnFloating('tp_roll', now, 4_000 + i * 500, i),
-        ),
+        tapTarget: GOLDEN_SHOWER.totalSpawns,
+        spawnedCount: 1,
+        targets: [first],
       }
+    }
     case 'mega_clog': {
       const total = def.tapTarget ?? 120
       return { ...base, phase: 1, phaseTapTarget: Math.ceil(total / 3), tapTarget: total }
     }
     case 'plumber_inspection':
-    case 'mystery_flush':
       return { ...base, tapTarget: 0 }
     default:
       return base
@@ -143,33 +123,28 @@ export function tickEventRuntime(
     return {
       ...t,
       x: Math.min(92, Math.max(4, t.x + t.vx * dtMs)),
-      y: Math.min(92, Math.max(-10, t.y + t.vy * dtMs)),
+      y: Math.min(105, Math.max(-12, t.y + t.vy * dtMs)),
     }
   })
 
-  if (next.type === 'toilet_paper_storm') {
-    const live = next.targets.filter((t) => !t.caught && t.expiresAt > now)
-    const spawnCount = Math.min(TP_STORM_POOL_MAX - live.length, Math.max(0, 5 - live.length))
-    next.targets = trimTargetPool(
-      [
-        ...live,
-        ...Array.from({ length: spawnCount }, (_, i) =>
-          spawnFloating('tp_roll', now, 3_500, i + live.length),
-        ),
-      ],
-      TP_STORM_POOL_MAX,
-      now,
+  if (next.type === 'golden_rain' && !next.completed && !next.failed) {
+    const elapsed = Math.max(0, now - next.startedAt)
+    const desired = Math.min(
+      GOLDEN_SHOWER.totalSpawns,
+      1 + Math.floor((elapsed / GOLDEN_SHOWER.durationMs) * (GOLDEN_SHOWER.totalSpawns - 1)),
     )
-  }
-
-  if (next.type === 'golden_rain') {
-    const live = next.targets.filter((t) => !t.caught && t.expiresAt > now)
-    next.targets = [
-      ...live,
-      ...Array.from({ length: Math.max(0, 4 - live.length) }, (_, i) =>
-        spawnFloating('golden', now, 3_500, i + live.length),
-      ),
-    ]
+    let spawnedCount = next.spawnedCount
+    let live = next.targets.filter((t) => !t.caught && t.expiresAt > now)
+    const additions: FloatingTarget[] = []
+    while (spawnedCount < desired && live.length + additions.length < GOLDEN_SHOWER.maxLive) {
+      additions.push(spawnFloating(now, 4_200, spawnedCount))
+      spawnedCount += 1
+    }
+    next = {
+      ...next,
+      spawnedCount,
+      targets: [...live, ...additions],
+    }
   }
 
   if (next.type === 'plumber_inspection' && !next.completed && !next.failed) {
@@ -187,10 +162,6 @@ export function tickEventRuntime(
     next = { ...next, phase: next.phase + 1 }
   }
 
-  if (next.type === 'mystery_flush' && now >= next.endsAt && !next.mysteryRevealed) {
-    next = { ...next, awaitingChoice: true }
-  }
-
   return next
 }
 
@@ -205,21 +176,18 @@ export function catchTarget(
   const caughtCount = runtime.caughtCount + 1
   const taps = runtime.taps + 1
   let completed = runtime.completed
-  if (
-    (runtime.type === 'golden_poop' && caughtCount >= 1) ||
-    (runtime.type === 'golden_rain' && caughtCount >= runtime.tapTarget) ||
-    (runtime.type === 'toilet_paper_storm' && caughtCount >= runtime.tapTarget)
-  ) {
+  // Golden shower runs full duration; completion is evaluated at endsAt.
+  if (runtime.type === 'golden_poop' && caughtCount >= 1) {
     completed = true
   }
   return { runtime: { ...runtime, targets, caughtCount, taps, completed }, caught: true }
 }
 
 export function bossTap(runtime: ActiveEventRuntime): ActiveEventRuntime {
-  if (runtime.type !== 'clogged_toilet' && runtime.type !== 'mega_clog') return runtime
+  if (runtime.type !== 'mega_clog') return runtime
   const taps = runtime.taps + 1
   let next: ActiveEventRuntime = { ...runtime, taps }
-  if (next.type === 'mega_clog' && next.phase < 3 && taps >= next.phase * next.phaseTapTarget) {
+  if (next.phase < 3 && taps >= next.phase * next.phaseTapTarget) {
     next = { ...next, phase: next.phase + 1 }
   }
   if (taps >= next.tapTarget) next = { ...next, completed: true }
@@ -229,47 +197,32 @@ export function bossTap(runtime: ActiveEventRuntime): ActiveEventRuntime {
 export function evaluateEventCompletion(
   runtime: ActiveEventRuntime,
   now: number,
-): { completed: boolean; failed: boolean; awaitingChoice: boolean } {
-  if (runtime.rewardClaimed) return { completed: true, failed: false, awaitingChoice: false }
+): { completed: boolean; failed: boolean } {
+  if (runtime.rewardClaimed) return { completed: true, failed: false }
+
+  if (runtime.type === 'golden_rain') {
+    if (now < runtime.endsAt) return { completed: false, failed: false }
+    return { completed: runtime.caughtCount >= 1, failed: runtime.caughtCount < 1 }
+  }
 
   const succeeded = (() => {
     switch (runtime.type) {
       case 'golden_poop':
-      case 'golden_rain':
-      case 'toilet_paper_storm':
         return runtime.completed
-      case 'clogged_toilet':
       case 'mega_clog':
         return runtime.taps >= runtime.tapTarget
       case 'plumber_inspection':
         return now >= runtime.endsAt && runtime.bandScore >= PLUMBER_SUCCESS_RATIO
-      case 'burrito_rush':
-      case 'toilet_quake':
-        return now >= runtime.endsAt
-      case 'mystery_flush':
-        return runtime.mysteryRevealed && runtime.rewardClaimed
       default:
         return runtime.completed
     }
   })()
 
-  if (succeeded) return { completed: true, failed: false, awaitingChoice: false }
-  if (runtime.type === 'mystery_flush' && now >= runtime.endsAt && !runtime.mysteryRevealed) {
-    return { completed: false, failed: false, awaitingChoice: true }
-  }
-  if (now < runtime.endsAt) {
-    return { completed: false, failed: false, awaitingChoice: runtime.awaitingChoice }
-  }
+  if (succeeded) return { completed: true, failed: false }
+  if (now < runtime.endsAt) return { completed: false, failed: false }
 
-  const failTypes: EventType[] = [
-    'clogged_toilet',
-    'mega_clog',
-    'plumber_inspection',
-    'golden_poop',
-    'golden_rain',
-    'toilet_paper_storm',
-  ]
-  return { completed: false, failed: failTypes.includes(runtime.type), awaitingChoice: false }
+  const failTypes: EventType[] = ['mega_clog', 'plumber_inspection', 'golden_poop']
+  return { completed: false, failed: failTypes.includes(runtime.type) }
 }
 
 export function pickScheduledEvent(
@@ -277,6 +230,7 @@ export function pickScheduledEvent(
   now: number,
 ): { kind: 'golden' | 'random'; id: string; reschedule?: boolean } | null {
   if (save.activeEvent) return null
+  if (now - save.lastEventActivityAt < EVENT_SCHEDULER.minIntervalMs) return null
   if (now >= save.nextGoldenPoopAt) return { kind: 'golden', id: 'golden_poop' }
   if (now >= save.nextRandomEventAt) {
     const candidates = EVENTS.filter(
@@ -321,10 +275,12 @@ export function afterEventSchedule(
   goldenChanceBonus: number,
   luckBonus: number,
 ): PlayerSaveV2 {
-  if (type === 'golden_poop') {
-    return { ...save, nextGoldenPoopAt: scheduleNextGoldenAt(now, goldenChanceBonus) }
+  void type
+  return {
+    ...save,
+    nextGoldenPoopAt: scheduleNextGoldenAt(now, goldenChanceBonus),
+    nextRandomEventAt: scheduleNextRandomEventAt(now, luckBonus, save.flushCount),
   }
-  return { ...save, nextRandomEventAt: scheduleNextRandomEventAt(now, luckBonus, save.flushCount) }
 }
 
 export { scheduleNextGoldenAt, scheduleNextRandomEventAt }
