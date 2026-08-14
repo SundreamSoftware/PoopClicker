@@ -390,6 +390,40 @@ export function goldenShowerFramePath(frame: number): string {
   return assetUrl(`P4_misc/golden_poop_shower/golden_poop_0${n}.png`)
 }
 
+/** P4 flush VFX frames (`flush_1.png` …). Currently 5 authored frames. */
+export const FLUSH_ANIM = {
+  frameCount: 5,
+  durationMs: 2_500,
+  /** Kept for helpers; playback uses durationMs. */
+  fps: 2,
+} as const
+
+export function flushAnimFramePath(frame: number): string {
+  const n = Math.min(FLUSH_ANIM.frameCount, Math.max(1, Math.floor(frame)))
+  return assetUrl(`P4_misc/flush/flush_${n}.png`)
+}
+
+export function flushAnimFrameUrls(): string[] {
+  return Array.from({ length: FLUSH_ANIM.frameCount }, (_, i) => flushAnimFramePath(i + 1))
+}
+
+/** Chest open reward VFX (`chest_animation1.png` … `6`). */
+export const CHEST_OPEN_ANIM = {
+  frameCount: 6,
+  durationMs: 3_000,
+  /** Kept for helpers; playback uses durationMs. */
+  fps: 2,
+} as const
+
+export function chestOpenAnimFramePath(frame: number): string {
+  const n = Math.min(CHEST_OPEN_ANIM.frameCount, Math.max(1, Math.floor(frame)))
+  return assetUrl(`P4_misc/chest_reward_animation/chest_animation${n}.png`)
+}
+
+export function chestOpenAnimFrameUrls(): string[] {
+  return Array.from({ length: CHEST_OPEN_ANIM.frameCount }, (_, i) => chestOpenAnimFramePath(i + 1))
+}
+
 export const EVENT_ASSETS = {
   golden_poop: assetUrl('P1_events/golden_poop/golden_poop_target.svg'),
   golden_rain: assetUrl('P4_misc/golden_poop_shower/golden_poop_01.png'),

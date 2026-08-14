@@ -120,6 +120,11 @@ export const ASSET_MANIFEST = {
     silver_key: { status: 'FINAL', path: 'P4_misc/silver_key.png' },
     golden_key: { status: 'FINAL', path: 'P4_misc/golden_key.png' },
     gtp: { status: 'FINAL', path: 'P4_misc/golden_toilet_paper.png' },
+    flush_anim: { status: 'FINAL', path: 'P4_misc/flush/flush_1.png' },
+    chest_open_anim: {
+      status: 'FINAL',
+      path: 'P4_misc/chest_reward_animation/chest_animation1.png',
+    },
   },
   worlds: {
     home_bathroom: { status: 'FINAL', path: 'P4_environments/L1.png' },

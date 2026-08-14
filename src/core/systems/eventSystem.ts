@@ -43,8 +43,9 @@ function spawnFloating(now: number, lifeMs: number, index = 0): FloatingTarget {
     kind: 'golden',
     x: 12 + ((index * 17 + Math.random() * 40) % 76),
     y: -8 - Math.random() * 18,
-    vx: (Math.random() - 0.5) * 0.06,
-    vy: 0.035 + Math.random() * 0.045,
+    vx: (Math.random() - 0.5) * 0.022,
+    // Slower than the original 0.035–0.08 fall; still clears in time for 60/20s.
+    vy: 0.026 + Math.random() * 0.018,
     bornAt: now,
     expiresAt: now + lifeMs,
     caught: false,
@@ -88,7 +89,7 @@ export function createEventRuntime(
         targets: [spawnFloating(now, def.durationMs)],
       }
     case 'golden_rain': {
-      const first = spawnFloating(now, 4_500, 0)
+      const first = spawnFloating(now, 6_500, 0)
       return {
         ...base,
         tapTarget: GOLDEN_SHOWER.totalSpawns,
@@ -118,33 +119,46 @@ export function tickEventRuntime(
     targets: runtime.targets.map((t) => ({ ...t })),
   }
 
-  next.targets = next.targets.map((t) => {
-    if (t.caught) return t
-    return {
-      ...t,
-      x: Math.min(92, Math.max(4, t.x + t.vx * dtMs)),
-      y: Math.min(105, Math.max(-12, t.y + t.vy * dtMs)),
+  if (next.type === 'golden_rain') {
+    // Move, then drop anything caught / expired / off the bottom — keep the live pool tiny.
+    const moved: FloatingTarget[] = []
+    for (const t of next.targets) {
+      if (t.caught || t.expiresAt <= now) continue
+      const x = Math.min(92, Math.max(4, t.x + t.vx * dtMs))
+      const y = t.y + t.vy * dtMs
+      if (y >= GOLDEN_SHOWER.despawnY) continue
+      moved.push(y === t.y && x === t.x ? t : { ...t, x, y })
     }
-  })
 
-  if (next.type === 'golden_rain' && !next.completed && !next.failed) {
-    const elapsed = Math.max(0, now - next.startedAt)
-    const desired = Math.min(
-      GOLDEN_SHOWER.totalSpawns,
-      1 + Math.floor((elapsed / GOLDEN_SHOWER.durationMs) * (GOLDEN_SHOWER.totalSpawns - 1)),
-    )
-    let spawnedCount = next.spawnedCount
-    let live = next.targets.filter((t) => !t.caught && t.expiresAt > now)
-    const additions: FloatingTarget[] = []
-    while (spawnedCount < desired && live.length + additions.length < GOLDEN_SHOWER.maxLive) {
-      additions.push(spawnFloating(now, 4_200, spawnedCount))
-      spawnedCount += 1
+    if (!next.completed && !next.failed) {
+      const elapsed = Math.max(0, now - next.startedAt)
+      const desired = Math.min(
+        GOLDEN_SHOWER.totalSpawns,
+        1 + Math.floor((elapsed / GOLDEN_SHOWER.durationMs) * (GOLDEN_SHOWER.totalSpawns - 1)),
+      )
+      let spawnedCount = next.spawnedCount
+      const additions: FloatingTarget[] = []
+      while (spawnedCount < desired && moved.length + additions.length < GOLDEN_SHOWER.maxLive) {
+        additions.push(spawnFloating(now, 6_500, spawnedCount))
+        spawnedCount += 1
+      }
+      next = {
+        ...next,
+        spawnedCount,
+        targets: additions.length ? [...moved, ...additions] : moved,
+      }
+    } else {
+      next = { ...next, targets: moved }
     }
-    next = {
-      ...next,
-      spawnedCount,
-      targets: [...live, ...additions],
-    }
+  } else {
+    next.targets = next.targets.map((t) => {
+      if (t.caught) return t
+      return {
+        ...t,
+        x: Math.min(92, Math.max(4, t.x + t.vx * dtMs)),
+        y: Math.min(105, Math.max(-12, t.y + t.vy * dtMs)),
+      }
+    })
   }
 
   if (next.type === 'plumber_inspection' && !next.completed && !next.failed) {
@@ -172,10 +186,14 @@ export function catchTarget(
 ): { runtime: ActiveEventRuntime; caught: boolean } {
   const idx = runtime.targets.findIndex((t) => t.id === targetId && !t.caught && t.expiresAt > now)
   if (idx < 0) return { runtime, caught: false }
-  const targets = runtime.targets.map((t, i) => (i === idx ? { ...t, caught: true } : t))
   const caughtCount = runtime.caughtCount + 1
   const taps = runtime.taps + 1
   let completed = runtime.completed
+  // Drop caught shower targets immediately so the DOM stays lean.
+  const targets =
+    runtime.type === 'golden_rain'
+      ? runtime.targets.filter((_, i) => i !== idx)
+      : runtime.targets.map((t, i) => (i === idx ? { ...t, caught: true } : t))
   // Golden shower runs full duration; completion is evaluated at endsAt.
   if (runtime.type === 'golden_poop' && caughtCount >= 1) {
     completed = true

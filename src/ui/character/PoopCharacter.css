@@ -11,18 +11,38 @@
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  -webkit-appearance: none;
   background: transparent;
   border: none;
+  outline: none;
   padding: 0;
   cursor: pointer;
-  filter: drop-shadow(0 16px 16px rgba(5, 14, 20, 0.22));
-  transition: filter 160ms ease;
+  /* Soft ground shadow only — avoid silhouette glow that reads as a selection outline. */
+  filter: drop-shadow(0 14px 10px rgba(5, 14, 20, 0.28));
 }
 
-/* Tap target — no focus ring (keyboard a11y is handled elsewhere in menus). */
+/* Kill WebView / Android focus + tap chrome on the character. */
 .poop-stage:focus,
-.poop-stage:focus-visible {
-  outline: none;
+.poop-stage:focus-visible,
+.poop-stage:active,
+.poop-stage:hover {
+  outline: none !important;
+  border: none;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.poop-stage img,
+.poop-stage * {
+  -webkit-tap-highlight-color: transparent;
+  outline: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 
 .authored-poop-stage {

@@ -46,13 +46,13 @@ export const EVENTS: EventDef[] = [
     id: 'golden_rain',
     type: 'golden_rain',
     name: 'Golden Poop Shower',
-    description: '120 golden poops in 30s — each catch is worth 20 taps.',
-    durationMs: 30_000,
+    description: '60 golden poops in 20s — each catch is worth 40 taps.',
+    durationMs: 20_000,
     cooldownMs: 300_000,
     minFlushCount: 0,
     rewardGtp: 15,
     rewardPpMinutes: 2,
-    tapTarget: 120,
+    tapTarget: 60,
     uiPresentation: 'multi_target',
     analyticsId: 'event_golden_rain',
   },
@@ -62,10 +62,13 @@ export const EVENT_BY_ID = Object.fromEntries(EVENTS.map((e) => [e.id, e]))
 
 /** Shower spawn contract. */
 export const GOLDEN_SHOWER = {
-  totalSpawns: 120,
-  durationMs: 30_000,
-  maxLive: 18,
-  catchTapMultiplier: 20,
+  totalSpawns: 60,
+  durationMs: 20_000,
+  /** Enough headroom for slow fall (~3–5s on screen) at ~3 spawns/s. */
+  maxLive: 14,
+  catchTapMultiplier: 40,
   minRandomCooldownMs: 300_000,
   frameCount: 6,
+  /** Percent Y at which a falling poop despawns (off the playfield). */
+  despawnY: 96,
 } as const

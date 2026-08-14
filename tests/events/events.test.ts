@@ -27,7 +27,7 @@ describe('Events', () => {
     expect(engine.spawnEvent('golden_rain')).toBe(false)
   })
 
-  it('grants 20x tap value on golden shower catch', () => {
+  it('grants 40x tap value on golden shower catch', () => {
     const engine = createTestEngine({
       flushCount: 0,
       currentPP: LargeNumber.from(0).serialize(),

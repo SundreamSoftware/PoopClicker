@@ -30,24 +30,27 @@ const bannerStyle: CSSProperties = {
   background: 'rgba(20, 30, 40, 0.82)',
   color: '#fff',
   pointerEvents: 'auto',
-  boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
 }
 
-const targetBtn = (x: number, y: number): CSSProperties => ({
+/** GPU-friendly catchables — no shadows / transitions (those stutter on phones). */
+const targetStyle = (x: number, y: number, size: number): CSSProperties => ({
   position: 'absolute',
   left: `${x}%`,
   top: `${y}%`,
-  transform: 'translate(-50%, -50%)',
-  width: 72,
-  height: 72,
-  borderRadius: '50%',
+  width: size,
+  height: size,
+  transform: 'translate3d(-50%, -50%, 0)',
   border: 'none',
   cursor: 'pointer',
   pointerEvents: 'auto',
   padding: 0,
+  margin: 0,
   background: 'transparent',
-  boxShadow: '0 0 16px rgba(241, 196, 15, 0.75)',
+  WebkitTapHighlightColor: 'transparent',
+  outline: 'none',
   zIndex: 21,
+  willChange: 'transform',
+  contain: 'layout style paint',
 })
 
 function remainingMs(runtime: ActiveEventRuntime, now: number): number {
@@ -79,7 +82,6 @@ function BossBar({
           right: 8,
           top: 4,
           objectFit: 'contain',
-          filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))',
         }}
       />
       <div style={{ fontWeight: 800, letterSpacing: 0.03 }}>
@@ -103,7 +105,6 @@ function BossBar({
             width: `${Math.round(progress * 100)}%`,
             height: '100%',
             background: 'linear-gradient(90deg, #e74c3c, #f39c12, #f1c40f)',
-            transition: 'width 80ms linear',
           }}
         />
       </div>
@@ -195,6 +196,7 @@ export function EventOverlay({
   onCatchTarget,
   now = Date.now(),
 }: EventOverlayProps) {
+  void reducedMotion
   if (!runtime || runtime.completed || runtime.failed || runtime.rewardClaimed) {
     return null
   }
@@ -215,15 +217,15 @@ export function EventOverlay({
   }
 
   if (runtime.type === 'golden_poop' || runtime.type === 'golden_rain') {
-    const live = runtime.targets.filter((t) => !t.caught && t.expiresAt > now)
+    const live = runtime.targets
+    const isShower = runtime.type === 'golden_rain'
     return (
       <div style={overlayRoot} data-event={runtime.type}>
         <div style={bannerStyle}>
           <div style={{ fontWeight: 800 }}>{title}</div>
           <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>
             Caught {runtime.caughtCount}
-            {runtime.type === 'golden_rain' ? `/${runtime.tapTarget}` : ''} ·{' '}
-            {formatDuration(remainingMs(runtime, now))}
+            {isShower ? `/${runtime.tapTarget}` : ''} · {formatDuration(remainingMs(runtime, now))}
           </div>
         </div>
         {live.map((target) => (
@@ -231,10 +233,7 @@ export function EventOverlay({
             key={target.id}
             type="button"
             aria-label="Catch golden poop"
-            style={{
-              ...targetBtn(target.x, target.y),
-              transition: reducedMotion ? undefined : 'transform 80ms ease',
-            }}
+            style={targetStyle(target.x, target.y, isShower ? 56 : 72)}
             onClick={(e) => {
               e.stopPropagation()
               onCatchTarget(target.id)
@@ -242,14 +241,17 @@ export function EventOverlay({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <img
-              src={
-                runtime.type === 'golden_rain'
-                  ? goldenShowerFramePath(target.frame)
-                  : EVENT_ASSETS.golden_poop
-              }
+              src={isShower ? goldenShowerFramePath(target.frame) : EVENT_ASSETS.golden_poop}
               alt=""
               draggable={false}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
+              decoding="async"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                pointerEvents: 'none',
+                display: 'block',
+              }}
             />
           </button>
         ))}

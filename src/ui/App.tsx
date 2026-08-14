@@ -1,5 +1,5 @@
 import { type PointerEventHandler, type ReactNode, useEffect, useRef, useState } from 'react'
-import { UI_ASSETS } from '../content/assetPaths'
+import { FLUSH_ANIM, UI_ASSETS, flushAnimFrameUrls } from '../content/assetPaths'
 import { formatDuration, formatMultiplier, formatNumber } from '../core/numbers/formatNumber'
 import { ECONOMY } from '../core/economy/formulas'
 import { canStartDailyDump } from '../core/systems/dailyDump'
@@ -13,7 +13,7 @@ import { useGameSnapshot } from '../state/useGameSnapshot'
 import AudioManager from '../audio/AudioManager'
 import { maybePromptNotifications } from './notificationPrompt'
 import { PoopCharacter, resolveFaceFromTapState } from './character/PoopCharacter'
-import { SpriteSheetPlayer } from './assets/SpriteSheetPlayer'
+import { FrameSequencePlayer } from './assets/FrameSequencePlayer'
 import { DailyDumpModal } from './daily/DailyDumpModal'
 import { ErrorBoundary } from './ErrorBoundary'
 import { EventOverlay } from './events/EventOverlay'
@@ -86,6 +86,7 @@ function GameScreen() {
   const eventActive = Boolean(snap.eventRuntime)
   const face = resolveFaceFromTapState(snap.tapState, { eventActive })
 
+  const flushFrames = flushAnimFrameUrls()
   const playFlushAnimation = () => {
     setTab('play')
     setFlushOpen(false)
@@ -93,10 +94,11 @@ function GameScreen() {
     if (flushAnimTimeoutRef.current !== null) {
       window.clearTimeout(flushAnimTimeoutRef.current)
     }
+    const duration = reducedMotion ? 400 : FLUSH_ANIM.durationMs + 150
     flushAnimTimeoutRef.current = window.setTimeout(() => {
       setFlushAnimating(false)
       flushAnimTimeoutRef.current = null
-    }, reducedMotion ? 400 : 1100)
+    }, duration)
   }
   const showDumpModal = snap.dailyDump.phase !== 'idle' || dumpModalOpen
 
@@ -303,10 +305,10 @@ function GameScreen() {
               />
               {flushAnimating && (
                 <div className="flush-vfx-layer" aria-hidden>
-                  <SpriteSheetPlayer
-                    name="flush_vortex"
-                    frames={8}
-                    fps={16}
+                  <FrameSequencePlayer
+                    className="flush-frame-sequence"
+                    frames={flushFrames}
+                    durationMs={FLUSH_ANIM.durationMs}
                     reducedMotion={reducedMotion}
                   />
                 </div>

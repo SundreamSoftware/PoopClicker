@@ -58,24 +58,38 @@ describe('eventSystem', () => {
     expect(runtime.bandScore).toBeGreaterThan(0)
   })
 
-  it('spawns golden shower toward 120 over 30s without early complete', () => {
+  it('spawns golden shower over 20s, despawns at bottom, no early complete', () => {
     const start = 1_000_000
     let runtime = createEventRuntime('golden_rain', start, 0)!
     expect(runtime.spawnedCount).toBe(1)
-    // Simulate real ticks so expired targets free slots for the full spawn budget.
-    for (let t = 200; t <= 15_000; t += 200) {
+    for (let t = 200; t <= 20_000; t += 200) {
       runtime = tickEventRuntime(runtime, start + t, 0, 200)
     }
-    expect(runtime.spawnedCount).toBeGreaterThan(40)
-    expect(runtime.spawnedCount).toBeLessThanOrEqual(GOLDEN_SHOWER.totalSpawns)
-    const live = runtime.targets.filter((t) => !t.caught && t.expiresAt > start + 15_000)
-    expect(live.length).toBeLessThanOrEqual(GOLDEN_SHOWER.maxLive)
+    expect(runtime.spawnedCount).toBe(GOLDEN_SHOWER.totalSpawns)
+    expect(runtime.targets.length).toBeLessThanOrEqual(GOLDEN_SHOWER.maxLive)
+    expect(runtime.targets.every((t) => t.y < GOLDEN_SHOWER.despawnY)).toBe(true)
 
-    const catchable = runtime.targets.find((t) => !t.caught && t.expiresAt > start + 15_000)!
-    const { runtime: afterCatch } = catchTarget(runtime, catchable.id, start + 15_000)
+    const mid = createEventRuntime('golden_rain', start, 0)!
+    let midRt = mid
+    for (let t = 200; t <= 10_000; t += 200) {
+      midRt = tickEventRuntime(midRt, start + t, 0, 200)
+    }
+    const catchable = midRt.targets.find((t) => !t.caught)!
+    const { runtime: afterCatch } = catchTarget(midRt, catchable.id, start + 10_000)
     expect(afterCatch.completed).toBe(false)
-    expect(evaluateEventCompletion(afterCatch, start + 15_000).completed).toBe(false)
+    expect(evaluateEventCompletion(afterCatch, start + 10_000).completed).toBe(false)
     expect(evaluateEventCompletion(afterCatch, afterCatch.endsAt + 1).completed).toBe(true)
+  })
+
+  it('removes shower targets that fall past the bottom', () => {
+    const start = 1_000_000
+    let runtime = createEventRuntime('golden_rain', start, 0)!
+    runtime = {
+      ...runtime,
+      targets: [{ ...runtime.targets[0], y: GOLDEN_SHOWER.despawnY - 0.1, vy: 1 }],
+    }
+    runtime = tickEventRuntime(runtime, start + 16, 0, 16)
+    expect(runtime.targets.every((t) => t.y < GOLDEN_SHOWER.despawnY)).toBe(true)
   })
 
   it('fails golden shower with zero catches at timeout', () => {

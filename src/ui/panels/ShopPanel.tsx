@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { CHEST_SHOP_OFFERS } from '../../content/chests'
 import { GENERATORS } from '../../content/generators'
 import { UPGRADES } from '../../content/upgrades'
-import { assetUrl, CHEST_ASSETS, UI_ASSETS } from '../../content/assetPaths'
+import {
+  assetUrl,
+  CHEST_ASSETS,
+  CHEST_OPEN_ANIM,
+  chestOpenAnimFrameUrls,
+  UI_ASSETS,
+} from '../../content/assetPaths'
 import {
   ECONOMY,
   geometricCost,
@@ -17,7 +23,13 @@ import AudioManager from '../../audio/AudioManager'
 import { billing } from '../../state/gameSingleton'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
+import { FrameSequencePlayer } from '../assets/FrameSequencePlayer'
 import { maybeShowInterstitial } from '../monetizationHelpers'
+
+interface ChestOpenShow {
+  label: string
+  startedShower: boolean
+}
 
 const CHEST_TIERS: ChestTier[] = ['regular', 'silver', 'golden']
 
@@ -38,7 +50,20 @@ export function ShopPanel() {
   const [iapLoading, setIapLoading] = useState(false)
   const [iapBusy, setIapBusy] = useState<string | null>(null)
   const [chestToast, setChestToast] = useState<string | null>(null)
+  const [chestOpenShow, setChestOpenShow] = useState<ChestOpenShow | null>(null)
+  const [chestRewardVisible, setChestRewardVisible] = useState(false)
+  const chestOpenFrames = useMemo(() => chestOpenAnimFrameUrls(), [])
   const balance = LargeNumber.deserialize(snap.save.currentPP)
+
+  useEffect(() => {
+    if (!chestOpenShow || !chestRewardVisible) return
+    const id = window.setTimeout(() => {
+      setChestToast(chestOpenShow.label)
+      setChestOpenShow(null)
+      setChestRewardVisible(false)
+    }, 2_200)
+    return () => window.clearTimeout(id)
+  }, [chestOpenShow, chestRewardVisible])
   const lifetimePP = LargeNumber.deserialize(snap.save.lifetimePPEarned)
   const multLabel =
     snap.save.buyMultiplierIndex >= ECONOMY.buyMultipliers.length
@@ -98,6 +123,30 @@ export function ShopPanel() {
 
   return (
     <div className="panel">
+      {chestOpenShow && (
+        <div
+          className="chest-open-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Opening chest"
+          onClick={() => {
+            if (!chestRewardVisible) return
+            setChestToast(chestOpenShow.label)
+            setChestOpenShow(null)
+            setChestRewardVisible(false)
+          }}
+        >
+          <div className="chest-open-stage">
+            <FrameSequencePlayer
+              frames={chestOpenFrames}
+              durationMs={CHEST_OPEN_ANIM.durationMs}
+              reducedMotion={snap.save.settings.reducedMotion}
+              onComplete={() => setChestRewardVisible(true)}
+            />
+            {chestRewardVisible && <div className="chest-open-reward">{chestOpenShow.label}</div>}
+          </div>
+        </div>
+      )}
       <h2>Shop</h2>
 
       {snap.save.autoBuyUnlocked && (
@@ -212,7 +261,7 @@ export function ShopPanel() {
           <div className="list-row">
             <div>
               <strong>Golden Poop Shower (Ad)</strong>
-              <div className="meta-line">120 golden poops in 30s — each catch is 20× tap</div>
+              <div className="meta-line">60 golden poops in 20s — each catch is 40× tap</div>
               {snap.eventRuntime && (
                 <div className="meta-line" style={{ color: '#ff6b6b' }}>
                   Event busy
@@ -287,15 +336,16 @@ export function ShopPanel() {
                 </div>
                 <button
                   className="ghost-btn"
-                  disabled={!canOpen}
+                  disabled={!canOpen || Boolean(chestOpenShow)}
                   onClick={() => {
                     const result = engine.openInventoryChest(tier)
                     if (result.ok) {
-                      setChestToast(
-                        result.startedShower
-                          ? `${result.label ?? 'Reward'} — shower started!`
-                          : (result.label ?? 'Opened!'),
-                      )
+                      const label = result.startedShower
+                        ? `${result.label ?? 'Reward'} — shower started!`
+                        : (result.label ?? 'Opened!')
+                      setChestRewardVisible(false)
+                      setChestOpenShow({ label, startedShower: Boolean(result.startedShower) })
+                      setChestToast(null)
                     } else if (result.reason === 'event_busy') {
                       setChestToast('Finish the current event first')
                     }
