@@ -26,9 +26,7 @@ function missionsFromTemplates(
 ): SessionMission[] {
   return MISSION_TEMPLATES.map((t) => {
     const saved = progressById?.get(t.id)
-    const progress = saved
-      ? Math.min(t.target, Math.max(0, Number(saved.progress) || 0))
-      : 0
+    const progress = saved ? Math.min(t.target, Math.max(0, Number(saved.progress) || 0)) : 0
     const claimed = Boolean(saved?.claimed)
     return {
       ...t,

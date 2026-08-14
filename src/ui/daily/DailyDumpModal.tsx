@@ -57,7 +57,7 @@ export function DailyDumpModal({
 }: DailyDumpModalProps) {
   const timeLeft =
     runtime.phase === 'running' ? Math.max(0, runtime.endsAt - now) : DAILY_DUMP.durationMs
-  
+
   const handleShare = async () => {
     const text = `My Daily Dump: ${runtime.score} (${tierLabel(runtime.rewardTier)}) in Poop Clicker!`
     if (navigator.share) {
@@ -77,7 +77,12 @@ export function DailyDumpModal({
   }
 
   return (
-    <div className="modal-backdrop modal-layer-dump" role="dialog" aria-modal="true" aria-label="Daily Dump">
+    <div
+      className="modal-backdrop modal-layer-dump"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Daily Dump"
+    >
       <div className="modal modal-sheet">
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
           <div>

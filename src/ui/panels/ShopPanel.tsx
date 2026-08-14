@@ -43,9 +43,9 @@ function formatCooldown(ms: number): string {
 export function ShopPanel() {
   const { engine, ads } = useGameContext()
   const snap = useGameSnapshot()
-  const [section, setSection] = useState<
-    'generators' | 'upgrades' | 'boosts' | 'chests' | 'iap'
-  >('generators')
+  const [section, setSection] = useState<'generators' | 'upgrades' | 'boosts' | 'chests' | 'iap'>(
+    'generators',
+  )
   const [products, setProducts] = useState<StoreProduct[]>([])
   const [iapLoading, setIapLoading] = useState(false)
   const [iapBusy, setIapBusy] = useState<string | null>(null)
@@ -69,7 +69,7 @@ export function ShopPanel() {
     snap.save.buyMultiplierIndex >= ECONOMY.buyMultipliers.length
       ? 'MAX'
       : `x${ECONOMY.buyMultipliers[snap.save.buyMultiplierIndex]}`
-  
+
   const incomeBoostCooldown = engine.getRewardedCooldownRemaining('income_boost')
   const instantPpsCooldown = engine.getRewardedCooldownRemaining('instant_pps')
   const goldenSpawnCooldown = engine.getRewardedCooldownRemaining('golden_spawn')
@@ -178,7 +178,7 @@ export function ShopPanel() {
           </label>
         </div>
       )}
-      
+
       <div style={{ marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
         <strong>Buy Multiplier:</strong>
         <button
@@ -237,7 +237,9 @@ export function ShopPanel() {
                 if (ad.ok) engine.applyRewardedIncomeBoost()
               }}
             >
-              {incomeBoostCooldown > 0 ? `Ready in ${formatCooldown(incomeBoostCooldown)}` : 'Watch Ad'}
+              {incomeBoostCooldown > 0
+                ? `Ready in ${formatCooldown(incomeBoostCooldown)}`
+                : 'Watch Ad'}
             </button>
           </div>
           <div className="list-row">
@@ -255,7 +257,9 @@ export function ShopPanel() {
                 if (ad.ok) engine.applyRewardedInstantPps()
               }}
             >
-              {instantPpsCooldown > 0 ? `Ready in ${formatCooldown(instantPpsCooldown)}` : 'Watch Ad'}
+              {instantPpsCooldown > 0
+                ? `Ready in ${formatCooldown(instantPpsCooldown)}`
+                : 'Watch Ad'}
             </button>
           </div>
           <div className="list-row">
@@ -278,7 +282,9 @@ export function ShopPanel() {
                 if (ad.ok) engine.spawnEvent('golden_rain', { rewarded: true })
               }}
             >
-              {goldenSpawnCooldown > 0 ? `Ready in ${formatCooldown(goldenSpawnCooldown)}` : 'Watch Ad'}
+              {goldenSpawnCooldown > 0
+                ? `Ready in ${formatCooldown(goldenSpawnCooldown)}`
+                : 'Watch Ad'}
             </button>
           </div>
           <div className="list-row">
@@ -296,7 +302,9 @@ export function ShopPanel() {
                 if (ad.ok) engine.applyRewardedEventRetry()
               }}
             >
-              {eventRetryCooldown > 0 ? `Ready in ${formatCooldown(eventRetryCooldown)}` : 'Watch Ad'}
+              {eventRetryCooldown > 0
+                ? `Ready in ${formatCooldown(eventRetryCooldown)}`
+                : 'Watch Ad'}
             </button>
           </div>
         </>
@@ -305,7 +313,11 @@ export function ShopPanel() {
       {section === 'chests' && (
         <>
           <h3 style={{ marginTop: 16, marginBottom: 8 }}>Your stash</h3>
-          {chestToast && <div className="meta-line" style={{ marginBottom: 8 }}>{chestToast}</div>}
+          {chestToast && (
+            <div className="meta-line" style={{ marginBottom: 8 }}>
+              {chestToast}
+            </div>
+          )}
           {CHEST_TIERS.map((tier) => {
             const chests = snap.save.inventoryChests[tier] ?? 0
             const keys = snap.save.inventoryKeys[tier] ?? 0
@@ -408,10 +420,7 @@ export function ShopPanel() {
             const level = snap.save.generators[gen.id] ?? 0
             const flushLocked = (gen.unlockFlushCount ?? 0) > snap.save.flushCount
             const ppLocked =
-              gen.unlockPP &&
-              level === 0 &&
-              lifetimePP.lt(gen.unlockPP) &&
-              balance.lt(gen.unlockPP)
+              gen.unlockPP && level === 0 && lifetimePP.lt(gen.unlockPP) && balance.lt(gen.unlockPP)
             const locked = flushLocked || ppLocked
             const count =
               snap.save.buyMultiplierIndex >= 3
@@ -435,7 +444,7 @@ export function ShopPanel() {
             let lockReason = ''
             if (flushLocked) lockReason = `Needs ${gen.unlockFlushCount} flushes`
             else if (ppLocked) lockReason = `Needs ${formatNumber(gen.unlockPP!)} lifetime PP`
-            
+
             return (
               <div
                 className={`list-row shop-card ${canAfford && !locked ? 'can-afford' : 'cannot-afford'}`}

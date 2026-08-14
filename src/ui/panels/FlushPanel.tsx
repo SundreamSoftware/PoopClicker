@@ -46,21 +46,33 @@ export function FlushPanel({
 
   return (
     <div className="panel modal-sheet">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16,
+        }}
+      >
         <h2 style={{ margin: 0 }}>Flush & Royal Flush</h2>
-        <button className="ghost-btn" onClick={onClose}>✕</button>
+        <button className="ghost-btn" onClick={onClose}>
+          ✕
+        </button>
       </div>
       <div className="goal-card">
         <div className="goal-title">CURRENT RUN</div>
         <div className="goal-sub">{formatNumber(preview.runPPEarned)} PP earned</div>
         {!canFlush && (
           <>
-            <div className="goal-title" style={{ marginTop: 8 }}>PROGRESS TO FLUSH</div>
+            <div className="goal-title" style={{ marginTop: 8 }}>
+              PROGRESS TO FLUSH
+            </div>
             <div className="progress" style={{ marginTop: 4 }}>
               <span style={{ width: `${Math.round(flushProgress * 100)}%` }} />
             </div>
             <div className="meta-line" style={{ marginTop: 4 }}>
-              {formatPercent(flushProgress)} of {formatNumber(ECONOMY.firstFlushRequirement)} PP required
+              {formatPercent(flushProgress)} of {formatNumber(ECONOMY.firstFlushRequirement)} PP
+              required
             </div>
           </>
         )}
@@ -82,7 +94,7 @@ export function FlushPanel({
           +{formatPercent(preview.nextTapBonusPercent)} Tap · +
           {formatPercent(preview.nextIdleBonusPercent)} Idle
         </div>
-        
+
         {!confirmStep && (
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <button
@@ -97,14 +109,18 @@ export function FlushPanel({
             </button>
           </div>
         )}
-        
+
         {confirmStep && (
           <div style={{ marginTop: 12 }}>
             <div className="meta-line" style={{ marginBottom: 8, color: '#ff6b6b' }}>
               Warning: Flush resets run progress (upgrades/generators/PP). Meta progress stays.
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="primary-btn" disabled={!canFlush} onClick={() => void confirmFlush()}>
+              <button
+                className="primary-btn"
+                disabled={!canFlush}
+                onClick={() => void confirmFlush()}
+              >
                 CONFIRM FLUSH
               </button>
               <button className="ghost-btn" onClick={() => setConfirmStep(false)}>
@@ -144,13 +160,13 @@ export function FlushPanel({
           const fpLocked = snap.save.flushPower < node.baseCost
           const gtpLocked = snap.save.gtp < cost
           const locked = flushCountLocked || requiresLocked || fpLocked || gtpLocked
-          
+
           let lockReason = ''
           if (fpLocked) lockReason = `Needs ${node.baseCost} FP`
           else if (flushCountLocked) lockReason = `Needs ${node.unlockFlushCount} flushes`
           else if (requiresLocked) lockReason = 'Requires prerequisites'
           else if (gtpLocked) lockReason = `Needs ${cost} GTP`
-          
+
           return (
             <div className="list-row" key={node.id}>
               <div>

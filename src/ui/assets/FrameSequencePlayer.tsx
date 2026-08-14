@@ -120,11 +120,7 @@ export function FrameSequencePlayer({
 
   return (
     <div
-      className={[
-        'frame-sequence-stage',
-        useMotion ? 'frame-sequence-stage--soft' : '',
-        className,
-      ]
+      className={['frame-sequence-stage', useMotion ? 'frame-sequence-stage--soft' : '', className]
         .filter(Boolean)
         .join(' ')}
       style={{ '--fs-duration': `${durationMs}ms` } as CSSProperties}

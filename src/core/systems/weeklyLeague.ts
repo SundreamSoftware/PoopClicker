@@ -30,10 +30,7 @@ function weekSeed(weekKey: string): number {
  * Maps a Daily Dump weekly best score to a local league standing.
  * Curve is soft-sigmoid so early scores feel rewarding without needing multiplayer.
  */
-export function estimateWeeklyLeagueStanding(
-  score: number,
-  weekKey: string,
-): WeeklyLeagueStanding {
+export function estimateWeeklyLeagueStanding(score: number, weekKey: string): WeeklyLeagueStanding {
   const safeScore = Math.max(0, Math.floor(score))
   const seed = weekSeed(weekKey || 'W00')
   // Soft curve: ~150 bronze-ish, ~400 gold, ~800 diamond edge

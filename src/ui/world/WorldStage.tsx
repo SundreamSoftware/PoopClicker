@@ -36,8 +36,7 @@ export function WorldStage({ worldId, children, reducedMotion = false }: WorldSt
   const [failedWorldId, setFailedWorldId] = useState<string | null>(null)
   const backdrop = resolveWorldBackdropPath(safeId)
   const useBackdrop = Boolean(backdrop) && failedWorldId !== safeId
-  const useLayers =
-    !useBackdrop && AUTHORED_WORLD_IDS.has(safeId) && failedWorldId !== safeId
+  const useLayers = !useBackdrop && AUTHORED_WORLD_IDS.has(safeId) && failedWorldId !== safeId
   const authored = useBackdrop || useLayers
   const layers: WorldLayer[] = ['background', 'midground', 'foreground', 'vfx']
 

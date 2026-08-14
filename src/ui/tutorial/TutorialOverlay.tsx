@@ -52,7 +52,7 @@ export function TutorialOverlay() {
   const snap = useGameSnapshot()
 
   const currentStep = TUTORIAL_STEPS.find((step) => step.condition(snap))
-  
+
   if (!currentStep) return null
 
   return (

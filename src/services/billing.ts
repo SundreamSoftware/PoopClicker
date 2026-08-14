@@ -230,12 +230,12 @@ export class CapacitorBillingService implements BillingService {
         productIdentifier: def.storeId,
         isConsumable: def.kind === 'consumable',
       })
-      
+
       if (isNonConsumable(def.kind)) {
         const current = this.cachedEntitlements?.ownedProductIds ?? []
         this.updateEntitlements([...current, productId])
       }
-      
+
       return { ok: true, productId, grant: def.grants }
     } catch (err) {
       const message = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()

@@ -872,11 +872,8 @@ export function PoopCharacter({
   }, [authoredBody, authoredExpression, authoredLegacy])
 
   const layeredOk =
-    authoredBody != null &&
-    failedAsset !== authoredBody &&
-    failedAsset !== authoredExpression
-  const legacyOk =
-    !layeredOk && authoredLegacy != null && failedAsset !== authoredLegacy
+    authoredBody != null && failedAsset !== authoredBody && failedAsset !== authoredExpression
+  const legacyOk = !layeredOk && authoredLegacy != null && failedAsset !== authoredLegacy
 
   if (layeredOk || legacyOk) {
     return (

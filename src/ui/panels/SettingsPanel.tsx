@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { maybePromptNotifications } from '../notificationPrompt'
-import { cancelNotificationReminders, scheduleNotificationReminders } from '../../services/notifications'
+import {
+  cancelNotificationReminders,
+  scheduleNotificationReminders,
+} from '../../services/notifications'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 
@@ -15,7 +18,7 @@ export function SettingsPanel() {
       <div className="meta-line" style={{ marginBottom: 16 }}>
         Audio, haptics, motion, and notification preferences
       </div>
-      
+
       {(
         [
           ['sfx', 'Sound effects'],
@@ -44,7 +47,7 @@ export function SettingsPanel() {
           />
         </label>
       ))}
-      
+
       <div className="list-row">
         <div>
           <span>Privacy choices</span>

@@ -62,7 +62,9 @@ export function isResumableDailyDumpRuntime(
   runtime: Pick<DailyDumpRuntime, 'phase'> | DailyDumpActiveRuntime | null | undefined,
 ): boolean {
   if (!runtime) return false
-  return runtime.phase === 'countdown' || runtime.phase === 'running' || runtime.phase === 'finished'
+  return (
+    runtime.phase === 'countdown' || runtime.phase === 'running' || runtime.phase === 'finished'
+  )
 }
 
 export function serializeDailyDumpRuntime(

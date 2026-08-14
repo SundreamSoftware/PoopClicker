@@ -96,11 +96,7 @@ export type AchievementMetric =
 
 export type RoyalFlushCategory = 'pressure' | 'plumbing' | 'combo' | 'idle' | 'luck'
 
-export type EventType =
-  | 'golden_poop'
-  | 'plumber_inspection'
-  | 'mega_clog'
-  | 'golden_rain'
+export type EventType = 'golden_poop' | 'plumber_inspection' | 'mega_clog' | 'golden_rain'
 
 export type ChestTier = 'regular' | 'silver' | 'golden'
 

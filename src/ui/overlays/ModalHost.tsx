@@ -98,7 +98,9 @@ export function ModalHost({
         onClick={(e) => e.stopPropagation()}
       >
         {title ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}
+          >
             <h2 id={titleId} style={{ margin: 0 }}>
               {title}
             </h2>

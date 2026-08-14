@@ -69,11 +69,7 @@ import {
 
 const REWARDED_COOLDOWN_MS = 600_000
 
-export type RewardedPlacement =
-  | 'income_boost'
-  | 'instant_pps'
-  | 'event_retry'
-  | 'golden_spawn'
+export type RewardedPlacement = 'income_boost' | 'instant_pps' | 'event_retry' | 'golden_spawn'
 import type { AnalyticsSink } from '../services/analytics'
 import { applyIapGrant as applyIapGrantToSave } from '../services/billing'
 
@@ -264,7 +260,7 @@ export class GameEngine {
     if (this.save.dailyDumpState.activeRuntime) {
       const todayKey = this.time.todayKey()
       const lastPlayedDate = this.save.dailyDumpState.lastPlayedDate
-      
+
       if (lastPlayedDate && lastPlayedDate !== todayKey) {
         this.save = {
           ...this.save,
@@ -395,7 +391,7 @@ export class GameEngine {
     this.updateCps(now)
     const production = this.getProduction()
     this.combo = Math.min(production.comboMax, this.combo + 1)
-    
+
     // Mark core tutorial complete on first tap
     if (!this.save.tutorialFlags.core) {
       this.save = {
@@ -403,7 +399,7 @@ export class GameEngine {
         tutorialFlags: { ...this.save.tutorialFlags, core: true },
       }
     }
-    
+
     const crit = Math.random() < production.critChance
     let gained = production.tapPower
     if (crit) {
@@ -431,7 +427,7 @@ export class GameEngine {
     this.save = progressChallenge(this.save, 'tap_pp', gained.toNumber())
     this.save = progressChallenge(this.save, 'cps', this.rollingCps)
     this.save = progressChallenge(this.save, 'combo', this.combo)
-    
+
     this.sessionMissions = ensureSessionMissionsForDay(this.sessionMissions, this.time.todayKey())
     this.sessionMissions = progressSessionMission(this.sessionMissions, 'taps_50', 1)
     if (crit) {
@@ -1118,7 +1114,10 @@ export class GameEngine {
       ...this.save,
       rewardedCooldowns: { ...this.save.rewardedCooldowns, eventRetryAt: now },
       // Ad can hurry the next event, but still respects the 1-minute global floor.
-      nextRandomEventAt: Math.max(now, this.save.lastEventActivityAt + EVENT_SCHEDULER.minIntervalMs),
+      nextRandomEventAt: Math.max(
+        now,
+        this.save.lastEventActivityAt + EVENT_SCHEDULER.minIntervalMs,
+      ),
       nextGoldenPoopAt: Math.max(
         this.save.nextGoldenPoopAt,
         this.save.lastEventActivityAt + EVENT_SCHEDULER.minIntervalMs,
@@ -1572,11 +1571,11 @@ export class GameEngine {
     this.syncActiveEventFromRuntime()
     this.syncDailyDumpRuntimeToSave()
     this.syncSessionMissionsToSave()
-    this.save = { 
-      ...this.save, 
+    this.save = {
+      ...this.save,
       saveRevision: this.save.saveRevision + 1,
-      lastSaveTimestamp: now, 
-      lastActiveTimestamp: now 
+      lastSaveTimestamp: now,
+      lastActiveTimestamp: now,
     }
     this.storage?.setItem(this.storageKey, serializeSave(this.save))
     this.lastPersistAt = now
@@ -1611,17 +1610,17 @@ export class GameEngine {
 }
 
 export function createTestEngine(
-  save?: Partial<PlayerSaveV2>, 
-  now = Date.now(), 
+  save?: Partial<PlayerSaveV2>,
+  now = Date.now(),
   storage: Storage | null = null,
-  fromStorage = false
+  fromStorage = false,
 ): GameEngine {
   const clock = new FixedClock(now)
-  
+
   if (fromStorage && storage) {
     return GameEngine.fromStorage({ clock, storage })
   }
-  
+
   const base = createDefaultSave(now)
   return new GameEngine({
     clock,

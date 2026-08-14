@@ -91,7 +91,9 @@ describe('GameEngine integration', () => {
     expect(engine.getSnapshot().eventRuntime).toBeNull()
     expect(engine.exportSave().gtp).toBeGreaterThan(beforeGtp)
     expect(engine.exportSave().eventsCompleted).toBe(1)
-    const eventsMission = engine.getSnapshot().sessionMissions.missions.find((m) => m.id === 'events_1')
+    const eventsMission = engine
+      .getSnapshot()
+      .sessionMissions.missions.find((m) => m.id === 'events_1')
     expect(eventsMission?.progress).toBeGreaterThanOrEqual(1)
   })
 

@@ -7,25 +7,11 @@ export function assetUrl(path: string): string {
 
 /** Material body ids under `public/assets/P4_skins/<id>.png`. */
 export type P4MaterialId =
-  | 'basic'
-  | 'cosmic'
-  | 'diamond'
-  | 'gold'
-  | 'lava'
-  | 'obsidian'
-  | 'ooze'
-  | 'pink'
-  | 'stone'
-  | 'wood'
+  'basic' | 'cosmic' | 'diamond' | 'gold' | 'lava' | 'obsidian' | 'ooze' | 'pink' | 'stone' | 'wood'
 
 /** Shared face overlay step 1–6 from `public/assets/P4_expressions/`. */
 export type SharedExpressionId =
-  | 'expr_01'
-  | 'expr_02'
-  | 'expr_03'
-  | 'expr_04'
-  | 'expr_05'
-  | 'expr_06'
+  'expr_01' | 'expr_02' | 'expr_03' | 'expr_04' | 'expr_05' | 'expr_06'
 
 /** Legacy P1 folder slug (SVG pack fallback). */
 export type AuthoredSkinSlug = string

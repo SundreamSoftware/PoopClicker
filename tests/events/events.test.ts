@@ -39,6 +39,9 @@ describe('Events', () => {
     expect(engine.catchEventTarget(target.id).ok).toBe(true)
     const after = LargeNumber.deserialize(engine.exportSave().currentPP)
     const gained = after.sub(before)
-    expect(gained.toNumber()).toBeCloseTo(tapPower.mul(GOLDEN_SHOWER.catchTapMultiplier).toNumber(), 5)
+    expect(gained.toNumber()).toBeCloseTo(
+      tapPower.mul(GOLDEN_SHOWER.catchTapMultiplier).toNumber(),
+      5,
+    )
   })
 })

@@ -220,8 +220,7 @@ function GameScreen() {
     event.currentTarget.blur()
   }
 
-  const suppressTutorial =
-    (snap.offlineReward && !snap.offlineReward.claimed) || showDumpModal
+  const suppressTutorial = (snap.offlineReward && !snap.offlineReward.claimed) || showDumpModal
 
   return (
     <div className={`app-shell ${reducedMotion ? 'reduced' : ''}`}>
@@ -244,9 +243,7 @@ function GameScreen() {
           <div className="stat-row">
             <span className="stat-pill stat-cps">CPS {snap.rollingCps.toFixed(1)}</span>
             <span className="stat-pill">{formatNumber(snap.production.pps)} /s</span>
-            {snap.combo >= 2 && (
-              <span className="stat-pill">COMBO {Math.floor(snap.combo)}</span>
-            )}
+            {snap.combo >= 2 && <span className="stat-pill">COMBO {Math.floor(snap.combo)}</span>}
             <span className="stat-pill" title="Flush Power — permanent prestige for Royal Flush">
               <img src={UI_ASSETS.currency.flushPower} alt="" aria-hidden />
               {snap.save.flushPower} Flush
@@ -356,11 +353,7 @@ function GameScreen() {
                 )
               }
               return (
-                <button
-                  className="ghost-btn"
-                  onClick={handleStreakClaim}
-                  disabled={streakClaimed}
-                >
+                <button className="ghost-btn" onClick={handleStreakClaim} disabled={streakClaimed}>
                   {streakClaimed ? 'Claimed' : `Streak Day ${snap.save.dailyStreak || 0}`}
                 </button>
               )
@@ -426,7 +419,11 @@ function GameScreen() {
         />
       )}
 
-      {toast && <div className="toast" role="status" aria-live="polite">{toast}</div>}
+      {toast && (
+        <div className="toast" role="status" aria-live="polite">
+          {toast}
+        </div>
+      )}
 
       <nav className="nav-dock" aria-label="Main">
         {(

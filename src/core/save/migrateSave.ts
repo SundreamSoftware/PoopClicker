@@ -237,8 +237,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
         : 'none',
       rewardClaimed: asBool(dump.rewardClaimed),
       activeRuntime: sanitizeDailyDumpActiveRuntime(dump.activeRuntime),
-      weeklyBestWeekKey:
-        dump.weeklyBestWeekKey == null ? null : asString(dump.weeklyBestWeekKey),
+      weeklyBestWeekKey: dump.weeklyBestWeekKey == null ? null : asString(dump.weeklyBestWeekKey),
       weeklyBestScore: asNumber(dump.weeklyBestScore),
     },
     sessionMissions: sanitizeSessionMissions(raw.sessionMissions),

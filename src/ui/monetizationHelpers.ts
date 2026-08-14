@@ -24,10 +24,10 @@ export async function maybeShowInterstitial(
   ) {
     return
   }
-  
+
   if (context === 'flush') {
-    await new Promise(resolve => setTimeout(resolve, 1200))
+    await new Promise((resolve) => setTimeout(resolve, 1200))
   }
-  
+
   await ads.showInterstitial(context)
 }

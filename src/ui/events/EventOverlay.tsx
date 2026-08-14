@@ -133,7 +133,10 @@ function PlumberMeter({
         background: 'rgba(10, 16, 24, 0.35)',
       }}
     >
-      <div style={{ ...bannerStyle, pointerEvents: 'none', top: '18%' }} className="event-banner-ui">
+      <div
+        style={{ ...bannerStyle, pointerEvents: 'none', top: '18%' }}
+        className="event-banner-ui"
+      >
         <div style={{ fontWeight: 800 }}>PLUMBER INSPECTION</div>
         <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>
           Hold CPS between {bandMin}–{bandMax} · {formatDuration(remainingMs(runtime, now))}

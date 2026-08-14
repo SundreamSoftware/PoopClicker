@@ -79,18 +79,18 @@ describe('sessionMissions', () => {
     const before = engine.exportSave().gtp
     expect(engine.claimSessionMission('taps_50').ok).toBe(true)
     expect(engine.exportSave().gtp).toBe(before + 2)
-    expect(engine.exportSave().sessionMissions.missions.find((m) => m.id === 'taps_50')?.claimed).toBe(
-      true,
-    )
+    expect(
+      engine.exportSave().sessionMissions.missions.find((m) => m.id === 'taps_50')?.claimed,
+    ).toBe(true)
 
     const restarted = new GameEngine({
       clock,
       save: deserializeSave(storage.getItem('poop_clicker_save_v2')!, clock.now()),
       storage,
     })
-    expect(restarted.getSnapshot().sessionMissions.missions.find((m) => m.id === 'taps_50')?.claimed).toBe(
-      true,
-    )
+    expect(
+      restarted.getSnapshot().sessionMissions.missions.find((m) => m.id === 'taps_50')?.claimed,
+    ).toBe(true)
     const gtpAfterReload = restarted.exportSave().gtp
     expect(restarted.claimSessionMission('taps_50').ok).toBe(false)
     expect(restarted.exportSave().gtp).toBe(gtpAfterReload)
