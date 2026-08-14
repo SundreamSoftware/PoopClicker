@@ -41,24 +41,25 @@ test('launches, taps, persists currency, and navigates core panels', async ({ pa
   await skipTutorial(page)
   await expect(page.locator('.pp-value')).toHaveText(ppAfterTap)
 
-  await page.getByRole('button', { name: 'Shop' }).click()
+  const nav = page.locator('.nav-dock')
+  await nav.getByRole('button', { name: 'Shop' }).click()
   await expect(page.getByRole('heading', { name: 'Shop' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Generators' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Missions' }).click()
+  await nav.getByRole('button', { name: 'Missions' }).click()
   await expect(page.getByRole('heading', { name: 'Daily Challenges' })).toBeVisible()
   await expect(page.getByText(/Finish \(demo score\)/i)).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'Collection' }).click()
+  await nav.getByRole('button', { name: 'Collection' }).click()
   await expect(page.getByRole('heading', { name: 'Collection' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Settings' }).click()
+  await nav.getByRole('button', { name: 'Settings' }).click()
   await expect(page.getByText('Privacy choices')).toBeVisible()
   await expect(page.getByText('Notifications')).toBeVisible()
 })
 
 test('starts the real Daily Dump and prevents a fake completion path', async ({ page }) => {
-  await page.getByRole('button', { name: 'Missions' }).click()
+  await page.locator('.nav-dock').getByRole('button', { name: 'Missions' }).click()
   await page.getByRole('button', { name: 'Start' }).click()
 
   await expect(page.getByRole('dialog', { name: 'Daily Dump' })).toBeVisible()
@@ -67,7 +68,7 @@ test('starts the real Daily Dump and prevents a fake completion path', async ({ 
 })
 
 test('loads the optional store catalog without blocking gameplay', async ({ page }) => {
-  await page.getByRole('button', { name: 'Shop' }).click()
+  await page.locator('.nav-dock').getByRole('button', { name: 'Shop' }).click()
   await page.getByRole('button', { name: 'Store' }).click()
 
   await expect(page.getByText('Remove Ads', { exact: true }).first()).toBeVisible()
