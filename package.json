@@ -15,7 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "validate:content": "vitest run tests/content/contentValidation.test.ts",
     "simulate:economy": "vitest run tests/economy/economySimulation.test.ts",
-    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run validate:assets && npm run build",
+    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run validate:assets && npm run build",
     "preview": "vite preview",
     "cap:sync": "npm run build && npm run android:assets && npx cap sync android",
     "cap:apk": "npm run cap:sync && cd android && gradlew.bat assembleDebug",

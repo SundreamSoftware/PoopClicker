@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   INTERSTITIAL_AFTER_REWARDED_COOLDOWN_MS,
+  INTERSTITIAL_MAX_PER_SESSION,
+  INTERSTITIAL_MIN_INTERVAL_MS,
   INTERSTITIAL_MIN_SESSION_AGE_MS,
 } from '../../src/config/monetization'
 import { canShowInterstitial, StubAdService } from '../../src/services/ads'
@@ -56,6 +58,15 @@ describe('StubAdService interstitial', () => {
     expect(second).toEqual({ ok: false, reason: 'cancel' })
   })
 
+  it('caps interstitials at two per session even after the interval', async () => {
+    expect((await ads.showInterstitial('flush')).ok).toBe(true)
+    vi.advanceTimersByTime(INTERSTITIAL_MIN_INTERVAL_MS)
+    expect((await ads.showInterstitial('flush')).ok).toBe(true)
+    vi.advanceTimersByTime(INTERSTITIAL_MIN_INTERVAL_MS)
+    expect(await ads.showInterstitial('flush')).toEqual({ ok: false, reason: 'cancel' })
+    expect(ads.getSessionInterstitialCount()).toBe(2)
+  })
+
   it('returns duplicate while interstitial is in flight', async () => {
     ;(ads as unknown as { inFlight: boolean }).inFlight = true
     const result = await ads.showInterstitial('flush')
@@ -101,5 +112,26 @@ describe('canShowInterstitial guardrails', () => {
     expect(
       canShowInterstitial({ ...base, sessionAgeMs: INTERSTITIAL_MIN_SESSION_AGE_MS - 1 }),
     ).toBe(false)
+  })
+
+  it('blocks after the per-session interstitial cap', () => {
+    expect(
+      canShowInterstitial({ ...base, sessionInterstitialCount: INTERSTITIAL_MAX_PER_SESSION }),
+    ).toBe(false)
+  })
+
+  it('blocks when live config disables interstitials', async () => {
+    const { setLiveConfigForTests } = await import('../../src/config/liveConfig')
+    try {
+      setLiveConfigForTests({
+        version: 1,
+        season: null,
+        features: { interstitialsEnabled: false, iapEnabled: true },
+      })
+      expect(canShowInterstitial(base)).toBe(false)
+    } finally {
+      setLiveConfigForTests(null)
+    }
+    expect(canShowInterstitial(base)).toBe(true)
   })
 })

@@ -10,10 +10,9 @@ import { collectionPercent } from '../../core/systems/achievements'
 import { getSkinStatus, isSkinUnlockRequirementMet } from '../../core/systems/skins'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
-import { maybeShowInterstitial } from '../monetizationHelpers'
 
 export function CollectionPanel() {
-  const { engine, ads } = useGameContext()
+  const { engine } = useGameContext()
   const snap = useGameSnapshot()
   const [tab, setTab] = useState<'overview' | 'skins' | 'worlds'>('overview')
 
@@ -37,13 +36,17 @@ export function CollectionPanel() {
     <div className="panel">
       <h2>Collection</h2>
       <div className="tabs">
-        <button className={tab === 'overview' ? 'active' : ''} onClick={() => setTab('overview')}>
+        <button
+          type="button"
+          className={tab === 'overview' ? 'active' : ''}
+          onClick={() => setTab('overview')}
+        >
           Overview
         </button>
-        <button className={tab === 'skins' ? 'active' : ''} onClick={() => setTab('skins')}>
+        <button type="button" className={tab === 'skins' ? 'active' : ''} onClick={() => setTab('skins')}>
           Skins
         </button>
-        <button className={tab === 'worlds' ? 'active' : ''} onClick={() => setTab('worlds')}>
+        <button type="button" className={tab === 'worlds' ? 'active' : ''} onClick={() => setTab('worlds')}>
           Worlds
         </button>
       </div>
@@ -179,14 +182,8 @@ export function CollectionPanel() {
               <button
                 className="primary-btn"
                 disabled={!unlocked || snap.save.currentWorldId === world.id}
-                onClick={async () => {
-                  const result = engine.setWorld(world.id)
-                  if (!result.ok) return
-                  await maybeShowInterstitial(ads, 'world_change', {
-                    eventActive: Boolean(snap.eventRuntime),
-                    frenzyActive: snap.frenzyActive,
-                    removeAds: snap.save.removeAds,
-                  })
+                onClick={() => {
+                  engine.setWorld(world.id)
                 }}
               >
                 {snap.save.currentWorldId === world.id ? 'Current' : unlocked ? 'Enter' : 'Locked'}

@@ -3,7 +3,7 @@ import { WORLDS } from '../../content/worlds'
 import { ECONOMY, flushPowerGain, flushPowerMultiplier } from '../economy/formulas'
 import { LargeNumber } from '../numbers/LargeNumber'
 import type { PlayerSaveV2 } from '../save/saveSchema'
-import { toUtcDateKey } from '../time/TimeService'
+import { isUtcDateInFuture, toUtcDateKey } from '../time/TimeService'
 import { computeProduction } from './production'
 
 export interface FlushPreview {
@@ -25,7 +25,8 @@ export function milestoneEventBonus(save: PlayerSaveV2): number {
 export function buildFlushPreview(save: PlayerSaveV2, now: number): FlushPreview {
   const runPPEarned = LargeNumber.deserialize(save.runPPEarned)
   const today = toUtcDateKey(now)
-  const firstFlushBonusApplied = save.firstFlushOfDayClaimedDate !== today
+  const claimed = save.firstFlushOfDayClaimedDate
+  const firstFlushBonusApplied = claimed !== today && !isUtcDateInFuture(claimed, now)
   const gain = flushPowerGain(
     runPPEarned,
     firstFlushBonusApplied ? ECONOMY.firstFlushOfDayBonus : 0,

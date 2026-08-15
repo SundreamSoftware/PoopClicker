@@ -6,6 +6,8 @@ import type {
 } from '../types/gameTypes'
 
 export const SAVE_SCHEMA_VERSION = 2
+export const SAVE_STORAGE_KEY = 'poop_clicker_save_v2'
+export const SAVE_BACKUP_KEY = 'poop_clicker_save_v2_bak'
 
 export interface SerializedLargeNumber {
   m: number
@@ -55,6 +57,8 @@ export interface SessionMissionSaveEntry {
 
 export interface SessionMissionsSave {
   dateKey: string | null
+  sessionId: number
+  dailyClaimedGtp: number
   missions: SessionMissionSaveEntry[]
 }
 

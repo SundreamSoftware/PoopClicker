@@ -1,8 +1,16 @@
-import { type PointerEventHandler, type ReactNode, useEffect, useRef, useState } from 'react'
+import {
+  type PointerEventHandler,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { FLUSH_ANIM, UI_ASSETS, flushAnimFrameUrls } from '../content/assetPaths'
 import { formatDuration, formatMultiplier, formatNumber } from '../core/numbers/formatNumber'
 import { ECONOMY } from '../core/economy/formulas'
 import { canStartDailyDump } from '../core/systems/dailyDump'
+import { toUtcDateKey } from '../core/time/TimeService'
 import { tapHaptic } from '../native/haptics'
 import { GameProvider } from '../state/GameContext'
 import { useAudioSync } from '../state/useAudioSync'
@@ -14,7 +22,7 @@ import AudioManager from '../audio/AudioManager'
 import { maybePromptNotifications } from './notificationPrompt'
 import { PoopCharacter, resolveFaceFromTapState } from './character/PoopCharacter'
 import { FrameSequencePlayer } from './assets/FrameSequencePlayer'
-import { DailyDumpModal } from './daily/DailyDumpModal'
+import { confirmAbandonDailyDump, DailyDumpModal } from './daily/DailyDumpModal'
 import { ErrorBoundary } from './ErrorBoundary'
 import { EventOverlay } from './events/EventOverlay'
 import { TutorialOverlay } from './tutorial/TutorialOverlay'
@@ -25,6 +33,7 @@ import { FlushPanel } from './panels/FlushPanel'
 import { SettingsPanel } from './panels/SettingsPanel'
 import { ShopPanel } from './panels/ShopPanel'
 import { WorldStage } from './world/WorldStage'
+import { decideAndroidBack } from './androidBack'
 import { ModalHost } from './overlays/ModalHost'
 import './styles.css'
 
@@ -86,7 +95,7 @@ function GameScreen() {
   const eventActive = Boolean(snap.eventRuntime)
   const face = resolveFaceFromTapState(snap.tapState, { eventActive })
 
-  const flushFrames = flushAnimFrameUrls()
+  const flushFrames = useMemo(() => flushAnimFrameUrls(), [])
   const playFlushAnimation = () => {
     setTab('play')
     setFlushOpen(false)
@@ -101,6 +110,49 @@ function GameScreen() {
     }, duration)
   }
   const showDumpModal = snap.dailyDump.phase !== 'idle' || dumpModalOpen
+  const suppressTutorial = (snap.offlineReward && !snap.offlineReward.claimed) || showDumpModal
+
+  const applyAndroidBackRef = useRef(() => undefined as void)
+  applyAndroidBackRef.current = () => {
+    const pendingTutorialFlag = !suppressTutorial
+      ? ['core', 'generators', 'flush', 'daily', 'collection'].find(
+          (flag) => !snap.save.tutorialFlags[flag],
+        )
+      : undefined
+    const action = decideAndroidBack({
+      pendingTutorialFlag,
+      dumpOpen: showDumpModal,
+      dumpPhase: snap.dailyDump.phase,
+      flushOpen,
+      offlineUnclaimed: Boolean(snap.offlineReward && !snap.offlineReward.claimed),
+      tab,
+    })
+    if (action.type === 'ack_tutorial') {
+      engine.acknowledgeTutorial(action.flag)
+      return
+    }
+    if (action.type === 'close_dump') {
+      setDumpModalOpen(false)
+      return
+    }
+    if (action.type === 'claim_dump') {
+      const result = engine.claimDailyDumpReward()
+      if (result.ok) showToast(`Daily Dump complete! +${result.gtp} GTP`)
+      setDumpModalOpen(false)
+      return
+    }
+    if (action.type === 'confirm_abandon_dump') {
+      if (!confirmAbandonDailyDump()) return
+      engine.abandonDailyDump()
+      setDumpModalOpen(false)
+      return
+    }
+    if (action.type === 'close_flush') {
+      setFlushOpen(false)
+      return
+    }
+    if (action.type === 'go_play') setTab('play')
+  }
 
   // Escape key handling for modals
   useEffect(() => {
@@ -122,50 +174,28 @@ function GameScreen() {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [showDumpModal, flushOpen, snap.dailyDump.phase, snap.offlineReward, engine, tab])
 
-  // Capacitor back button handling
   useEffect(() => {
-    const loadApp = async () => {
-      try {
-        const { App } = await import('@capacitor/app')
-        const listener = await App.addListener('backButton', () => {
-          const activeTutorial =
-            !suppressTutorial &&
-            ['core', 'generators', 'flush', 'daily', 'collection'].find(
-              (flag) => !snap.save.tutorialFlags[flag],
-            )
-
-          if (activeTutorial) {
-            engine.acknowledgeTutorial(activeTutorial)
-          } else if (showDumpModal) {
-            if (snap.dailyDump.phase === 'idle') {
-              setDumpModalOpen(false)
-            } else if (snap.dailyDump.phase === 'finished') {
-              const result = engine.claimDailyDumpReward()
-              if (result.ok) {
-                showToast(`Daily Dump complete! +${result.gtp} GTP`)
-              }
-              setDumpModalOpen(false)
-            } else if (snap.dailyDump.phase === 'countdown' || snap.dailyDump.phase === 'running') {
-              engine.abandonDailyDump()
-              setDumpModalOpen(false)
-            }
-          } else if (flushOpen) {
-            setFlushOpen(false)
-          } else if (snap.offlineReward && !snap.offlineReward.claimed) {
-            // Block back on offline reward modal
-          } else if (tab !== 'play') {
-            setTab('play')
-          }
-        })
-        return () => {
-          listener.remove()
+    let cancelled = false
+    let handle: { remove: () => void | Promise<void> } | null = null
+    void import('@capacitor/app')
+      .then(({ App }) => {
+        if (cancelled) return undefined
+        return App.addListener('backButton', () => applyAndroidBackRef.current())
+      })
+      .then((listener) => {
+        if (!listener) return
+        if (cancelled) {
+          void listener.remove()
+          return
         }
-      } catch {
-        // @capacitor/app not available
-      }
+        handle = listener
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+      void handle?.remove()
     }
-    void loadApp()
-  }, [flushOpen, showDumpModal, snap.offlineReward, snap.dailyDump.phase, tab, engine])
+  }, [])
 
   // Toast helper
   const showToast = (message: string) => {
@@ -193,7 +223,7 @@ function GameScreen() {
     }
   }
 
-  const todayKey = new Date().toISOString().split('T')[0]
+  const todayKey = toUtcDateKey(Date.now())
   const streakClaimed = snap.save.lastDailyClaim === todayKey
 
   const prevCanFlush = useRef(snap.canFlush)
@@ -220,11 +250,9 @@ function GameScreen() {
     event.currentTarget.blur()
   }
 
-  const suppressTutorial = (snap.offlineReward && !snap.offlineReward.claimed) || showDumpModal
-
   return (
     <div className={`app-shell ${reducedMotion ? 'reduced' : ''}`}>
-      {!suppressTutorial && <TutorialOverlay />}
+      {!suppressTutorial && <TutorialOverlay onGoToShop={() => setTab('shop')} />}
 
       <header className="top-bar">
         <div className="currency-stack currency-stack-main">
@@ -328,6 +356,16 @@ function GameScreen() {
             </div>
           </WorldStage>
 
+          {snap.nextGoals[0] && (
+            <div className="goal-card play-next-goal" aria-label="Next objective">
+              <div className="goal-title">{snap.nextGoals[0].title}</div>
+              <div className="goal-sub">{snap.nextGoals[0].subtitle}</div>
+              <div className="progress" aria-hidden>
+                <span style={{ width: `${Math.round(snap.nextGoals[0].progress * 100)}%` }} />
+              </div>
+            </div>
+          )}
+
           <div className="play-actions">
             <button
               className={`primary-btn ${snap.canFlush ? 'flush-ready-pulse' : ''}`}
@@ -370,17 +408,21 @@ function GameScreen() {
       {tab === 'collection' && <CollectionPanel />}
       {tab === 'settings' && <SettingsPanel />}
 
-      {flushOpen && (
-        <div className="modal-backdrop modal-layer-sheet" role="dialog" aria-modal="true">
-          <FlushPanel
-            canFlush={snap.canFlush}
-            onClose={() => {
-              setFlushOpen(false)
-            }}
-            onFlushed={playFlushAnimation}
-          />
-        </div>
-      )}
+      <ModalHost
+        open={flushOpen}
+        onClose={() => setFlushOpen(false)}
+        ariaLabel="Flush & Royal Flush"
+        hideChrome
+        layerClass="modal-layer-sheet"
+      >
+        <FlushPanel
+          canFlush={snap.canFlush}
+          onClose={() => {
+            setFlushOpen(false)
+          }}
+          onFlushed={playFlushAnimation}
+        />
+      </ModalHost>
 
       {showDumpModal && (
         <DailyDumpModal
@@ -392,6 +434,7 @@ function GameScreen() {
           onTap={() => {
             engine.tapDailyDumpChallenge()
             if (snap.save.settings.sfx) AudioManager.play('tap_fart')
+            if (snap.save.settings.haptics) void tapHaptic(false)
           }}
           onClaim={() => {
             const result = engine.claimDailyDumpReward()
@@ -438,6 +481,7 @@ function GameScreen() {
         ).map(([id, label]) => (
           <button
             key={id}
+            type="button"
             className={tab === id ? 'active' : ''}
             onClick={() => setTab(id)}
             aria-current={tab === id ? 'page' : undefined}

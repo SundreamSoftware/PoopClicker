@@ -19,6 +19,7 @@ export async function maybeShowInterstitial(
       frenzyActive: opts.frenzyActive,
       removeAds: opts.removeAds,
       lastRewardedAt: getAdLastRewardedAt(ads),
+      sessionInterstitialCount: ads.getSessionInterstitialCount?.() ?? 0,
       now,
     })
   ) {

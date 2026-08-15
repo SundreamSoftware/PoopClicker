@@ -8,6 +8,7 @@ import {
   createIdleDailyDumpRuntime,
   DAILY_DUMP,
   gtpForTier,
+  nextDumpTierProgress,
   restoreDailyDumpRuntime,
   serializeDailyDumpRuntime,
   startDailyDumpRuntime,
@@ -42,10 +43,13 @@ describe('dailyDump', () => {
   })
 
   it('maps tiers and gtp rewards', () => {
-    expect(tierFromScore(24)).toBe('none')
-    expect(tierFromScore(25)).toBe('bronze')
-    expect(tierFromScore(120)).toBe('diamond')
+    expect(tierFromScore(59)).toBe('none')
+    expect(tierFromScore(60)).toBe('bronze')
+    expect(tierFromScore(240)).toBe('diamond')
     expect(gtpForTier('gold')).toBe(25)
+    expect(nextDumpTierProgress(0)).toEqual({ current: 'none', next: 'bronze', remaining: 60 })
+    expect(nextDumpTierProgress(60).current).toBe('bronze')
+    expect(nextDumpTierProgress(240)).toEqual({ current: 'diamond', next: null, remaining: 0 })
   })
 
   it('allows one attempt per UTC day unless resumable runtime exists', () => {
@@ -57,6 +61,9 @@ describe('dailyDump', () => {
       dailyDumpState: { ...save.dailyDumpState, lastPlayedDate: '2026-08-08', activeRuntime: null },
     }
     expect(canStartDailyDump(blocked, now)).toBe(false)
+
+    const rolledBack = Date.UTC(2026, 7, 7, 12)
+    expect(canStartDailyDump(blocked, rolledBack)).toBe(false)
 
     const runtime = startDailyDumpRuntime(now)
     const resumable = {

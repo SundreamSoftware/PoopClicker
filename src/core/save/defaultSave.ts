@@ -58,6 +58,8 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
     },
     sessionMissions: {
       dateKey: null,
+      sessionId: 0,
+      dailyClaimedGtp: 0,
       missions: [],
     },
     rewardedCooldowns: {

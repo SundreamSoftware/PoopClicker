@@ -1,21 +1,24 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Capacitor / Cordova bridge — required when minifyEnabled is true.
+-keep class com.getcapacitor.** { *; }
+-keep class org.apache.cordova.** { *; }
+-dontwarn com.getcapacitor.**
+-keep public class * extends com.getcapacitor.Plugin
+-keepclassmembers class * {
+    @com.getcapacitor.annotation.CapacitorPlugin *;
+    @com.getcapacitor.PluginMethod *;
+}
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Play Billing, AdMob, Firebase used by native plugins.
+-keep class com.android.vending.billing.** { *; }
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.android.gms.internal.ads.** { *; }
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+-keepattributes *Annotation*
+-keepattributes JavascriptInterface
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

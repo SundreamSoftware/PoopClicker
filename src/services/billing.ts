@@ -6,7 +6,9 @@ import {
   type IapGrant,
   type IapProductDef,
 } from '../content/iapProducts'
+import { getLiveConfig } from '../config/liveConfig'
 import type { PlayerSaveV2 } from '../core/save/saveSchema'
+import { trackProduct } from './analytics'
 
 export type { IapGrant, IapProductDef }
 export { IAP_PRODUCTS, IAP_BY_ID, IAP_BY_STORE_ID }
@@ -35,13 +37,19 @@ export interface Entitlements {
   ownedProductIds: string[]
 }
 
+export type IapGrantSource = 'purchase' | 'restore'
+
 export interface BillingService {
   init(): Promise<void>
+  /** False when native store failed to initialize. Web/test stubs stay available. */
+  isAvailable(): boolean
   loadProducts(): Promise<StoreProduct[]>
   /** @deprecated alias of loadProducts */
   getCatalog(): Promise<StoreProduct[]>
   purchase(productId: string): Promise<PurchaseResult>
   restore(): Promise<PurchaseResult[]>
+  /** Silent Play entitlement sync — getPurchases only, no restore dialog. */
+  syncEntitlements(): Promise<PurchaseResult[]>
   getEntitlements(): Entitlements
 }
 
@@ -97,6 +105,22 @@ function isNonConsumable(kind: IapProductDef['kind']): boolean {
   return kind === 'non_consumable' || kind === 'bundle'
 }
 
+export function isPurchasedAndroidState(state: string | number | undefined | null): boolean {
+  if (state == null || state === '') return true
+  const normalized = String(state).toUpperCase()
+  return normalized === 'PURCHASED' || normalized === '1'
+}
+
+export function restorableProductFromPurchase(purchase: {
+  productIdentifier: string
+  purchaseState?: string | number
+}): IapProductDef | null {
+  if (!isPurchasedAndroidState(purchase.purchaseState)) return null
+  const def = IAP_BY_STORE_ID[purchase.productIdentifier]
+  if (!def || def.kind === 'consumable') return null
+  return def
+}
+
 /** Deterministic billing for web/dev/tests. */
 export class StubBillingService implements BillingService {
   private ready = false
@@ -104,6 +128,10 @@ export class StubBillingService implements BillingService {
 
   async init(): Promise<void> {
     this.ready = true
+  }
+
+  isAvailable(): boolean {
+    return true
   }
 
   async loadProducts(): Promise<StoreProduct[]> {
@@ -124,24 +152,47 @@ export class StubBillingService implements BillingService {
   }
 
   async purchase(productId: string): Promise<PurchaseResult> {
+    trackProduct('iap_start', { productId })
+    if (!getLiveConfig().features.iapEnabled) {
+      trackProduct('iap_fail', { productId, reason: 'unavailable' })
+      return { ok: false, reason: 'unavailable' }
+    }
     const def = IAP_BY_ID[productId]
-    if (!def) return { ok: false, reason: 'not_found' }
+    if (!def) {
+      trackProduct('iap_fail', { productId, reason: 'not_found' })
+      return { ok: false, reason: 'not_found' }
+    }
     if (isNonConsumable(def.kind) && this.ownedStoreIds.has(def.storeId)) {
+      trackProduct('iap_fail', { productId, reason: 'already_owned' })
       return { ok: false, productId, reason: 'already_owned' }
     }
     if (isNonConsumable(def.kind)) {
       this.ownedStoreIds.add(def.storeId)
     }
+    trackProduct('iap_success', { productId })
     return { ok: true, productId, grant: def.grants }
   }
 
   async restore(): Promise<PurchaseResult[]> {
-    return IAP_PRODUCTS.filter((def) => this.ownedStoreIds.has(def.storeId)).map((def) => ({
+    return this.syncEntitlements()
+  }
+
+  async syncEntitlements(): Promise<PurchaseResult[]> {
+    return IAP_PRODUCTS.filter(
+      (def) => isNonConsumable(def.kind) && this.ownedStoreIds.has(def.storeId),
+    ).map((def) => ({
       ok: true,
       productId: def.id,
       grant: def.grants,
     }))
   }
+}
+
+type NativePurchase = {
+  productIdentifier: string
+  purchaseState?: string | number
+  isAcknowledged?: boolean
+  purchaseToken?: string
 }
 
 type NativePurchasesLike = {
@@ -152,15 +203,17 @@ type NativePurchasesLike = {
   purchaseProduct: (opts: {
     productIdentifier: string
     isConsumable?: boolean
-  }) => Promise<{ productIdentifier: string }>
-  getPurchases: () => Promise<{ purchases: Array<{ productIdentifier: string }> }>
+  }) => Promise<NativePurchase>
+  getPurchases: () => Promise<{ purchases: NativePurchase[] }>
   restorePurchases: () => Promise<void>
+  acknowledgePurchase?: (opts: { purchaseToken: string }) => Promise<void>
+  consumePurchase?: (opts: { purchaseToken: string }) => Promise<void>
 }
 
 export class CapacitorBillingService implements BillingService {
   private native: NativePurchasesLike | null = null
-  private usingStub = false
-  private readonly stub = new StubBillingService()
+  private initialized = false
+  private available = false
   private cachedEntitlements: Entitlements | null = null
 
   async init(): Promise<void> {
@@ -171,17 +224,28 @@ export class CapacitorBillingService implements BillingService {
       if (!supported.isBillingSupported) {
         throw new Error('billing unsupported')
       }
-      this.usingStub = false
+      this.available = true
     } catch (err) {
-      console.warn('[billing] native purchases unavailable; using StubBillingService', err)
-      this.usingStub = true
-      await this.stub.init()
+      console.warn('[billing] native purchases unavailable; store locked closed', err)
+      this.native = null
+      this.available = false
+    } finally {
+      this.initialized = true
     }
   }
 
+  isAvailable(): boolean {
+    return this.available
+  }
+
+  private async ensureReady(): Promise<boolean> {
+    if (!this.initialized) await this.init()
+    return this.available && this.native != null
+  }
+
   async loadProducts(): Promise<StoreProduct[]> {
-    if (this.usingStub || !this.native) {
-      return this.stub.loadProducts()
+    if (!(await this.ensureReady()) || !this.native) {
+      return []
     }
 
     try {
@@ -190,13 +254,14 @@ export class CapacitorBillingService implements BillingService {
         productType: 'inapp',
       })
       const byStoreId = new Map(products.map((p) => [p.identifier, p]))
-      return IAP_PRODUCTS.map((def) => {
+      return IAP_PRODUCTS.flatMap((def) => {
         const store = byStoreId.get(def.storeId)
-        return toStoreProduct(def, store?.priceString ?? def.displayPrice)
+        if (!store) return []
+        return [toStoreProduct(def, store.priceString)]
       })
     } catch (err) {
       console.warn('[billing] getProducts failed', err)
-      return IAP_PRODUCTS.map((def) => toStoreProduct(def))
+      return []
     }
   }
 
@@ -205,10 +270,7 @@ export class CapacitorBillingService implements BillingService {
   }
 
   getEntitlements(): Entitlements {
-    if (this.cachedEntitlements) {
-      return this.cachedEntitlements
-    }
-    return this.stub.getEntitlements()
+    return this.cachedEntitlements ?? { removeAds: false, ownedProductIds: [] }
   }
 
   private updateEntitlements(productIds: string[]): void {
@@ -218,63 +280,117 @@ export class CapacitorBillingService implements BillingService {
   }
 
   async purchase(productId: string): Promise<PurchaseResult> {
-    if (this.usingStub || !this.native) {
-      return this.stub.purchase(productId)
+    trackProduct('iap_start', { productId })
+    if (!getLiveConfig().features.iapEnabled) {
+      trackProduct('iap_fail', { productId, reason: 'unavailable' })
+      return { ok: false, reason: 'unavailable' }
+    }
+    if (!(await this.ensureReady()) || !this.native) {
+      trackProduct('iap_fail', { productId, reason: 'unavailable' })
+      return { ok: false, reason: 'unavailable' }
     }
 
     const def = IAP_BY_ID[productId]
-    if (!def) return { ok: false, reason: 'not_found' }
+    if (!def) {
+      trackProduct('iap_fail', { productId, reason: 'not_found' })
+      return { ok: false, reason: 'not_found' }
+    }
 
     try {
-      await this.native.purchaseProduct({
+      const txn = await this.native.purchaseProduct({
         productIdentifier: def.storeId,
         isConsumable: def.kind === 'consumable',
       })
+      if (!isPurchasedAndroidState(txn.purchaseState)) {
+        trackProduct('iap_fail', { productId, reason: 'pending' })
+        return { ok: false, productId, reason: 'pending' }
+      }
+      await this.finishNativeTransaction(txn, def)
 
       if (isNonConsumable(def.kind)) {
         const current = this.cachedEntitlements?.ownedProductIds ?? []
         this.updateEntitlements([...current, productId])
       }
 
+      trackProduct('iap_success', { productId })
       return { ok: true, productId, grant: def.grants }
     } catch (err) {
       const message = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()
       if (message.includes('cancel') || message.includes('user')) {
+        trackProduct('iap_fail', { productId, reason: 'cancel' })
         return { ok: false, productId, reason: 'cancel' }
       }
       if (message.includes('already') || message.includes('owned')) {
+        trackProduct('iap_fail', { productId, reason: 'already_owned' })
         return { ok: false, productId, reason: 'already_owned' }
       }
       if (message.includes('pending')) {
+        trackProduct('iap_fail', { productId, reason: 'pending' })
         return { ok: false, productId, reason: 'pending' }
       }
+      trackProduct('iap_fail', { productId, reason: 'error' })
       return { ok: false, productId, reason: 'error' }
     }
   }
 
   async restore(): Promise<PurchaseResult[]> {
-    if (this.usingStub || !this.native) {
-      return this.stub.restore()
+    if (!(await this.ensureReady()) || !this.native) {
+      return [{ ok: false, reason: 'unavailable' }]
     }
 
     try {
       await this.native.restorePurchases()
-      const { purchases } = await this.native.getPurchases()
-      const results: PurchaseResult[] = []
-      const productIds: string[] = []
-      for (const purchase of purchases) {
-        const def = IAP_BY_STORE_ID[purchase.productIdentifier]
-        if (!def) continue
-        results.push({ ok: true, productId: def.id, grant: def.grants })
-        if (isNonConsumable(def.kind)) {
-          productIds.push(def.id)
-        }
-      }
-      this.updateEntitlements(productIds)
-      return results
+      return this.collectRestorablePurchases()
     } catch (err) {
       console.warn('[billing] restore failed', err)
       return []
+    }
+  }
+
+  async syncEntitlements(): Promise<PurchaseResult[]> {
+    if (!(await this.ensureReady()) || !this.native) {
+      return []
+    }
+    try {
+      return this.collectRestorablePurchases()
+    } catch (err) {
+      console.warn('[billing] entitlement sync failed', err)
+      return []
+    }
+  }
+
+  private async collectRestorablePurchases(): Promise<PurchaseResult[]> {
+    if (!this.native) return []
+    const { purchases } = await this.native.getPurchases()
+    const results: PurchaseResult[] = []
+    const productIds: string[] = []
+    for (const purchase of purchases) {
+      const def = restorableProductFromPurchase(purchase)
+      if (!def) continue
+      await this.finishNativeTransaction(purchase, def)
+      results.push({ ok: true, productId: def.id, grant: def.grants })
+      productIds.push(def.id)
+    }
+    this.updateEntitlements(productIds)
+    return results
+  }
+
+  private async finishNativeTransaction(
+    txn: NativePurchase,
+    def: IapProductDef,
+  ): Promise<void> {
+    const token = txn.purchaseToken
+    if (!token || !this.native) return
+    try {
+      if (def.kind === 'consumable' && this.native.consumePurchase) {
+        await this.native.consumePurchase({ purchaseToken: token })
+        return
+      }
+      if (txn.isAcknowledged === false && this.native.acknowledgePurchase) {
+        await this.native.acknowledgePurchase({ purchaseToken: token })
+      }
+    } catch (err) {
+      console.warn('[billing] finish transaction failed', err)
     }
   }
 }

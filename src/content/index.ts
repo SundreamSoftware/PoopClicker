@@ -5,7 +5,13 @@ export { WORLDS, WORLD_BY_ID } from './worlds'
 export { ACHIEVEMENTS, ACHIEVEMENT_BY_ID } from './achievements'
 export { CHALLENGE_TEMPLATES, CHALLENGE_BY_ID } from './challenges'
 export { EVENTS, EVENT_BY_ID } from './events'
-export { ROYAL_FLUSH_NODES, ROYAL_FLUSH_BY_ID } from './royalFlush'
+export {
+  ROYAL_FLUSH_NODES,
+  ROYAL_FLUSH_BY_ID,
+  ROYAL_FLUSH_CATEGORY_ORDER,
+  ROYAL_FLUSH_CATEGORY_LABEL,
+  royalFlushMissingPrerequisiteNames,
+} from './royalFlush'
 export { FLUSH_MILESTONES } from './flushMilestones'
 export { ASSET_MANIFEST } from './assetManifest'
 export {

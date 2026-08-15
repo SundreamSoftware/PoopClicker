@@ -51,7 +51,7 @@ export function FrameSequencePlayer({
       img.decoding = 'async'
       img.src = src
     }
-  }, [framesKey, frames])
+  }, [framesKey])
 
   useEffect(() => {
     if (count <= 0) return

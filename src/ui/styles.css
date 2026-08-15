@@ -431,7 +431,7 @@ button:focus:not(:focus-visible) {
   border-radius: 17px;
   padding: 7px 3px 6px;
   min-height: 56px;
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   font-weight: 900;
   letter-spacing: 0.02em;
   transition:
@@ -827,6 +827,7 @@ button:disabled {
   background: transparent;
   border-radius: 12px;
   padding: 9px 11px;
+  min-height: 44px;
   font-size: 0.75rem;
   font-weight: 800;
   color: #52646c;
@@ -931,6 +932,23 @@ button:disabled {
 
 .modal-layer-tutorial {
   z-index: 1000;
+}
+
+.tutorial-pass-through {
+  pointer-events: none;
+  background: transparent;
+  align-items: flex-start;
+  padding-top: max(12px, env(safe-area-inset-top));
+}
+
+.tutorial-pass-through .tutorial-card {
+  pointer-events: auto;
+  margin: 8px auto 0;
+  max-width: min(380px, calc(100vw - 24px));
+}
+
+.play-next-goal {
+  margin: 8px 12px 0;
 }
 
 .modal-layer-dump {
@@ -1059,7 +1077,7 @@ a:focus-visible,
   }
 
   .nav-dock button {
-    font-size: 0.5rem;
+    font-size: 0.62rem;
     min-height: 52px;
     padding-inline: 1px;
   }

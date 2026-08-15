@@ -2,7 +2,7 @@ import { LargeNumber } from '../numbers/LargeNumber'
 
 export const ECONOMY = {
   tapBase: 1,
-  firstFlushRequirement: 1_000_000,
+  firstFlushRequirement: 25_000,
   flushPowerBase: 10,
   flushPowerExponent: 0.33,
   flushPowerProductionBonus: 0.05,

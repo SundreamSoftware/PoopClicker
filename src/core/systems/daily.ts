@@ -1,7 +1,12 @@
 import { CHALLENGE_TEMPLATES } from '../../content/challenges'
 import { LargeNumber } from '../numbers/LargeNumber'
 import type { PlayerSaveV2 } from '../save/saveSchema'
-import { daysBetweenUtc, toUtcDateKey } from '../time/TimeService'
+import {
+  daysBetweenUtc,
+  isUtcDateInFuture,
+  safeElapsed,
+  toUtcDateKey,
+} from '../time/TimeService'
 import type {
   ChallengeCategory,
   ChallengeTemplate,
@@ -174,6 +179,7 @@ export function settleUnclaimedDailies(
 export function ensureDailyState(save: PlayerSaveV2, now: number, pps: LargeNumber): PlayerSaveV2 {
   const today = toUtcDateKey(now)
   if (save.dailyChallengeDate === today && save.dailyChallenges.length === 3) return save
+  if (isUtcDateInFuture(save.dailyChallengeDate, now)) return save
   const settled = settleUnclaimedDailies(save, now)
   return {
     ...settled.save,
@@ -371,7 +377,10 @@ export function generateBathroomBreakCharges(
   intervalMs: number,
   maxCharges: number,
 ): PlayerSaveV2 {
-  const elapsed = Math.max(0, now - save.lastBathroomBreakGeneration)
+  if (save.lastBathroomBreakGeneration > now) {
+    return { ...save, lastBathroomBreakGeneration: now }
+  }
+  const elapsed = safeElapsed(save.lastBathroomBreakGeneration, now, intervalMs * maxCharges)
   const gained = Math.floor(elapsed / intervalMs)
   if (gained <= 0) return save
   const charges = Math.min(maxCharges, save.bathroomBreakCharges + gained)

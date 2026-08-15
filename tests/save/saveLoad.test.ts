@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { GameEngine } from '../../src/core/GameEngine'
 import { createDefaultSave } from '../../src/core/save/defaultSave'
-import { deserializeSave, serializeSave } from '../../src/core/save/migrateSave'
+import {
+  deserializeSave,
+  isImportableSave,
+  loadSaveFromStorage,
+  serializeSave,
+  writeSaveRecord,
+} from '../../src/core/save/migrateSave'
+import { SAVE_BACKUP_KEY, SAVE_STORAGE_KEY } from '../../src/core/save/saveSchema'
 import { ECONOMY } from '../../src/core/economy/formulas'
 import { FixedClock } from '../../src/core/time/TimeService'
 
@@ -54,6 +61,50 @@ describe('Save/Load vertical slice', () => {
     const again = deserializeSave(serializeSave(save))
     expect(again.schemaVersion).toBe(save.schemaVersion)
     expect(again.ownedSkins).toEqual(save.ownedSkins)
+  })
+
+  it('restores from backup when the primary save is corrupt', () => {
+    const now = Date.UTC(2026, 7, 8, 12)
+    const memory = new Map<string, string>()
+    const storage = {
+      getItem: (k: string) => memory.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        memory.set(k, v)
+      },
+      removeItem: (k: string) => {
+        memory.delete(k)
+      },
+      clear: () => memory.clear(),
+      key: () => null,
+      length: 0,
+    } as Storage
+
+    const first = createDefaultSave(now)
+    first.gtp = 70
+    writeSaveRecord(storage, serializeSave(first), SAVE_STORAGE_KEY)
+    const good = { ...first, gtp: 77, saveRevision: first.saveRevision + 1 }
+    writeSaveRecord(storage, serializeSave(good), SAVE_STORAGE_KEY)
+    storage.setItem(SAVE_STORAGE_KEY, '{not-json')
+    expect(storage.getItem(SAVE_BACKUP_KEY)).toBeTruthy()
+
+    const restored = loadSaveFromStorage(storage, now, SAVE_STORAGE_KEY)
+    expect(restored.gtp).toBe(70)
+  })
+
+  it('rejects imports that are not save documents', () => {
+    const engine = new GameEngine({
+      clock: new FixedClock(Date.UTC(2026, 7, 8, 12)),
+      save: { ...createDefaultSave(), gtp: 40 },
+      storage: null,
+    })
+    expect(isImportableSave(null)).toBe(false)
+    expect(isImportableSave([])).toBe(false)
+    expect(isImportableSave({ foo: 1 })).toBe(false)
+    expect(isImportableSave({ schemaVersion: 2, gtp: 9 })).toBe(true)
+    expect(engine.importSave({ foo: 1 }).ok).toBe(false)
+    expect(engine.exportSave().gtp).toBe(40)
+    expect(engine.importSave({ schemaVersion: 2, gtp: 9 }).ok).toBe(true)
+    expect(engine.exportSave().gtp).toBe(9)
   })
 })
 

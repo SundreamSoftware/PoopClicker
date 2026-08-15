@@ -4,8 +4,10 @@ import { createDefaultSave } from '../../src/core/save/defaultSave'
 import { deserializeSave } from '../../src/core/save/migrateSave'
 import { FixedClock } from '../../src/core/time/TimeService'
 import {
+  SESSION_MISSION_DAILY_GTP_CAP,
   claimSessionMission,
   createSessionMissions,
+  ensureSessionMissions,
   ensureSessionMissionsForDay,
   progressSessionMission,
   restoreSessionMissions,
@@ -42,22 +44,27 @@ describe('sessionMissions', () => {
     expect(claimed.ok).toBe(true)
     state = claimed.state
 
+    const rolledBack = ensureSessionMissionsForDay(state, '2026-08-07')
+    expect(rolledBack.dateKey).toBe('2026-08-08')
+    expect(rolledBack.dailyClaimedGtp).toBe(state.dailyClaimedGtp)
+
     const nextDay = ensureSessionMissionsForDay(state, '2026-08-09')
     expect(nextDay.dateKey).toBe('2026-08-09')
+    expect(nextDay.dailyClaimedGtp).toBe(0)
     const taps = nextDay.missions.find((m) => m.id === 'taps_50')
     expect(taps?.progress).toBe(0)
     expect(taps?.claimed).toBe(false)
   })
 
   it('same-day restore keeps claimed and progress', () => {
-    let state = createSessionMissions('2026-08-08')
+    let state = createSessionMissions('2026-08-08', 1, 0)
     state = progressSessionMission(state, 'taps_50', 50)
     state = claimSessionMission(state, 'taps_50').state
     state = progressSessionMission(state, 'crits_3', 2)
 
     const saved = serializeSessionMissions(state)
     const restored = restoreSessionMissions(saved)
-    const ensured = ensureSessionMissionsForDay(restored, '2026-08-08')
+    const ensured = ensureSessionMissions(restored, '2026-08-08', 1)
 
     expect(ensured.dateKey).toBe('2026-08-08')
     expect(ensured.missions.find((m) => m.id === 'taps_50')?.claimed).toBe(true)
@@ -65,7 +72,29 @@ describe('sessionMissions', () => {
     expect(ensured.missions.find((m) => m.id === 'events_1')?.progress).toBe(0)
   })
 
-  it('engine relaunch same day cannot re-farm claimed mission GTP', () => {
+  it('new session same day resets missions but keeps the daily GTP cap', () => {
+    let state = createSessionMissions('2026-08-08', 1, 0)
+    state = progressSessionMission(state, 'taps_50', 50)
+    state = claimSessionMission(state, 'taps_50').state
+    expect(state.dailyClaimedGtp).toBe(2)
+
+    const nextSession = ensureSessionMissions(state, '2026-08-08', 2)
+    expect(nextSession.sessionId).toBe(2)
+    expect(nextSession.dailyClaimedGtp).toBe(2)
+    expect(nextSession.missions.find((m) => m.id === 'taps_50')?.claimed).toBe(false)
+    expect(nextSession.missions.find((m) => m.id === 'taps_50')?.progress).toBe(0)
+  })
+
+  it('stops granting GTP after the daily cap', () => {
+    let state = createSessionMissions('2026-08-08', 1, SESSION_MISSION_DAILY_GTP_CAP)
+    state = progressSessionMission(state, 'taps_50', 50)
+    const result = claimSessionMission(state, 'taps_50')
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('daily_cap')
+    expect(result.reward).toBe(0)
+  })
+
+  it('engine relaunch same day refreshes missions but cannot exceed the daily GTP cap', () => {
     const now = Date.UTC(2026, 7, 8, 12)
     const clock = new FixedClock(now)
     const storage = new MapStorage()
@@ -79,24 +108,24 @@ describe('sessionMissions', () => {
     const before = engine.exportSave().gtp
     expect(engine.claimSessionMission('taps_50').ok).toBe(true)
     expect(engine.exportSave().gtp).toBe(before + 2)
-    expect(
-      engine.exportSave().sessionMissions.missions.find((m) => m.id === 'taps_50')?.claimed,
-    ).toBe(true)
+    engine.persistImmediate()
 
     const restarted = new GameEngine({
       clock,
       save: deserializeSave(storage.getItem('poop_clicker_save_v2')!, clock.now()),
       storage,
     })
-    expect(
-      restarted.getSnapshot().sessionMissions.missions.find((m) => m.id === 'taps_50')?.claimed,
-    ).toBe(true)
-    const gtpAfterReload = restarted.exportSave().gtp
-    expect(restarted.claimSessionMission('taps_50').ok).toBe(false)
-    expect(restarted.exportSave().gtp).toBe(gtpAfterReload)
+    const taps = restarted.getSnapshot().sessionMissions.missions.find((m) => m.id === 'taps_50')
+    expect(taps?.claimed).toBe(false)
+    expect(taps?.progress).toBe(0)
+    expect(restarted.getSnapshot().sessionMissions.dailyClaimedGtp).toBe(2)
+
+    for (let i = 0; i < 50; i++) restarted.tap()
+    expect(restarted.claimSessionMission('taps_50').ok).toBe(true)
+    expect(restarted.getSnapshot().sessionMissions.dailyClaimedGtp).toBe(4)
   })
 
-  it('engine day rollover resets missions after relaunch', () => {
+  it('engine day rollover resets missions and the daily GTP cap after relaunch', () => {
     const day1 = Date.UTC(2026, 7, 8, 12)
     const clock = new FixedClock(day1)
     const storage = new MapStorage()
@@ -118,6 +147,7 @@ describe('sessionMissions', () => {
     })
     const taps = nextDay.getSnapshot().sessionMissions.missions.find((m) => m.id === 'taps_50')
     expect(nextDay.exportSave().sessionMissions.dateKey).toBe('2026-08-09')
+    expect(nextDay.getSnapshot().sessionMissions.dailyClaimedGtp).toBe(0)
     expect(taps?.claimed).toBe(false)
     expect(taps?.progress).toBe(0)
   })

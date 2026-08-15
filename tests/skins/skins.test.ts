@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createTestEngine } from '../../src/core/GameEngine'
 import { createDefaultSave } from '../../src/core/save/defaultSave'
 import { deserializeSave, serializeSave } from '../../src/core/save/migrateSave'
+import { getSkinStatus, isSkinUnlockRequirementMet } from '../../src/core/systems/skins'
 
 describe('Skins', () => {
   it('purchases with GTP and keeps ownership after spending GTP', () => {
@@ -40,5 +41,32 @@ describe('Skins', () => {
 
   it('default save owns classic only', () => {
     expect(createDefaultSave().ownedSkins).toEqual(['classic_poop'])
+  })
+
+  it('reports equipped, purchasable, and unmet achievement skins distinctly', () => {
+    const save = createDefaultSave()
+    expect(getSkinStatus(save, 'classic_poop')).toBe('equipped')
+    expect(getSkinStatus(save, 'coffee_poop')).toBe('purchasable')
+    expect(getSkinStatus(save, 'missing_skin')).toBe('locked')
+    expect(getSkinStatus(save, 'corny_poop')).toBe('achievement_locked')
+    expect(isSkinUnlockRequirementMet(save, 'corny_poop')).toBe(false)
+  })
+
+  it('treats met flush, world, and streak requirements as owned', () => {
+    const locked = createDefaultSave()
+    expect(getSkinStatus(locked, 'wizard_poop')).toBe('locked')
+    expect(getSkinStatus(locked, 'office_poop')).toBe('locked')
+    expect(getSkinStatus(locked, 'cowboy_poop')).toBe('locked')
+
+    const unlocked = {
+      ...createDefaultSave(),
+      flushCount: 5,
+      unlockedWorlds: ['home_bathroom', 'office_toilet'],
+      dailyStreak: 3,
+    }
+    expect(isSkinUnlockRequirementMet(unlocked, 'wizard_poop')).toBe(true)
+    expect(getSkinStatus(unlocked, 'wizard_poop')).toBe('owned')
+    expect(getSkinStatus(unlocked, 'office_poop')).toBe('owned')
+    expect(getSkinStatus(unlocked, 'cowboy_poop')).toBe('owned')
   })
 })

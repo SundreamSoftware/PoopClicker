@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { LargeNumber } from '../../src/core/numbers/LargeNumber'
-import { formatNumber } from '../../src/core/numbers/formatNumber'
+import { formatDuration, formatMultiplier, formatNumber, formatPercent } from '../../src/core/numbers/formatNumber'
 
 describe('LargeNumber', () => {
   it('adds and compares large values', () => {
@@ -34,5 +34,19 @@ describe('formatNumber', () => {
     expect(formatNumber(1500)).toContain('K')
     expect(formatNumber(2_500_000)).toContain('M')
     expect(formatNumber(LargeNumber.from(1e15))).toContain('Qa')
+  })
+
+  it('formats small values, percents, multipliers, and durations', () => {
+    expect(formatNumber(0)).toBe('0')
+    expect(formatNumber(7.25)).toBe('7.25')
+    expect(formatNumber(42)).toBe('42')
+    expect(formatNumber(150)).toBe('150')
+    expect(formatPercent(0.25)).toBe('25%')
+    expect(formatPercent(Number.NaN)).toBe('0%')
+    expect(formatMultiplier(1.5)).toBe('x1.50')
+    expect(formatMultiplier(Number.POSITIVE_INFINITY)).toBe('x1')
+    expect(formatDuration(1_500)).toBe('1s')
+    expect(formatDuration(65_000)).toBe('1m 5s')
+    expect(formatDuration(3_600_000 + 120_000)).toBe('1h 2m')
   })
 })

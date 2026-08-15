@@ -45,6 +45,12 @@ export function daysBetweenUtc(previousKey: string, nowMs: number): number {
   return Math.round((next - prev) / 86_400_000)
 }
 
+/** True when `dateKey` is a UTC calendar day after `nowMs`. */
+export function isUtcDateInFuture(dateKey: string | null | undefined, nowMs: number): boolean {
+  if (!dateKey) return false
+  return daysBetweenUtc(dateKey, nowMs) < 0
+}
+
 export function clampFutureTimestamp(
   timestampMs: number,
   nowMs: number,

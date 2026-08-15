@@ -1,6 +1,18 @@
 import type { CSSProperties } from 'react'
 import { formatDuration } from '../../core/numbers/formatNumber'
-import { DAILY_DUMP, type DailyDumpRuntime } from '../../core/systems/dailyDump'
+import {
+  DAILY_DUMP,
+  nextDumpTierProgress,
+  type DailyDumpRuntime,
+} from '../../core/systems/dailyDump'
+import { ModalHost } from '../overlays/ModalHost'
+
+export const DAILY_DUMP_ABANDON_MESSAGE =
+  'Abandon this Daily Dump run? You cannot retry until tomorrow. Your progress will be lost.'
+
+export function confirmAbandonDailyDump(): boolean {
+  return window.confirm(DAILY_DUMP_ABANDON_MESSAGE)
+}
 
 export interface DailyDumpModalProps {
   runtime: DailyDumpRuntime
@@ -57,6 +69,16 @@ export function DailyDumpModal({
 }: DailyDumpModalProps) {
   const timeLeft =
     runtime.phase === 'running' ? Math.max(0, runtime.endsAt - now) : DAILY_DUMP.durationMs
+  const tierProgress = nextDumpTierProgress(runtime.score)
+  const inRun = runtime.phase === 'countdown' || runtime.phase === 'running'
+
+  const requestClose = () => {
+    if (inRun) {
+      if (confirmAbandonDailyDump()) onAbandon()
+      return
+    }
+    onClose()
+  }
 
   const handleShare = async () => {
     const text = `My Daily Dump: ${runtime.score} (${tierLabel(runtime.rewardTier)}) in Poop Clicker!`
@@ -77,13 +99,16 @@ export function DailyDumpModal({
   }
 
   return (
-    <div
-      className="modal-backdrop modal-layer-dump"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Daily Dump"
+    <ModalHost
+      open
+      onClose={requestClose}
+      ariaLabel="Daily Dump"
+      hideChrome
+      layerClass="modal-layer-dump"
+      panelClassName="modal modal-sheet"
+      dismissible={!inRun}
+      closeOnBackdrop={runtime.phase === 'idle'}
     >
-      <div className="modal modal-sheet">
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
           <div>
             <div style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 24, fontWeight: 700 }}>
@@ -101,11 +126,7 @@ export function DailyDumpModal({
               type="button"
               style={ghostBtn}
               onClick={() => {
-                if (
-                  window.confirm(
-                    'Abandon this Daily Dump run? You cannot retry until tomorrow. Your progress will be lost.',
-                  )
-                ) {
+                if (confirmAbandonDailyDump()) {
                   onAbandon()
                 }
               }}
@@ -152,11 +173,7 @@ export function DailyDumpModal({
               type="button"
               style={{ ...ghostBtn, marginTop: 16 }}
               onClick={() => {
-                if (
-                  window.confirm(
-                    'Abandon this Daily Dump run? You cannot retry until tomorrow. Your progress will be lost.',
-                  )
-                ) {
+                if (confirmAbandonDailyDump()) {
                   onAbandon()
                 }
               }}
@@ -183,6 +200,10 @@ export function DailyDumpModal({
             <div style={{ fontSize: 13, color: '#5d6d76', marginBottom: 10 }}>
               Combo {Math.floor(runtime.combo)} · Peak {Math.floor(runtime.peakCombo)} · Taps{' '}
               {runtime.taps}
+              {' · '}
+              {tierProgress.next
+                ? `${tierProgress.remaining} to ${tierLabel(tierProgress.next)}`
+                : 'Diamond reached'}
             </div>
             <button
               type="button"
@@ -198,7 +219,7 @@ export function DailyDumpModal({
                 cursor: 'pointer',
                 touchAction: 'manipulation',
                 userSelect: 'none',
-                background: 'radial-gradient(circle at 35% 30%, #c8894d, #8b5a2b 55%, #5a3516)',
+                background: dumpTapBackground(tierProgress.current),
                 boxShadow: '0 12px 28px rgba(20,30,40,0.28)',
                 color: '#fff8e6',
                 fontFamily: 'Fredoka, sans-serif',
@@ -213,11 +234,7 @@ export function DailyDumpModal({
               type="button"
               style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
               onClick={() => {
-                if (
-                  window.confirm(
-                    'Abandon this Daily Dump run? You cannot retry until tomorrow. Your progress will be lost.',
-                  )
-                ) {
+                if (confirmAbandonDailyDump()) {
                   onAbandon()
                 }
               }}
@@ -269,9 +286,16 @@ export function DailyDumpModal({
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </ModalHost>
   )
+}
+
+function dumpTapBackground(tier: DailyDumpRuntime['rewardTier']): string {
+  if (tier === 'diamond') return 'radial-gradient(circle at 35% 30%, #7ad4ff, #2f6f9a 55%, #16324a)'
+  if (tier === 'gold') return 'radial-gradient(circle at 35% 30%, #f6d365, #c47b14 55%, #6a3d08)'
+  if (tier === 'silver') return 'radial-gradient(circle at 35% 30%, #d9e2ec, #7f8c97 55%, #3d464d)'
+  if (tier === 'bronze') return 'radial-gradient(circle at 35% 30%, #e0a070, #8b5a2b 55%, #5a3516)'
+  return 'radial-gradient(circle at 35% 30%, #c8894d, #8b5a2b 55%, #5a3516)'
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

@@ -239,9 +239,9 @@ describe('Economy simulation (deterministic)', () => {
     expect(results['10min'].timeToNextPurchaseSec).toBeLessThan(120)
     expect(results['10min'].nextGeneratorCost).toBeGreaterThan(0)
 
-    // First flush wall: not trivial (<30s) and not a 3+ hour wall for active play
-    expect(secondsToFirstFlush).toBeGreaterThanOrEqual(30)
-    expect(secondsToFirstFlush).toBeLessThan(3 * 60 * 60)
+    // First flush should land inside an early session window (target 8–12 min).
+    expect(secondsToFirstFlush).toBeGreaterThanOrEqual(6 * 60)
+    expect(secondsToFirstFlush).toBeLessThan(12 * 60)
 
     // First flush preview gain is meaningful
     expect(results.first_flush_ready.flushPowerGain).toBeGreaterThanOrEqual(

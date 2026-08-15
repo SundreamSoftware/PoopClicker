@@ -56,6 +56,9 @@ test('launches, taps, persists currency, and navigates core panels', async ({ pa
   await nav.getByRole('button', { name: 'Settings' }).click()
   await expect(page.getByText('Privacy choices')).toBeVisible()
   await expect(page.getByText('Notifications')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Restore' })).toBeVisible()
+  await page.getByRole('button', { name: 'Manage' }).click()
+  await expect(page.getByText(/Privacy form|Privacy choices updated/)).toBeVisible()
 })
 
 test('starts the real Daily Dump and prevents a fake completion path', async ({ page }) => {
@@ -65,6 +68,17 @@ test('starts the real Daily Dump and prevents a fake completion path', async ({ 
   await expect(page.getByRole('dialog', { name: 'Daily Dump' })).toBeVisible()
   await expect(page.getByText('60s local tap trial')).toBeVisible()
   await expect(page.getByText(/Finish \(demo score\)/i)).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: 'Daily Dump' })).toHaveCount(0)
+})
+
+test('claims the daily streak from Missions', async ({ page }) => {
+  await page.locator('.nav-dock').getByRole('button', { name: 'Missions' }).click()
+  await expect(page.getByRole('heading', { name: 'Daily Challenges' })).toBeVisible()
+  const claim = page.getByRole('button', { name: /Claim Day/ })
+  await expect(claim).toBeVisible()
+  await claim.click()
+  await expect(page.getByRole('button', { name: 'Claimed today' })).toBeVisible()
 })
 
 test('loads the optional store catalog without blocking gameplay', async ({ page }) => {
@@ -74,4 +88,10 @@ test('loads the optional store catalog without blocking gameplay', async ({ page
   await expect(page.getByText('Remove Ads', { exact: true }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Restore Purchases' })).toBeVisible()
   await expect(page.getByRole('button', { name: /^Tap / })).toHaveCount(0)
+})
+
+test('shows chest odds in the shop', async ({ page }) => {
+  await page.locator('.nav-dock').getByRole('button', { name: 'Shop' }).click()
+  await page.getByRole('button', { name: 'Chests' }).click()
+  await expect(page.getByText(/Odds:/).first()).toBeVisible()
 })

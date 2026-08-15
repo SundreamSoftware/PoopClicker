@@ -49,6 +49,12 @@ jobs:
           test -n "$VITE_ADMOB_REWARDED_ID" || { echo "::error::VITE_ADMOB_REWARDED_ID is required"; exit 1; }
           test -n "$ANDROID_KEYSTORE_BASE64" || { echo "::error::ANDROID_KEYSTORE_BASE64 is required"; exit 1; }
           test -n "$GOOGLE_SERVICES_JSON_BASE64" || { echo "::error::GOOGLE_SERVICES_JSON_BASE64 is required"; exit 1; }
+          case "$ADMOB_APP_ID$VITE_ADMOB_INTERSTITIAL_ID$VITE_ADMOB_REWARDED_ID" in
+            *3940256099942544*)
+              echo "::error::Production builds cannot use Google sample AdMob IDs"
+              exit 1
+              ;;
+          esac
 
       - name: Build web
         env:

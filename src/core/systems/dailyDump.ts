@@ -1,5 +1,5 @@
 import type { DailyDumpActiveRuntime, DailyDumpState, PlayerSaveV2 } from '../save/saveSchema'
-import { toUtcDateKey } from '../time/TimeService'
+import { isUtcDateInFuture, toUtcDateKey } from '../time/TimeService'
 
 export const DAILY_DUMP = {
   durationMs: 60_000,
@@ -9,10 +9,10 @@ export const DAILY_DUMP = {
   comboBonusPerStack: 0.05,
   maxCombo: 30,
   tiers: {
-    bronze: 25,
-    silver: 50,
-    gold: 80,
-    diamond: 120,
+    bronze: 60,
+    silver: 120,
+    gold: 180,
+    diamond: 240,
   },
   rewards: {
     none: 0,
@@ -117,6 +117,9 @@ export function canStartDailyDump(save: PlayerSaveV2, now: number): boolean {
   if (resumable && (lastPlayedDate === today || lastPlayedDate === null)) {
     return true
   }
+  if (isUtcDateInFuture(lastPlayedDate, now)) {
+    return false
+  }
 
   return lastPlayedDate !== today
 }
@@ -131,6 +134,23 @@ export function tierFromScore(score: number): DailyDumpTier {
 
 export function gtpForTier(tier: DailyDumpTier): number {
   return DAILY_DUMP.rewards[tier]
+}
+
+const TIER_ORDER: DailyDumpTier[] = ['none', 'bronze', 'silver', 'gold', 'diamond']
+
+export function nextDumpTierProgress(score: number): {
+  current: DailyDumpTier
+  next: DailyDumpTier | null
+  remaining: number
+} {
+  const current = tierFromScore(score)
+  const index = TIER_ORDER.indexOf(current)
+  const next = index >= 0 && index < TIER_ORDER.length - 1 ? TIER_ORDER[index + 1] : null
+  if (!next || next === 'none') {
+    return { current, next: null, remaining: 0 }
+  }
+  const threshold = DAILY_DUMP.tiers[next]
+  return { current, next, remaining: Math.max(0, threshold - score) }
 }
 
 /** UTC ISO-week key, e.g. `2026-W32`. */

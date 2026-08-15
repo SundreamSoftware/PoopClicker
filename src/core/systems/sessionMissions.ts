@@ -12,8 +12,12 @@ export interface SessionMission {
 
 export interface SessionMissionsState {
   dateKey: string | null
+  sessionId: number
+  dailyClaimedGtp: number
   missions: SessionMission[]
 }
+
+export const SESSION_MISSION_DAILY_GTP_CAP = 20
 
 const MISSION_TEMPLATES = [
   { id: 'taps_50', title: 'Tap 50 times', target: 50, reward: 2 },
@@ -37,9 +41,15 @@ function missionsFromTemplates(
   })
 }
 
-export function createSessionMissions(dateKey: string | null = null): SessionMissionsState {
+export function createSessionMissions(
+  dateKey: string | null = null,
+  sessionId = 0,
+  dailyClaimedGtp = 0,
+): SessionMissionsState {
   return {
     dateKey,
+    sessionId,
+    dailyClaimedGtp,
     missions: missionsFromTemplates(),
   }
 }
@@ -48,6 +58,8 @@ export function createSessionMissions(dateKey: string | null = null): SessionMis
 export function serializeSessionMissions(state: SessionMissionsState): SessionMissionsSave {
   return {
     dateKey: state.dateKey,
+    sessionId: state.sessionId,
+    dailyClaimedGtp: state.dailyClaimedGtp,
     missions: state.missions.map((m) => ({
       id: m.id,
       progress: m.progress,
@@ -69,22 +81,39 @@ export function restoreSessionMissions(
   )
   return {
     dateKey: saved.dateKey == null ? null : String(saved.dateKey),
+    sessionId: Math.max(0, Number(saved.sessionId) || 0),
+    dailyClaimedGtp: Math.max(0, Number(saved.dailyClaimedGtp) || 0),
     missions: missionsFromTemplates(byId),
   }
 }
 
 /**
- * Ensure missions match the given UTC day key. When the day changes, progress
- * and claimed flags reset so GTP cannot be re-farmed across launches.
+ * Reset missions on a new UTC day (and clear the daily GTP cap) or a new session
+ * (keep the daily cap so relaunch farming stays bounded).
  */
+export function ensureSessionMissions(
+  state: SessionMissionsState,
+  dateKey: string,
+  sessionId: number,
+): SessionMissionsState {
+  if (state.dateKey && dateKey < state.dateKey) {
+    return { ...state }
+  }
+  if (state.dateKey !== dateKey) {
+    return createSessionMissions(dateKey, sessionId, 0)
+  }
+  if (state.sessionId !== sessionId) {
+    return createSessionMissions(dateKey, sessionId, state.dailyClaimedGtp)
+  }
+  return { ...state, dateKey, sessionId }
+}
+
+/** @deprecated Prefer ensureSessionMissions — kept for day-only callers/tests. */
 export function ensureSessionMissionsForDay(
   state: SessionMissionsState,
   dateKey: string,
 ): SessionMissionsState {
-  if (state.dateKey === dateKey) {
-    return { ...state, dateKey }
-  }
-  return createSessionMissions(dateKey)
+  return ensureSessionMissions(state, dateKey, state.sessionId)
 }
 
 export function progressSessionMission(
@@ -105,17 +134,22 @@ export function progressSessionMission(
 export function claimSessionMission(
   state: SessionMissionsState,
   missionId: string,
-): { state: SessionMissionsState; reward: number; ok: boolean } {
+): { state: SessionMissionsState; reward: number; ok: boolean; reason?: string } {
   const mission = state.missions.find((m) => m.id === missionId)
   if (!mission || mission.claimed || mission.progress < mission.target) {
-    return { state, reward: 0, ok: false }
+    return { state, reward: 0, ok: false, reason: 'not_ready' }
   }
+  if (state.dailyClaimedGtp >= SESSION_MISSION_DAILY_GTP_CAP) {
+    return { state, reward: 0, ok: false, reason: 'daily_cap' }
+  }
+  const reward = Math.min(mission.reward, SESSION_MISSION_DAILY_GTP_CAP - state.dailyClaimedGtp)
   return {
     state: {
       ...state,
+      dailyClaimedGtp: state.dailyClaimedGtp + reward,
       missions: state.missions.map((m) => (m.id === missionId ? { ...m, claimed: true } : m)),
     },
-    reward: mission.reward,
+    reward,
     ok: true,
   }
 }

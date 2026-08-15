@@ -28,6 +28,20 @@ describe('Android startup configuration', () => {
     expect(activity).toContain('onWindowFocusChanged')
   })
 
+  it('minifies release APKs with Capacitor keep rules', () => {
+    const gradle = readFileSync(gradlePath, 'utf8')
+    const proguard = readFileSync('android/app/proguard-rules.pro', 'utf8')
+    expect(gradle).toMatch(/minifyEnabled\s+true/)
+    expect(proguard).toContain('com.getcapacitor')
+    expect(proguard).toContain('JavascriptInterface')
+  })
+
+  it('rejects Google sample AdMob IDs in the production release workflow', () => {
+    const workflow = readFileSync('.github/workflows/android-release.yml', 'utf8')
+    expect(workflow).toContain('3940256099942544')
+    expect(workflow).toContain('Production builds cannot use Google sample AdMob IDs')
+  })
+
   it('ships the authored adaptive icon and splash resources', () => {
     expect(
       existsSync('android/app/src/main/res/drawable-nodpi/ic_launcher_foreground_authored.png'),

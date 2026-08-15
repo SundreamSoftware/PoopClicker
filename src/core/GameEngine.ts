@@ -13,9 +13,21 @@ import {
 } from './economy/formulas'
 import { LargeNumber } from './numbers/LargeNumber'
 import { createDefaultSave } from './save/defaultSave'
-import { deserializeSave, migrateSave, serializeSave } from './save/migrateSave'
-import type { PlayerSaveV2 } from './save/saveSchema'
-import { FixedClock, SystemClock, TimeService, type Clock } from './time/TimeService'
+import {
+  isImportableSave,
+  loadSaveFromStorage,
+  migrateSave,
+  serializeSave,
+  writeSaveRecord,
+} from './save/migrateSave'
+import { SAVE_STORAGE_KEY, type PlayerSaveV2 } from './save/saveSchema'
+import {
+  FixedClock,
+  SystemClock,
+  TimeService,
+  safeElapsed,
+  type Clock,
+} from './time/TimeService'
 import type { ClaimResult, NextGoal, OfflineReward, TapSpeedState } from './types/gameTypes'
 import type { ActiveEventRuntime } from './types/eventRuntime'
 import { EVENT_SCHEDULER, scheduleNextRandomEventAt } from './types/eventRuntime'
@@ -60,7 +72,7 @@ import { computeProduction, resolveTapSpeedState } from './systems/production'
 import { equipSkin, grantEligibleSkins, purchaseSkin } from './systems/skins'
 import {
   claimSessionMission,
-  ensureSessionMissionsForDay,
+  ensureSessionMissions,
   progressSessionMission,
   restoreSessionMissions,
   serializeSessionMissions,
@@ -68,10 +80,15 @@ import {
 } from './systems/sessionMissions'
 
 const REWARDED_COOLDOWN_MS = 600_000
+const ECONOMY_TICK_INTERVAL_MS = 100
+const ECONOMY_CATCH_UP_DT_MS = 250
 
 export type RewardedPlacement = 'income_boost' | 'instant_pps' | 'event_retry' | 'golden_spawn'
 import type { AnalyticsSink } from '../services/analytics'
-import { applyIapGrant as applyIapGrantToSave } from '../services/billing'
+import {
+  applyIapGrant as applyIapGrantToSave,
+  type IapGrantSource,
+} from '../services/billing'
 
 export interface TapResult {
   gained: LargeNumber
@@ -116,6 +133,11 @@ export class GameEngine {
   private absenceMs = 0
   private flushWithCorny = 0
   private lastTickAt: number
+  private pendingEconomyDt = 0
+  private cachedProduction: ReturnType<typeof computeProduction> | null = null
+  private cachedProductionSave: PlayerSaveV2 | null = null
+  private cachedProductionCombo = Number.NaN
+  private cachedProductionAt = 0
   private dirty = false
   private readonly listeners = new Set<Listener>()
   private readonly analytics: AnalyticsSink
@@ -147,7 +169,7 @@ export class GameEngine {
     const now = this.time.now()
     this.save = options.save ?? createDefaultSave(now)
     this.analytics = options.analytics ?? { track: () => undefined }
-    this.storageKey = options.storageKey ?? 'poop_clicker_save_v2'
+    this.storageKey = options.storageKey ?? SAVE_STORAGE_KEY
     this.storage =
       options.storage === undefined
         ? typeof localStorage !== 'undefined'
@@ -172,10 +194,8 @@ export class GameEngine {
           ? localStorage
           : null
         : options.storage
-    const key = 'poop_clicker_save_v2'
-    const raw = storage?.getItem(key)
     const now = (options.clock ?? new SystemClock()).now()
-    const save = raw ? deserializeSave(raw, now) : createDefaultSave(now)
+    const save = loadSaveFromStorage(storage, now, SAVE_STORAGE_KEY)
     return new GameEngine({
       clock: options.clock,
       save,
@@ -215,7 +235,7 @@ export class GameEngine {
       this.analytics.track('session_start', { sessionsCount: this.save.sessionsCount })
     }
 
-    const away = Math.max(0, now - this.save.lastActiveTimestamp)
+    const away = safeElapsed(this.save.lastActiveTimestamp, now, 48 * 60 * 60 * 1000)
     this.absenceMs = away
     this.save = generateBathroomBreakCharges(
       this.save,
@@ -288,9 +308,10 @@ export class GameEngine {
       }
     }
 
-    this.sessionMissions = ensureSessionMissionsForDay(
+    this.sessionMissions = ensureSessionMissions(
       restoreSessionMissions(this.save.sessionMissions),
       this.time.todayKey(),
+      this.save.sessionsCount,
     )
     this.syncSessionMissionsToSave()
 
@@ -306,7 +327,7 @@ export class GameEngine {
 
   private buildSnapshot(): EngineSnapshot {
     const now = this.time.now()
-    const production = computeProduction(this.save, this.combo, now)
+    const production = this.getProduction()
     const frenzyActive = now < this.frenzyActiveUntil
     return {
       save: this.save,
@@ -332,10 +353,22 @@ export class GameEngine {
     this.lastTickAt = now
     if (dt <= 0) return
 
+    this.applyDailyDumpTick(now, dt)
+    this.updateCps(now)
+
     const production = this.getProduction()
     this.combo = Math.max(0, this.combo - (production.comboDecay * dt) / 1000)
-    this.updateCps(now)
     this.refreshTapState(now, production.frenzyThreshold)
+    this.processScheduledEvents(now, dt)
+
+    this.pendingEconomyDt += dt
+    if (this.pendingEconomyDt < ECONOMY_TICK_INTERVAL_MS && dt < ECONOMY_CATCH_UP_DT_MS) {
+      this.emitUiThrottled(now)
+      return
+    }
+    const economyDt = this.pendingEconomyDt
+    this.pendingEconomyDt = 0
+
     this.save = generateBathroomBreakCharges(
       this.save,
       now,
@@ -349,21 +382,19 @@ export class GameEngine {
     }
 
     if (production.pps.gt(0)) {
-      this.creditPP(production.pps.mul(dt / 1000), 'idle')
+      this.creditPP(production.pps.mul(economyDt / 1000), 'idle')
     }
 
     if (this.save.currentWorldId === 'office_toilet') {
-      this.save = { ...this.save, officeSessionMs: this.save.officeSessionMs + dt }
+      this.save = { ...this.save, officeSessionMs: this.save.officeSessionMs + economyDt }
     }
 
     this.save = {
       ...this.save,
-      totalPlayTimeMs: this.save.totalPlayTimeMs + dt,
+      totalPlayTimeMs: this.save.totalPlayTimeMs + economyDt,
       lastActiveTimestamp: now,
       activeBoosts: this.save.activeBoosts.filter((b) => b.expiresAt > now),
     }
-
-    this.applyDailyDumpTick(now, dt)
 
     if (this.save.autoBuyUnlocked && this.save.autoBuyEnabled && now - this.lastAutoBuyAt >= 1500) {
       this.lastAutoBuyAt = now
@@ -377,10 +408,8 @@ export class GameEngine {
       }
     }
 
-    this.processScheduledEvents(now, dt)
     this.syncMeta(now)
     this.maybePersist(now)
-    // Invalidate cache so next forced read is fresh; notify React at ~10Hz.
     this.emitUiThrottled(now)
   }
 
@@ -428,7 +457,11 @@ export class GameEngine {
     this.save = progressChallenge(this.save, 'cps', this.rollingCps)
     this.save = progressChallenge(this.save, 'combo', this.combo)
 
-    this.sessionMissions = ensureSessionMissionsForDay(this.sessionMissions, this.time.todayKey())
+    this.sessionMissions = ensureSessionMissions(
+      this.sessionMissions,
+      this.time.todayKey(),
+      this.save.sessionsCount,
+    )
     this.sessionMissions = progressSessionMission(this.sessionMissions, 'taps_50', 1)
     if (crit) {
       this.sessionMissions = progressSessionMission(this.sessionMissions, 'crits_3', 1)
@@ -503,7 +536,20 @@ export class GameEngine {
   }
 
   private getProduction() {
-    return computeProduction(this.save, this.combo, this.time.now())
+    const now = this.time.now()
+    if (
+      this.cachedProduction &&
+      this.cachedProductionSave === this.save &&
+      this.cachedProductionCombo === this.combo &&
+      now - this.cachedProductionAt < 100
+    ) {
+      return this.cachedProduction
+    }
+    this.cachedProduction = computeProduction(this.save, this.combo, now)
+    this.cachedProductionSave = this.save
+    this.cachedProductionCombo = this.combo
+    this.cachedProductionAt = now
+    return this.cachedProduction
   }
 
   buyGenerator(generatorId: string, count?: number): ClaimResult {
@@ -1130,14 +1176,18 @@ export class GameEngine {
   }
 
   claimSessionMission(missionId: string): ClaimResult {
-    this.sessionMissions = ensureSessionMissionsForDay(this.sessionMissions, this.time.todayKey())
+    this.sessionMissions = ensureSessionMissions(
+      this.sessionMissions,
+      this.time.todayKey(),
+      this.save.sessionsCount,
+    )
     this.syncSessionMissionsToSave()
 
     const persisted = this.save.sessionMissions.missions.find((m) => m.id === missionId)
     if (persisted?.claimed) return { ok: false, reason: 'already_claimed' }
 
     const result = claimSessionMission(this.sessionMissions, missionId)
-    if (!result.ok) return { ok: false, reason: 'not_ready' }
+    if (!result.ok) return { ok: false, reason: result.reason ?? 'not_ready' }
     this.sessionMissions = result.state
     this.save = {
       ...this.save,
@@ -1172,9 +1222,12 @@ export class GameEngine {
     }
   }
 
-  applyIapGrant(productId: string): ClaimResult {
+  applyIapGrant(productId: string, source: IapGrantSource = 'purchase'): ClaimResult {
     const def = IAP_BY_ID[productId]
     if (!def) return { ok: false, reason: 'missing' }
+    if (source === 'restore' && def.kind === 'consumable') {
+      return { ok: false, reason: 'not_restorable' }
+    }
     if (def.kind !== 'consumable' && this.save.ownedIapProducts.includes(productId)) {
       return { ok: false, reason: 'already_owned' }
     }
@@ -1245,7 +1298,11 @@ export class GameEngine {
     }
     this.save = progressChallenge(this.save, 'events', 1)
     this.analytics.track('event_complete', { id: runtime.defId })
-    this.sessionMissions = ensureSessionMissionsForDay(this.sessionMissions, this.time.todayKey())
+    this.sessionMissions = ensureSessionMissions(
+      this.sessionMissions,
+      this.time.todayKey(),
+      this.save.sessionsCount,
+    )
     this.sessionMissions = progressSessionMission(this.sessionMissions, 'events_1', 1)
     this.syncSessionMissionsToSave()
 
@@ -1466,7 +1523,7 @@ export class GameEngine {
 
   foreground(): void {
     const now = this.time.now()
-    const away = Math.max(0, now - this.save.lastActiveTimestamp)
+    const away = safeElapsed(this.save.lastActiveTimestamp, now, 48 * 60 * 60 * 1000)
     this.absenceMs = Math.max(this.absenceMs, away)
     this.save = ensureDailyState(this.save, now, this.getProduction().pps)
     this.save = generateBathroomBreakCharges(
@@ -1577,7 +1634,13 @@ export class GameEngine {
       lastSaveTimestamp: now,
       lastActiveTimestamp: now,
     }
-    this.storage?.setItem(this.storageKey, serializeSave(this.save))
+    try {
+      if (this.storage) {
+        writeSaveRecord(this.storage, serializeSave(this.save), this.storageKey)
+      }
+    } catch (error) {
+      console.warn('[save] persist failed', error)
+    }
     this.lastPersistAt = now
     this.dirty = false
   }
@@ -1586,11 +1649,13 @@ export class GameEngine {
     return structuredClone(this.save)
   }
 
-  importSave(raw: unknown): void {
+  importSave(raw: unknown): ClaimResult {
+    if (!isImportableSave(raw)) return { ok: false, reason: 'invalid' }
     this.save = migrateSave(raw as PlayerSaveV2, this.time.now())
     this.bootstrap(this.time.now(), { countSession: false })
     this.persistImmediate()
     this.emit()
+    return { ok: true }
   }
 
   /** Test helper */

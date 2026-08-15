@@ -24,15 +24,19 @@
   filter: drop-shadow(0 14px 10px rgba(5, 14, 20, 0.28));
 }
 
-/* Kill WebView / Android focus + tap chrome on the character. */
+/* Kill WebView tap chrome, but keep a visible keyboard/switch focus ring. */
 .poop-stage:focus,
-.poop-stage:focus-visible,
 .poop-stage:active,
 .poop-stage:hover {
-  outline: none !important;
+  outline: none;
   border: none;
   box-shadow: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+.poop-stage:focus-visible {
+  outline: 3px solid #ffd166;
+  outline-offset: 4px;
 }
 
 .poop-stage img,

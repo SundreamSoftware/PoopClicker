@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CHEST_SHOP_OFFERS } from '../../content/chests'
+import { CHEST_SHOP_OFFERS, chestRewardOdds } from '../../content/chests'
 import { GENERATORS } from '../../content/generators'
 import { UPGRADES } from '../../content/upgrades'
 import {
@@ -18,13 +18,15 @@ import {
 import { LargeNumber } from '../../core/numbers/LargeNumber'
 import { formatNumber } from '../../core/numbers/formatNumber'
 import type { ChestTier } from '../../core/types/gameTypes'
+import { trackProduct } from '../../services/analytics'
 import type { StoreProduct } from '../../services/billing'
 import AudioManager from '../../audio/AudioManager'
 import { billing } from '../../state/gameSingleton'
+import { restorePurchasesToEngine } from '../../services/purchaseSync'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 import { FrameSequencePlayer } from '../assets/FrameSequencePlayer'
-import { maybeShowInterstitial } from '../monetizationHelpers'
+import { ModalHost } from '../overlays/ModalHost'
 
 interface ChestOpenShow {
   label: string
@@ -49,6 +51,7 @@ export function ShopPanel() {
   const [products, setProducts] = useState<StoreProduct[]>([])
   const [iapLoading, setIapLoading] = useState(false)
   const [iapBusy, setIapBusy] = useState<string | null>(null)
+  const [storeAvailable, setStoreAvailable] = useState(billing.isAvailable())
   const [chestToast, setChestToast] = useState<string | null>(null)
   const [chestOpenShow, setChestOpenShow] = useState<ChestOpenShow | null>(null)
   const [chestRewardVisible, setChestRewardVisible] = useState(false)
@@ -85,8 +88,15 @@ export function ShopPanel() {
     if (section !== 'iap') return
     setIapLoading(true)
     void billing
-      .loadProducts()
-      .then(setProducts)
+      .init()
+      .then(() => billing.loadProducts())
+      .then((loaded) => {
+        setStoreAvailable(billing.isAvailable())
+        setProducts(loaded)
+        if (loaded.length > 0) {
+          trackProduct('iap_impression', { count: loaded.length })
+        }
+      })
       .finally(() => setIapLoading(false))
   }, [section])
 
@@ -101,7 +111,15 @@ export function ShopPanel() {
       const result = await billing.purchase(productId)
       if (result.ok && result.productId) {
         engine.applyIapGrant(result.productId)
+        setChestToast('Purchase complete')
+        return
       }
+      const reason = result.reason
+      if (reason === 'cancel') setChestToast('Purchase cancelled')
+      else if (reason === 'pending') setChestToast('Purchase pending — check Play Store')
+      else if (reason === 'already_owned') setChestToast('Already owned')
+      else if (reason === 'unavailable') setChestToast('Store unavailable')
+      else setChestToast('Purchase failed')
     } finally {
       setIapBusy(null)
     }
@@ -110,12 +128,12 @@ export function ShopPanel() {
   const handleRestore = async () => {
     setIapBusy('restore')
     try {
-      const results = await billing.restore()
-      for (const result of results) {
-        if (result.ok && result.productId) {
-          engine.applyIapGrant(result.productId)
-        }
+      const { restored, unavailable } = await restorePurchasesToEngine(engine, billing)
+      if (unavailable) {
+        setChestToast('Store unavailable')
+        return
       }
+      setChestToast(restored > 0 ? `Restored ${restored} purchase(s)` : 'No purchases to restore')
     } finally {
       setIapBusy(null)
     }
@@ -123,20 +141,23 @@ export function ShopPanel() {
 
   return (
     <div className="panel">
-      {chestOpenShow && (
-        <div
-          className="chest-open-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Opening chest"
-          onClick={() => {
-            if (!chestRewardVisible) return
-            setChestToast(chestOpenShow.label)
-            setChestOpenShow(null)
-            setChestRewardVisible(false)
-          }}
-        >
-          <div className="chest-open-stage">
+      <ModalHost
+        open={Boolean(chestOpenShow)}
+        onClose={() => {
+          if (!chestOpenShow || !chestRewardVisible) return
+          setChestToast(chestOpenShow.label)
+          setChestOpenShow(null)
+          setChestRewardVisible(false)
+        }}
+        ariaLabel="Opening chest"
+        hideChrome
+        dismissible={chestRewardVisible}
+        closeOnBackdrop={chestRewardVisible}
+        layerClass="chest-open-overlay"
+        panelClassName="chest-open-stage"
+      >
+        {chestOpenShow && (
+          <>
             <FrameSequencePlayer
               frames={chestOpenFrames}
               durationMs={CHEST_OPEN_ANIM.durationMs}
@@ -144,9 +165,9 @@ export function ShopPanel() {
               onComplete={() => setChestRewardVisible(true)}
             />
             {chestRewardVisible && <div className="chest-open-reward">{chestOpenShow.label}</div>}
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </ModalHost>
       <h2>Shop</h2>
 
       {snap.save.autoBuyUnlocked && (
@@ -191,30 +212,38 @@ export function ShopPanel() {
 
       <div className="tabs">
         <button
+          type="button"
           className={section === 'generators' ? 'active' : ''}
           onClick={() => setSection('generators')}
         >
           Generators
         </button>
         <button
+          type="button"
           className={section === 'upgrades' ? 'active' : ''}
           onClick={() => setSection('upgrades')}
         >
           Upgrades
         </button>
         <button
+          type="button"
           className={section === 'boosts' ? 'active' : ''}
           onClick={() => setSection('boosts')}
         >
           Boosts
         </button>
         <button
+          type="button"
           className={section === 'chests' ? 'active' : ''}
           onClick={() => setSection('chests')}
         >
           Chests
         </button>
-        <button className={section === 'iap' ? 'active' : ''} onClick={() => setSection('iap')}>
+        <button
+          type="button"
+          className={section === 'iap' ? 'active' : ''}
+          onClick={() => setSection('iap')}
+        >
           Store
         </button>
       </div>
@@ -344,6 +373,12 @@ export function ShopPanel() {
                     <div className="meta-line">
                       {chests} chest · {keys} key
                     </div>
+                    <div className="meta-line">
+                      Odds:{' '}
+                      {chestRewardOdds(tier)
+                        .map((row) => `${row.label} ${row.percent}%`)
+                        .join(' · ')}
+                    </div>
                   </div>
                 </div>
                 <button
@@ -465,16 +500,9 @@ export function ShopPanel() {
                 <button
                   className="primary-btn"
                   disabled={locked || !canAfford}
-                  onClick={async () => {
+                  onClick={() => {
                     const result = engine.buyGenerator(gen.id)
-                    if (result.ok) {
-                      playPurchaseSfx('generator')
-                      await maybeShowInterstitial(ads, 'shop', {
-                        eventActive: Boolean(snap.eventRuntime),
-                        frenzyActive: snap.frenzyActive,
-                        removeAds: snap.save.removeAds,
-                      })
-                    }
+                    if (result.ok) playPurchaseSfx('generator')
                   }}
                 >
                   {locked ? 'Locked' : formatNumber(cost)}
@@ -523,7 +551,14 @@ export function ShopPanel() {
             <strong>{snap.save.removeAds ? 'Active' : 'Not owned'}</strong>
           </div>
           {iapLoading && <p className="meta-line">Loading products…</p>}
+          {!iapLoading && !storeAvailable && (
+            <p className="meta-line">Store unavailable on this device.</p>
+          )}
+          {!iapLoading && storeAvailable && products.length === 0 && (
+            <p className="meta-line">No store products available right now.</p>
+          )}
           {!iapLoading &&
+            storeAvailable &&
             products.map((product) => {
               const owned =
                 product.kind !== 'consumable' && snap.save.ownedIapProducts.includes(product.id)
@@ -536,7 +571,7 @@ export function ShopPanel() {
                   </div>
                   <button
                     className="primary-btn"
-                    disabled={owned || iapBusy !== null}
+                    disabled={owned || iapBusy !== null || !storeAvailable}
                     onClick={() => void handlePurchase(product.id)}
                   >
                     {iapBusy === product.id
@@ -553,7 +588,7 @@ export function ShopPanel() {
           <button
             className="ghost-btn"
             style={{ marginTop: 12 }}
-            disabled={iapBusy !== null}
+            disabled={iapBusy !== null || !storeAvailable}
             onClick={() => void handleRestore()}
           >
             {iapBusy === 'restore' ? 'Restoring…' : 'Restore Purchases'}

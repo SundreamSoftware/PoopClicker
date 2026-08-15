@@ -4,7 +4,11 @@ import { CHALLENGE_TEMPLATES } from '../../src/content/challenges'
 import { EVENTS } from '../../src/content/events'
 import { FLUSH_MILESTONES } from '../../src/content/flushMilestones'
 import { GENERATORS } from '../../src/content/generators'
-import { ROYAL_FLUSH_NODES } from '../../src/content/royalFlush'
+import {
+  ROYAL_FLUSH_CATEGORY_ORDER,
+  ROYAL_FLUSH_NODES,
+  royalFlushMissingPrerequisiteNames,
+} from '../../src/content/royalFlush'
 import { SKINS } from '../../src/content/skins'
 import { getSkinVisual, SKINS_VISUAL } from '../../src/content/skinsVisual'
 import { UPGRADES } from '../../src/content/upgrades'
@@ -266,6 +270,18 @@ describe('Content validation', () => {
     expect(ACHIEVEMENTS.length).toBeGreaterThanOrEqual(80)
     expect(EVENTS.length).toBeGreaterThanOrEqual(4)
     expect(ROYAL_FLUSH_NODES.length).toBeGreaterThanOrEqual(25)
+  })
+
+  it('names missing Royal Flush prerequisites instead of a generic lock', () => {
+    expect(royalFlushMissingPrerequisiteNames('rf_tap_2', {})).toEqual(['Firm Sit'])
+    expect(royalFlushMissingPrerequisiteNames('rf_tap_2', { rf_tap_1: 1 })).toEqual([])
+    expect(ROYAL_FLUSH_CATEGORY_ORDER).toEqual([
+      'pressure',
+      'plumbing',
+      'combo',
+      'idle',
+      'luck',
+    ])
   })
 
   it('achievement thresholds unique per metric family', () => {

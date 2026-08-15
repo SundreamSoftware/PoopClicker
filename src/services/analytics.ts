@@ -4,6 +4,31 @@ export interface AnalyticsSink {
   track(event: string, payload?: Record<string, unknown>): void
 }
 
+let productTracker: AnalyticsSink['track'] = () => undefined
+let firebaseCollectionEnabled = false
+
+/** Wire GameEngine/UI analytics into ads/billing without import cycles. */
+export function setAnalyticsTracker(track: AnalyticsSink['track']): void {
+  productTracker = track
+}
+
+export function trackProduct(event: string, payload: Record<string, unknown> = {}): void {
+  try {
+    productTracker(event, payload)
+  } catch {
+    // Monetization telemetry must never break a purchase or ad.
+  }
+}
+
+/** Firebase / network analytics stay off until UMP allows ads (AUD-003). */
+export function setAnalyticsCollectionEnabled(enabled: boolean): void {
+  firebaseCollectionEnabled = enabled
+}
+
+export function isAnalyticsCollectionEnabled(): boolean {
+  return firebaseCollectionEnabled
+}
+
 export class MemoryAnalytics implements AnalyticsSink {
   readonly events: Array<{ event: string; payload: Record<string, unknown>; at: number }> = []
 
@@ -83,6 +108,7 @@ export class FirebaseAnalyticsSink implements AnalyticsSink {
   }
 
   track(event: string, payload: Record<string, unknown> = {}): void {
+    if (!firebaseCollectionEnabled) return
     void this.ensure().then((ok) => {
       if (!ok || !this.plugin) return
       const name = event.slice(0, 40)

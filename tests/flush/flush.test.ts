@@ -72,6 +72,18 @@ describe('Flush', () => {
     expect(secondPreview.flushPowerGain).toBeLessThanOrEqual(first)
   })
 
+  it('does not reapply first-flush bonus when the clock rolls back', () => {
+    const day = Date.UTC(2026, 7, 8, 12)
+    const save = {
+      ...createDefaultSave(day),
+      firstFlushOfDayClaimedDate: '2026-08-08',
+      runPPEarned: LargeNumber.from(ECONOMY.firstFlushRequirement).serialize(),
+    }
+    const rolledBack = Date.UTC(2026, 7, 7, 12)
+    const preview = buildFlushPreview(save, rolledBack)
+    expect(preview.firstFlushBonusApplied).toBe(false)
+  })
+
   it('applies start bonus from post-flush production', () => {
     const now = Date.UTC(2026, 7, 7, 12)
     const save = {

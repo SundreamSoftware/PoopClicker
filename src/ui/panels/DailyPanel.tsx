@@ -1,10 +1,14 @@
 import { canStartDailyDump, utcWeekKey } from '../../core/systems/dailyDump'
+import { SESSION_MISSION_DAILY_GTP_CAP } from '../../core/systems/sessionMissions'
 import {
   estimateWeeklyLeagueStanding,
   weeklyLeagueShareText,
 } from '../../core/systems/weeklyLeague'
+import { toUtcDateKey } from '../../core/time/TimeService'
+import AudioManager from '../../audio/AudioManager'
 import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
+import { maybePromptNotifications } from '../notificationPrompt'
 
 export interface DailyPanelProps {
   onOpenDailyDump?: () => void
@@ -40,15 +44,38 @@ export function DailyPanel({ onOpenDailyDump, onToast }: DailyPanelProps) {
     if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(text)
-        onToast?.('League card copied!')
+        onToast?.('Grade card copied!')
       } catch {
-        onToast?.('Could not share league card')
+        onToast?.('Could not share grade card')
       }
+    }
+  }
+
+  const streakClaimed = snap.save.lastDailyClaim === toUtcDateKey(Date.now())
+  const nextStreakDay = !snap.save.lastDailyClaim
+    ? 1
+    : snap.save.dailyStreak >= 7
+      ? 1
+      : snap.save.dailyStreak + 1
+  const claimStreak = async () => {
+    const result = engine.claimStreak()
+    if (result.ok) {
+      if (snap.save.settings.sfx) AudioManager.play('streak_claim')
+      onToast?.(`Daily streak claimed! +${result.gtp} GTP`)
+      await maybePromptNotifications()
+    } else if (result.reason === 'already_claimed') {
+      onToast?.('Streak already claimed today')
+    } else {
+      onToast?.('Streak claim failed')
     }
   }
 
   const missions = snap.sessionMissions.missions
   const claimedMissions = missions.filter((m) => m.claimed).length
+  const remainingMissionGtp = Math.max(
+    0,
+    SESSION_MISSION_DAILY_GTP_CAP - snap.sessionMissions.dailyClaimedGtp,
+  )
 
   return (
     <div className="panel">
@@ -57,14 +84,30 @@ export function DailyPanel({ onOpenDailyDump, onToast }: DailyPanelProps) {
         {completed} / 3 · Streak Day {snap.save.dailyStreak} · Saver {snap.save.streakSaverCharges}
       </div>
 
+      <div className="goal-card" style={{ marginTop: 12 }}>
+        <div className="goal-title">DAILY STREAK</div>
+        <div className="goal-sub">
+          Day {Math.max(1, snap.save.dailyStreak || 1)} · Saver {snap.save.streakSaverCharges}
+        </div>
+        <button
+          className="primary-btn"
+          style={{ marginTop: 8 }}
+          disabled={streakClaimed}
+          onClick={() => void claimStreak()}
+        >
+          {streakClaimed ? 'Claimed today' : `Claim Day ${nextStreakDay}`}
+        </button>
+      </div>
+
       <div className="goal-card session-missions-panel" style={{ marginTop: 12 }}>
         <div className="goal-title">SESSION MISSIONS</div>
         <div className="goal-sub">
-          {claimedMissions} / {missions.length} claimed
+          {claimedMissions} / {missions.length} claimed · {remainingMissionGtp} /{' '}
+          {SESSION_MISSION_DAILY_GTP_CAP} GTP left today
         </div>
         {missions.length === 0 ? (
           <div className="meta-line" style={{ marginTop: 6 }}>
-            Keep tapping — new missions appear each session.
+            Keep tapping — missions refresh each session.
           </div>
         ) : (
           <div className="session-missions-list" style={{ marginTop: 8 }}>
@@ -89,6 +132,9 @@ export function DailyPanel({ onOpenDailyDump, onToast }: DailyPanelProps) {
                     onClick={() => {
                       const result = engine.claimSessionMission(mission.id)
                       if (result.ok) onToast?.(`+${result.gtp} GTP`)
+                      else if (result.reason === 'daily_cap') {
+                        onToast?.('Daily mission GTP cap reached')
+                      }
                     }}
                   >
                     {mission.claimed ? 'Done' : ready ? `+${mission.reward} GTP` : 'In progress'}
@@ -205,8 +251,8 @@ export function DailyPanel({ onOpenDailyDump, onToast }: DailyPanelProps) {
       </div>
 
       <div className="goal-card weekly-league-card" style={{ marginTop: 12 }}>
-        <div className="goal-title">WEEKLY TOILET LEAGUE</div>
-        <div className="goal-sub">{weekKey}</div>
+        <div className="goal-title">LOCAL WEEKLY GRADE</div>
+        <div className="goal-sub">{weekKey} · your score, not a live ranking</div>
         {dump.weeklyBestScore > 0 ? (
           <>
             <div className="meta-line" style={{ marginTop: 6 }}>
@@ -215,13 +261,10 @@ export function DailyPanel({ onOpenDailyDump, onToast }: DailyPanelProps) {
             <div className="progress" style={{ marginTop: 8 }}>
               <span style={{ width: `${league.percentile}%` }} />
             </div>
-            <div className="meta-line">
-              ≈#{league.approxRank.toLocaleString()} / {league.fieldSize.toLocaleString()}
-            </div>
           </>
         ) : (
           <div className="meta-line" style={{ marginTop: 6 }}>
-            Play Daily Dump this week to enter the local league ladder.
+            Play Daily Dump this week to earn a local grade.
           </div>
         )}
         <button
@@ -230,7 +273,7 @@ export function DailyPanel({ onOpenDailyDump, onToast }: DailyPanelProps) {
           disabled={dump.weeklyBestScore <= 0}
           onClick={() => void shareLeague()}
         >
-          Share standing
+          Share grade
         </button>
       </div>
     </div>

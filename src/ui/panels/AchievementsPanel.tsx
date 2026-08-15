@@ -47,7 +47,12 @@ export function AchievementsPanel() {
       <h2>Awards</h2>
       <div className="tabs">
         {FILTERS.map((f) => (
-          <button key={f} className={filter === f ? 'active' : ''} onClick={() => setFilter(f)}>
+          <button
+            key={f}
+            type="button"
+            className={filter === f ? 'active' : ''}
+            onClick={() => setFilter(f)}
+          >
             {FILTER_LABELS[f] || f}
           </button>
         ))}

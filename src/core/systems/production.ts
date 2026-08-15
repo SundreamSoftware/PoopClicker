@@ -128,7 +128,12 @@ export function computeProduction(
 
   const comboMult = 1 + combo * 0.05
   const tapMultiplier =
-    (1 + tapMultBonus + tapPowerBonus) * boostTap * flushMult * worldBonus * permanent
+    (1 + tapMultBonus + tapPowerBonus) *
+    boostTap *
+    flushMult *
+    worldBonus *
+    permanent *
+    (1 + globalBonus)
   const tapPower = LargeNumber.from(ECONOMY.tapBase).mul(tapMultiplier).mul(comboMult)
 
   const critChance = Math.min(0.75, ECONOMY.critBaseChance + critChanceBonus)

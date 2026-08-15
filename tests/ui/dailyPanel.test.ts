@@ -7,6 +7,14 @@ import { createDefaultSave } from '../../src/core/save/defaultSave'
 import { FixedClock } from '../../src/core/time/TimeService'
 import { StubAdService } from '../../src/services/ads'
 
+describe('Mobile UI targets', () => {
+  it('keeps dock labels at a readable size', () => {
+    const src = readFileSync(resolve('src/ui/styles.css'), 'utf8')
+    expect(src).toMatch(/\.nav-dock button \{[\s\S]*font-size: 0\.7rem;/)
+    expect(src).not.toMatch(/\.nav-dock button \{[\s\S]*font-size: 0\.55rem;/)
+  })
+})
+
 describe('DailyPanel expectations', () => {
   it('does not expose demo score copy in panel source', () => {
     const src = readFileSync(resolve('src/ui/panels/DailyPanel.tsx'), 'utf8')

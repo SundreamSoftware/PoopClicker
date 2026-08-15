@@ -9,17 +9,11 @@ export function getSkinStatus(save: PlayerSaveV2, skinId: string): SkinStatus {
   if (!skin) return 'locked'
   if (save.equippedSkinId === skinId) return 'equipped'
   if (save.ownedSkins.includes(skinId)) return 'owned'
-
-  switch (skin.unlock.type) {
-    case 'default':
-      return 'purchasable'
-    case 'gtp':
-      return 'purchasable'
-    case 'achievement':
-      return 'achievement_locked'
-    default:
-      return 'locked'
+  if (skin.unlock.type === 'gtp' || skin.unlock.type === 'default') return 'purchasable'
+  if (!isSkinUnlockRequirementMet(save, skinId)) {
+    return skin.unlock.type === 'achievement' ? 'achievement_locked' : 'locked'
   }
+  return 'owned'
 }
 
 export function isSkinUnlockRequirementMet(save: PlayerSaveV2, skinId: string): boolean {
@@ -77,9 +71,10 @@ export function equipSkin(
   save: PlayerSaveV2,
   skinId: string,
 ): { save: PlayerSaveV2; ok: boolean; reason?: string } {
-  if (!save.ownedSkins.includes(skinId)) return { save, ok: false, reason: 'not_owned' }
-  if (!SKIN_BY_ID[skinId]) return { save, ok: false, reason: 'missing' }
-  return { save: { ...save, equippedSkinId: skinId }, ok: true }
+  const granted = grantEligibleSkins(save)
+  if (!SKIN_BY_ID[skinId]) return { save: granted, ok: false, reason: 'missing' }
+  if (!granted.ownedSkins.includes(skinId)) return { save: granted, ok: false, reason: 'not_owned' }
+  return { save: { ...granted, equippedSkinId: skinId }, ok: true }
 }
 
 export function grantEligibleSkins(save: PlayerSaveV2): PlayerSaveV2 {

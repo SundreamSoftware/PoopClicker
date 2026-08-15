@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "season": null,
+  "features": {
+    "interstitialsEnabled": true,
+    "iapEnabled": true
+  }
+}

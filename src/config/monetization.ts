@@ -38,5 +38,6 @@ export function getAdMobIds(): {
 
 /** Interstitial frequency cap after a rewarded completion. */
 export const INTERSTITIAL_AFTER_REWARDED_COOLDOWN_MS = 120_000
-export const INTERSTITIAL_MIN_INTERVAL_MS = 90_000
-export const INTERSTITIAL_MIN_SESSION_AGE_MS = 30_000
+export const INTERSTITIAL_MIN_INTERVAL_MS = 180_000
+export const INTERSTITIAL_MIN_SESSION_AGE_MS = 90_000
+export const INTERSTITIAL_MAX_PER_SESSION = 2

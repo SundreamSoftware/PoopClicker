@@ -407,3 +407,31 @@ export const ROYAL_FLUSH_NODES: RoyalFlushNodeDef[] = [
 ]
 
 export const ROYAL_FLUSH_BY_ID = Object.fromEntries(ROYAL_FLUSH_NODES.map((n) => [n.id, n]))
+
+export const ROYAL_FLUSH_CATEGORY_ORDER = [
+  'pressure',
+  'plumbing',
+  'combo',
+  'idle',
+  'luck',
+] as const
+
+export const ROYAL_FLUSH_CATEGORY_LABEL: Record<(typeof ROYAL_FLUSH_CATEGORY_ORDER)[number], string> =
+  {
+    pressure: 'Pressure',
+    plumbing: 'Plumbing',
+    combo: 'Combo',
+    idle: 'Idle',
+    luck: 'Luck',
+  }
+
+export function royalFlushMissingPrerequisiteNames(
+  nodeId: string,
+  levels: Record<string, number>,
+): string[] {
+  const node = ROYAL_FLUSH_BY_ID[nodeId]
+  if (!node) return []
+  return node.requires
+    .filter((id) => (levels[id] ?? 0) <= 0)
+    .map((id) => ROYAL_FLUSH_BY_ID[id]?.name ?? id)
+}

@@ -41,19 +41,17 @@ export class CapacitorUmpConsentService implements ConsentService {
       const info = await AdMob.requestConsentInfo()
       const status = String(info?.status ?? '').toUpperCase()
 
-      if (info?.canRequestAds && status !== 'REQUIRED') {
-        return 'not_required'
-      }
-
-      if (info?.isConsentFormAvailable) {
+      if (info?.isConsentFormAvailable && (status === 'REQUIRED' || !info?.canRequestAds)) {
         try {
           await AdMob.showConsentForm()
-          return 'required'
         } catch {
           return 'error'
         }
+        const after = await AdMob.requestConsentInfo()
+        return after?.canRequestAds ? 'not_required' : 'required'
       }
 
+      if (info?.canRequestAds) return 'not_required'
       if (status === 'REQUIRED') return 'required'
       if (status === 'NOT_REQUIRED' || status === 'OBTAINED') return 'not_required'
       return 'unavailable'

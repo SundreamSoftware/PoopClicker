@@ -72,26 +72,68 @@ export interface ChestRewardRoll {
 
 const TIER_REWARD_TABLE: Record<
   ChestTier,
-  Array<{ weight: number; roll: () => ChestRewardRoll }>
+  Array<{ weight: number; label: string; roll: () => ChestRewardRoll }>
 > = {
   regular: [
-    { weight: 50, roll: () => ({ kind: 'gtp', amount: 5, label: '+5 GTP' }) },
-    { weight: 35, roll: () => ({ kind: 'gtp', amount: 10, label: '+10 GTP' }) },
-    { weight: 12, roll: () => ({ kind: 'pp_minutes', amount: 2, label: '+2 min PP' }) },
-    { weight: 3, roll: () => ({ kind: 'golden_shower', amount: 1, label: 'Golden Shower!' }) },
+    { weight: 50, label: '+5 GTP', roll: () => ({ kind: 'gtp', amount: 5, label: '+5 GTP' }) },
+    { weight: 35, label: '+10 GTP', roll: () => ({ kind: 'gtp', amount: 10, label: '+10 GTP' }) },
+    {
+      weight: 12,
+      label: '+2 min PP',
+      roll: () => ({ kind: 'pp_minutes', amount: 2, label: '+2 min PP' }),
+    },
+    {
+      weight: 3,
+      label: 'Golden Shower!',
+      roll: () => ({ kind: 'golden_shower', amount: 1, label: 'Golden Shower!' }),
+    },
   ],
   silver: [
-    { weight: 40, roll: () => ({ kind: 'gtp', amount: 20, label: '+20 GTP' }) },
-    { weight: 30, roll: () => ({ kind: 'gtp', amount: 35, label: '+35 GTP' }) },
-    { weight: 20, roll: () => ({ kind: 'pp_minutes', amount: 5, label: '+5 min PP' }) },
-    { weight: 10, roll: () => ({ kind: 'golden_shower', amount: 1, label: 'Golden Shower!' }) },
+    { weight: 40, label: '+20 GTP', roll: () => ({ kind: 'gtp', amount: 20, label: '+20 GTP' }) },
+    { weight: 30, label: '+35 GTP', roll: () => ({ kind: 'gtp', amount: 35, label: '+35 GTP' }) },
+    {
+      weight: 20,
+      label: '+5 min PP',
+      roll: () => ({ kind: 'pp_minutes', amount: 5, label: '+5 min PP' }),
+    },
+    {
+      weight: 10,
+      label: 'Golden Shower!',
+      roll: () => ({ kind: 'golden_shower', amount: 1, label: 'Golden Shower!' }),
+    },
   ],
   golden: [
-    { weight: 35, roll: () => ({ kind: 'gtp', amount: 60, label: '+60 GTP' }) },
-    { weight: 25, roll: () => ({ kind: 'gtp', amount: 100, label: '+100 GTP' }) },
-    { weight: 20, roll: () => ({ kind: 'pp_minutes', amount: 12, label: '+12 min PP' }) },
-    { weight: 20, roll: () => ({ kind: 'golden_shower', amount: 1, label: 'Golden Shower!' }) },
+    { weight: 35, label: '+60 GTP', roll: () => ({ kind: 'gtp', amount: 60, label: '+60 GTP' }) },
+    {
+      weight: 25,
+      label: '+100 GTP',
+      roll: () => ({ kind: 'gtp', amount: 100, label: '+100 GTP' }),
+    },
+    {
+      weight: 20,
+      label: '+12 min PP',
+      roll: () => ({ kind: 'pp_minutes', amount: 12, label: '+12 min PP' }),
+    },
+    {
+      weight: 20,
+      label: 'Golden Shower!',
+      roll: () => ({ kind: 'golden_shower', amount: 1, label: 'Golden Shower!' }),
+    },
   ],
+}
+
+export interface ChestOddsRow {
+  label: string
+  percent: number
+}
+
+export function chestRewardOdds(tier: ChestTier): ChestOddsRow[] {
+  const table = TIER_REWARD_TABLE[tier]
+  const total = table.reduce((sum, row) => sum + row.weight, 0)
+  return table.map((row) => ({
+    label: row.label,
+    percent: Math.round((row.weight / total) * 1000) / 10,
+  }))
 }
 
 export function rollChestReward(tier: ChestTier, random = Math.random): ChestRewardRoll {

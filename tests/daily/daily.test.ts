@@ -6,6 +6,8 @@ import { createDefaultSave } from '../../src/core/save/defaultSave'
 import { LargeNumber } from '../../src/core/numbers/LargeNumber'
 import {
   claimChallenge,
+  ensureDailyState,
+  generateBathroomBreakCharges,
   generateDailyChallenges,
   processStreak,
   progressChallenge,
@@ -252,5 +254,30 @@ describe('Bathroom Break', () => {
     const claim = engine.claimBathroomBreak('tap_boost')
     expect(claim.ok).toBe(true)
     expect(engine.exportSave().bathroomBreakCharges).toBe(1)
+  })
+
+  it('does not grant bathroom charges when generation time is in the future', () => {
+    const now = Date.UTC(2026, 7, 8, 12)
+    const save = {
+      ...createDefaultSave(now),
+      bathroomBreakCharges: 0,
+      lastBathroomBreakGeneration: now + 3_600_000,
+    }
+    const next = generateBathroomBreakCharges(save, now, 4 * 60 * 60 * 1000, 2)
+    expect(next.bathroomBreakCharges).toBe(0)
+    expect(next.lastBathroomBreakGeneration).toBe(now)
+  })
+
+  it('does not regenerate dailies when the clock rolls back', () => {
+    const now = Date.UTC(2026, 7, 8, 12)
+    const challenges = generateDailyChallenges(createDefaultSave(now), now, LargeNumber.from(10))
+    const save = {
+      ...createDefaultSave(now),
+      dailyChallengeDate: '2026-08-08',
+      dailyChallenges: challenges,
+    }
+    const rolledBack = ensureDailyState(save, Date.UTC(2026, 7, 7, 12), LargeNumber.from(10))
+    expect(rolledBack.dailyChallengeDate).toBe('2026-08-08')
+    expect(rolledBack.dailyChallenges).toEqual(challenges)
   })
 })

@@ -6,6 +6,7 @@ import {
   daysBetweenUtc,
   FixedClock,
   isNewUtcDay,
+  isUtcDateInFuture,
   safeElapsed,
   toUtcDateKey,
 } from '../../src/core/time/TimeService'
@@ -19,6 +20,9 @@ describe('Time service', () => {
     const b = Date.UTC(2026, 7, 8, 0, 30)
     expect(isNewUtcDay(toUtcDateKey(a), b)).toBe(true)
     expect(daysBetweenUtc(toUtcDateKey(a), b)).toBe(1)
+    expect(isUtcDateInFuture(toUtcDateKey(b), a)).toBe(true)
+    expect(isUtcDateInFuture(toUtcDateKey(a), b)).toBe(false)
+    expect(isUtcDateInFuture(null, b)).toBe(false)
   })
 
   it('clamps future timestamps and treats clock rollback as zero elapsed', () => {

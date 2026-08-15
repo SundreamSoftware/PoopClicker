@@ -31,11 +31,60 @@ describe('Save migration', () => {
     expect(migrated.lifetimePPEarned).toBeTruthy()
   })
 
+  it('clamps negative currencies and drops unknown royal-flush / IAP ids', () => {
+    const migrated = migrateSave({
+      schemaVersion: 2,
+      gtp: -40,
+      flushCount: -2,
+      royalFlushLevels: { rf_tap_1: 3, hacked_node: 9 },
+      ownedIapProducts: ['remove_ads', 'not_a_product'],
+    } as never)
+    expect(migrated.gtp).toBe(0)
+    expect(migrated.flushCount).toBe(0)
+    expect(migrated.royalFlushLevels).toEqual({ rf_tap_1: 3 })
+    expect(migrated.ownedIapProducts).toEqual(['remove_ads'])
+  })
+
+  it('keeps only known achievements and generator milestones', () => {
+    const migrated = migrateSave({
+      schemaVersion: 2,
+      achievements: {
+        taps_100: { progress: 100, completed: true, claimed: false, completedAt: 1, discovered: true },
+        fake_ach: { progress: 99, completed: true, claimed: true, completedAt: 1, discovered: true },
+      },
+      claimedGeneratorMilestones: {
+        plunger_intern: [10, -3, 25],
+        hacked_gen: [5],
+      },
+    } as never)
+    expect(migrated.achievements.taps_100?.completed).toBe(true)
+    expect(migrated.achievements.fake_ach).toBeUndefined()
+    expect(migrated.claimedGeneratorMilestones.plunger_intern).toEqual([10, 25])
+    expect(migrated.claimedGeneratorMilestones.hacked_gen).toBeUndefined()
+  })
+
+  it('drops unknown generator and upgrade ids', () => {
+    const migrated = migrateSave({
+      schemaVersion: 2,
+      generators: { plunger_intern: 4, hacked_id: 99 },
+      purchasedRunUpgrades: { more_fiber: 2, not_real: 8 },
+      activeBoosts: [{ tapMultiplier: 2 }],
+    } as never)
+    expect(migrated.generators).toEqual({ plunger_intern: 4 })
+    expect(migrated.purchasedRunUpgrades).toEqual({ more_fiber: 2 })
+    expect(migrated.activeBoosts).toEqual([])
+  })
+
   it('handles corrupt/partial saves with defaults', () => {
     const migrated = migrateSave({ schemaVersion: 2, gtp: 'nope' } as never)
     expect(migrated.gtp).toBe(0)
     expect(migrated.ownedSkins).toContain('classic_poop')
-    expect(migrated.sessionMissions).toEqual({ dateKey: null, missions: [] })
+    expect(migrated.sessionMissions).toEqual({
+      dateKey: null,
+      sessionId: 0,
+      dailyClaimedGtp: 0,
+      missions: [],
+    })
     expect(migrated.rewardedCooldowns).toEqual({
       incomeBoostAt: 0,
       instantPpsAt: 0,
@@ -49,6 +98,8 @@ describe('Save migration', () => {
       schemaVersion: 2,
       sessionMissions: {
         dateKey: '2026-08-08',
+        sessionId: 3,
+        dailyClaimedGtp: 7,
         missions: [{ id: 'taps_50', progress: 12, claimed: false }],
       },
       rewardedCooldowns: {
@@ -59,6 +110,8 @@ describe('Save migration', () => {
       },
     } as never)
     expect(migrated.sessionMissions.dateKey).toBe('2026-08-08')
+    expect(migrated.sessionMissions.sessionId).toBe(3)
+    expect(migrated.sessionMissions.dailyClaimedGtp).toBe(7)
     expect(migrated.sessionMissions.missions[0]).toEqual({
       id: 'taps_50',
       progress: 12,

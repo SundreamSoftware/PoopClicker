@@ -11,6 +11,9 @@ export interface ModalHostProps {
   /** When false, Escape / backdrop do not close (e.g. offline claim soft-block). */
   dismissible?: boolean
   ariaLabel?: string
+  /** Skip the built-in title/close chrome when the child already has a header. */
+  hideChrome?: boolean
+  panelClassName?: string
 }
 
 function getFocusable(root: HTMLElement): HTMLElement[] {
@@ -32,6 +35,8 @@ export function ModalHost({
   closeOnBackdrop = true,
   dismissible = true,
   ariaLabel,
+  hideChrome = false,
+  panelClassName = '',
 }: ModalHostProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const restoreFocusRef = useRef<HTMLElement | null>(null)
@@ -89,15 +94,15 @@ export function ModalHost({
     >
       <div
         ref={panelRef}
-        className="modal"
+        className={hideChrome ? panelClassName || 'modal' : `modal ${panelClassName}`.trim()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
-        aria-label={!title ? ariaLabel : undefined}
+        aria-labelledby={title && !hideChrome ? titleId : undefined}
+        aria-label={!title || hideChrome ? ariaLabel : undefined}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
-        {title ? (
+        {title && !hideChrome ? (
           <div
             style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}
           >

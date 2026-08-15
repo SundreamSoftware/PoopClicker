@@ -1,11 +1,12 @@
 import { GameEngine } from '../core/GameEngine'
 import { createAdService } from '../services/ads'
-import { createAnalytics } from '../services/analytics'
+import { createAnalytics, setAnalyticsTracker } from '../services/analytics'
 import { createBillingService } from '../services/billing'
 import { createConsentService } from '../services/consent'
 import { createNotificationScheduler } from '../services/notifications'
 
 export const analytics = createAnalytics()
+setAnalyticsTracker((event, payload) => analytics.track(event, payload))
 
 export const engine = GameEngine.fromStorage({
   analytics,

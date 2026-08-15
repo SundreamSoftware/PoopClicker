@@ -1,6 +1,13 @@
+import { ACHIEVEMENT_BY_ID } from '../../content/achievements'
+import { GENERATOR_BY_ID } from '../../content/generators'
+import { IAP_BY_ID } from '../../content/iapProducts'
+import { ROYAL_FLUSH_BY_ID } from '../../content/royalFlush'
+import { UPGRADE_BY_ID } from '../../content/upgrades'
 import { createDefaultSave } from './defaultSave'
 import {
+  SAVE_BACKUP_KEY,
   SAVE_SCHEMA_VERSION,
+  SAVE_STORAGE_KEY,
   type AnySave,
   type DailyDumpActiveRuntime,
   type PlayerSaveV1,
@@ -9,7 +16,7 @@ import {
   type SerializedLargeNumber,
   type SessionMissionsSave,
 } from './saveSchema'
-import type { ActiveEvent, ChestInventory, EventType } from '../types/gameTypes'
+import type { ActiveBoost, ActiveEvent, ChestInventory, EventType } from '../types/gameTypes'
 
 const VALID_EVENT_TYPES = new Set<EventType>([
   'golden_poop',
@@ -51,6 +58,10 @@ function sanitizeActiveEvent(value: unknown): ActiveEvent | null {
 
 function asNumber(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function asNonNegInt(value: unknown, fallback = 0): number {
+  return Math.max(0, Math.floor(asNumber(value, fallback)))
 }
 
 function asString(value: unknown, fallback = ''): string {
@@ -95,14 +106,14 @@ function sanitizeDailyDumpActiveRuntime(value: unknown): DailyDumpActiveRuntime 
     startedAt: asNumber(raw.startedAt),
     endsAt: asNumber(raw.endsAt),
     countdownEndsAt: asNumber(raw.countdownEndsAt),
-    score: asNumber(raw.score),
-    taps: asNumber(raw.taps),
-    combo: asNumber(raw.combo),
-    peakCombo: asNumber(raw.peakCombo),
+    score: asNonNegInt(raw.score),
+    taps: asNonNegInt(raw.taps),
+    combo: asNonNegInt(raw.combo),
+    peakCombo: asNonNegInt(raw.peakCombo),
     rewardTier: (DAILY_DUMP_TIERS.has(rewardTier)
       ? rewardTier
       : 'none') as DailyDumpActiveRuntime['rewardTier'],
-    gtpReward: asNumber(raw.gtpReward),
+    gtpReward: asNonNegInt(raw.gtpReward),
   }
 }
 
@@ -120,8 +131,74 @@ function sanitizeSessionMissions(value: unknown): SessionMissionsSave {
     : []
   return {
     dateKey: raw.dateKey == null ? null : asString(raw.dateKey),
+    sessionId: Math.max(0, Math.floor(asNumber(raw.sessionId))),
+    dailyClaimedGtp: Math.max(0, Math.floor(asNumber(raw.dailyClaimedGtp))),
     missions,
   }
+}
+
+function sanitizeClaimedMilestones(value: unknown): Record<string, number[]> {
+  const raw = asRecord(value)
+  const out: Record<string, number[]> = {}
+  for (const [id, levels] of Object.entries(raw)) {
+    if (!GENERATOR_BY_ID[id] || !Array.isArray(levels)) continue
+    const clean = Array.from(
+      new Set(levels.map((level) => Math.max(0, Math.floor(asNumber(level)))).filter((n) => n > 0)),
+    )
+    if (clean.length > 0) out[id] = clean
+  }
+  return out
+}
+
+function sanitizeAchievements(value: unknown): PlayerSaveV2['achievements'] {
+  const raw = asRecord(value)
+  const out: PlayerSaveV2['achievements'] = {}
+  for (const [id, state] of Object.entries(raw)) {
+    if (!ACHIEVEMENT_BY_ID[id] || !state || typeof state !== 'object') continue
+    const rec = state as Record<string, unknown>
+    out[id] = {
+      progress: asNonNegInt(rec.progress),
+      completed: asBool(rec.completed),
+      claimed: asBool(rec.claimed),
+      completedAt: rec.completedAt == null ? null : asNumber(rec.completedAt),
+      discovered: asBool(rec.discovered),
+    }
+  }
+  return out
+}
+
+function sanitizeLevelMap(
+  value: unknown,
+  isValidId: (id: string) => boolean,
+  maxLevel = 10_000,
+): Record<string, number> {
+  const raw = asRecord(value)
+  const out: Record<string, number> = {}
+  for (const [id, level] of Object.entries(raw)) {
+    if (!isValidId(id)) continue
+    const n = Math.min(maxLevel, Math.max(0, Math.floor(asNumber(level))))
+    if (n > 0) out[id] = n
+  }
+  return out
+}
+
+function sanitizeActiveBoosts(value: unknown): ActiveBoost[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return []
+    const raw = item as Record<string, unknown>
+    const id = asString(raw.id)
+    if (!id) return []
+    return [
+      {
+        id,
+        label: asString(raw.label, id),
+        tapMultiplier: Math.max(0, asNumber(raw.tapMultiplier, 1)),
+        idleMultiplier: Math.max(0, asNumber(raw.idleMultiplier, 1)),
+        expiresAt: asNumber(raw.expiresAt),
+      },
+    ]
+  })
 }
 
 function sanitizeRewardedCooldowns(value: unknown): RewardedCooldownsSave {
@@ -146,12 +223,12 @@ function migrateV1(raw: PlayerSaveV1, now: number): PlayerSaveV2 {
     currentPP: toSerialized(raw.pp),
     runPPEarned: toSerialized(raw.pp),
     lifetimePPEarned: toSerialized(raw.pp),
-    tapCount: asNumber(raw.tapCount),
-    generators: (raw.generators as Record<string, number>) ?? {},
-    purchasedRunUpgrades: (raw.upgrades as Record<string, number>) ?? {},
-    flushCount: asNumber(raw.flushCount),
+    tapCount: asNonNegInt(raw.tapCount),
+    generators: sanitizeLevelMap(raw.generators, (id) => Boolean(GENERATOR_BY_ID[id])),
+    purchasedRunUpgrades: sanitizeLevelMap(raw.upgrades, (id) => Boolean(UPGRADE_BY_ID[id])),
+    flushCount: asNonNegInt(raw.flushCount),
     flushPower,
-    gtp,
+    gtp: asNonNegInt(gtp),
     ownedSkins: Array.isArray(raw.ownedSkins)
       ? Array.from(new Set(['classic_poop', ...raw.ownedSkins.map(String)]))
       : ['classic_poop'],
@@ -169,31 +246,33 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
 
   return {
     ...base,
-    ...raw,
     schemaVersion: SAVE_SCHEMA_VERSION,
-    saveRevision: asNumber(raw.saveRevision, 0),
+    saveRevision: asNonNegInt(raw.saveRevision, 0),
     currentPP: toSerialized(raw.currentPP ?? raw.pp),
     runPPEarned: toSerialized(raw.runPPEarned ?? raw.currentPP ?? raw.pp),
     lifetimePPEarned: toSerialized(raw.lifetimePPEarned ?? raw.runPPEarned ?? raw.pp),
-    tapCount: asNumber(raw.tapCount),
-    sessionTapCount: asNumber(raw.sessionTapCount),
-    critCount: asNumber(raw.critCount),
-    highestCPS: asNumber(raw.highestCPS),
+    tapCount: asNonNegInt(raw.tapCount),
+    sessionTapCount: asNonNegInt(raw.sessionTapCount),
+    critCount: asNonNegInt(raw.critCount),
+    highestCPS: asNonNegInt(raw.highestCPS),
     highestPPS: toSerialized(raw.highestPPS),
-    generators: (raw.generators as Record<string, number>) ?? {},
-    purchasedRunUpgrades:
-      (raw.purchasedRunUpgrades as Record<string, number>) ??
-      (raw.upgrades as Record<string, number>) ??
-      {},
-    claimedGeneratorMilestones: (raw.claimedGeneratorMilestones as Record<string, number[]>) ?? {},
-    flushCount: asNumber(raw.flushCount),
-    flushPower: asNumber(raw.flushPower),
-    royalFlushLevels: (raw.royalFlushLevels as Record<string, number>) ?? {},
-    gtp: asNumber(raw.gtp),
+    generators: sanitizeLevelMap(raw.generators, (id) => Boolean(GENERATOR_BY_ID[id])),
+    purchasedRunUpgrades: sanitizeLevelMap(raw.purchasedRunUpgrades ?? raw.upgrades, (id) =>
+      Boolean(UPGRADE_BY_ID[id]),
+    ),
+    claimedGeneratorMilestones: sanitizeClaimedMilestones(raw.claimedGeneratorMilestones),
+    flushCount: asNonNegInt(raw.flushCount),
+    flushPower: asNonNegInt(raw.flushPower),
+    royalFlushLevels: sanitizeLevelMap(raw.royalFlushLevels, (id) => Boolean(ROYAL_FLUSH_BY_ID[id])),
+    gtp: asNonNegInt(raw.gtp),
     inventoryChests: sanitizeChestInventory(raw.inventoryChests),
     inventoryKeys: sanitizeChestInventory(raw.inventoryKeys),
     removeAds: asBool(raw.removeAds),
-    ownedIapProducts: Array.isArray(raw.ownedIapProducts) ? raw.ownedIapProducts.map(String) : [],
+    ownedIapProducts: Array.isArray(raw.ownedIapProducts)
+      ? Array.from(
+          new Set(raw.ownedIapProducts.map(String).filter((id) => Boolean(IAP_BY_ID[id]))),
+        )
+      : [],
     ownedSkins: Array.isArray(raw.ownedSkins)
       ? Array.from(new Set(['classic_poop', ...raw.ownedSkins.map(String)]))
       : ['classic_poop'],
@@ -203,33 +282,33 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
       ? Array.from(new Set(['home_bathroom', ...raw.unlockedWorlds.map(String)]))
       : ['home_bathroom'],
     currentWorldId: asString(raw.currentWorldId, 'home_bathroom') || 'home_bathroom',
-    achievements: (raw.achievements as PlayerSaveV2['achievements']) ?? {},
+    achievements: sanitizeAchievements(raw.achievements),
     dailyChallenges: Array.isArray(raw.dailyChallenges)
       ? (raw.dailyChallenges as PlayerSaveV2['dailyChallenges'])
       : [],
     dailyChallengeDate: raw.dailyChallengeDate == null ? null : asString(raw.dailyChallengeDate),
     dailyChestClaimed: asBool(raw.dailyChestClaimed),
-    dailyRerollsUsed: asNumber(raw.dailyRerollsUsed),
-    dailyChallengesCompletedTotal: asNumber(raw.dailyChallengesCompletedTotal),
-    dailyStreak: asNumber(raw.dailyStreak),
-    dailyStreakCycle: Math.max(1, asNumber(raw.dailyStreakCycle, 1)),
+    dailyRerollsUsed: asNonNegInt(raw.dailyRerollsUsed),
+    dailyChallengesCompletedTotal: asNonNegInt(raw.dailyChallengesCompletedTotal),
+    dailyStreak: asNonNegInt(raw.dailyStreak),
+    dailyStreakCycle: Math.max(1, asNonNegInt(raw.dailyStreakCycle, 1)),
     lastDailyClaim: raw.lastDailyClaim == null ? null : asString(raw.lastDailyClaim),
-    streakSaverCharges: asNumber(raw.streakSaverCharges, 1),
+    streakSaverCharges: asNonNegInt(raw.streakSaverCharges, 1),
     lastStreakSaverEarnDate:
       raw.lastStreakSaverEarnDate == null ? null : asString(raw.lastStreakSaverEarnDate),
-    bathroomBreakCharges: asNumber(raw.bathroomBreakCharges),
+    bathroomBreakCharges: asNonNegInt(raw.bathroomBreakCharges),
     lastBathroomBreakGeneration: asNumber(raw.lastBathroomBreakGeneration, now),
     firstFlushOfDayClaimedDate:
       raw.firstFlushOfDayClaimedDate == null ? null : asString(raw.firstFlushOfDayClaimedDate),
-    goldenPoopsCaught: asNumber(raw.goldenPoopsCaught),
-    clogsCompleted: asNumber(raw.clogsCompleted),
-    clogsFailed: asNumber(raw.clogsFailed),
-    eventsCompleted: asNumber(raw.eventsCompleted),
+    goldenPoopsCaught: asNonNegInt(raw.goldenPoopsCaught),
+    clogsCompleted: asNonNegInt(raw.clogsCompleted),
+    clogsFailed: asNonNegInt(raw.clogsFailed),
+    eventsCompleted: asNonNegInt(raw.eventsCompleted),
     eventCompletions: (raw.eventCompletions as Record<string, number>) ?? {},
     dailyDumpState: {
       lastPlayedDate: dump.lastPlayedDate == null ? null : asString(dump.lastPlayedDate),
-      bestScore: asNumber(dump.bestScore),
-      lastScore: asNumber(dump.lastScore),
+      bestScore: asNonNegInt(dump.bestScore),
+      lastScore: asNonNegInt(dump.lastScore),
       lastTier: (['none', 'bronze', 'silver', 'gold', 'diamond'] as const).includes(
         dump.lastTier as PlayerSaveV2['dailyDumpState']['lastTier'],
       )
@@ -238,13 +317,11 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
       rewardClaimed: asBool(dump.rewardClaimed),
       activeRuntime: sanitizeDailyDumpActiveRuntime(dump.activeRuntime),
       weeklyBestWeekKey: dump.weeklyBestWeekKey == null ? null : asString(dump.weeklyBestWeekKey),
-      weeklyBestScore: asNumber(dump.weeklyBestScore),
+      weeklyBestScore: asNonNegInt(dump.weeklyBestScore),
     },
     sessionMissions: sanitizeSessionMissions(raw.sessionMissions),
     rewardedCooldowns: sanitizeRewardedCooldowns(raw.rewardedCooldowns),
-    activeBoosts: Array.isArray(raw.activeBoosts)
-      ? (raw.activeBoosts as PlayerSaveV2['activeBoosts'])
-      : [],
+    activeBoosts: sanitizeActiveBoosts(raw.activeBoosts),
     activeEvent: sanitizeActiveEvent(raw.activeEvent),
     lastEventEndedAt: (raw.lastEventEndedAt as Record<string, number>) ?? {},
     lastGoldenPoopAt: asNumber(raw.lastGoldenPoopAt),
@@ -257,18 +334,18 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
       generators: asBool(autoBuyPreferences.generators, true),
       upgrades: asBool(autoBuyPreferences.upgrades, true),
     },
-    permanentProductionBonus: asNumber(raw.permanentProductionBonus),
+    permanentProductionBonus: Math.max(0, asNumber(raw.permanentProductionBonus)),
     tutorialFlags: {
       ...base.tutorialFlags,
       ...(raw.tutorialFlags as Record<string, boolean>),
     },
     lastSaveTimestamp: asNumber(raw.lastSaveTimestamp ?? raw.lastSave, now),
     lastActiveTimestamp: asNumber(raw.lastActiveTimestamp ?? raw.lastSaveTimestamp, now),
-    totalPlayTimeMs: asNumber(raw.totalPlayTimeMs),
-    officeSessionMs: asNumber(raw.officeSessionMs),
-    buyMultiplierIndex: asNumber(raw.buyMultiplierIndex),
-    sessionsCount: asNumber(raw.sessionsCount),
-    bathroomBreakClaimsTotal: asNumber(raw.bathroomBreakClaimsTotal),
+    totalPlayTimeMs: asNonNegInt(raw.totalPlayTimeMs),
+    officeSessionMs: asNonNegInt(raw.officeSessionMs),
+    buyMultiplierIndex: asNonNegInt(raw.buyMultiplierIndex),
+    sessionsCount: asNonNegInt(raw.sessionsCount),
+    bathroomBreakClaimsTotal: asNonNegInt(raw.bathroomBreakClaimsTotal),
     settings: {
       reducedMotion: asBool(settings.reducedMotion),
       haptics: asBool(settings.haptics, true),
@@ -298,10 +375,65 @@ export function serializeSave(save: PlayerSaveV2): string {
   return JSON.stringify(save)
 }
 
-export function deserializeSave(json: string, now = Date.now()): PlayerSaveV2 {
+export function parseSaveJson(json: string, now = Date.now()): PlayerSaveV2 | null {
   try {
-    return migrateSave(JSON.parse(json) as AnySave, now)
+    const parsed = JSON.parse(json) as unknown
+    if (!parsed || typeof parsed !== 'object') return null
+    return migrateSave(parsed as AnySave, now)
   } catch {
-    return createDefaultSave(now)
+    return null
   }
+}
+
+export function deserializeSave(json: string, now = Date.now()): PlayerSaveV2 {
+  return parseSaveJson(json, now) ?? createDefaultSave(now)
+}
+
+/** User imports must look like a save — not a random JSON object. */
+export function isImportableSave(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false
+  const rec = raw as Record<string, unknown>
+  if (rec.schemaVersion === 1 || rec.schemaVersion === 2) return true
+  return (
+    rec.currentPP != null ||
+    rec.pp != null ||
+    rec.tapCount != null ||
+    rec.gtp != null ||
+    rec.flushCount != null
+  )
+}
+
+export function backupKeyFor(storageKey: string): string {
+  return storageKey === SAVE_STORAGE_KEY ? SAVE_BACKUP_KEY : `${storageKey}_bak`
+}
+
+export function loadSaveFromStorage(
+  storage: Storage | null | undefined,
+  now = Date.now(),
+  storageKey = SAVE_STORAGE_KEY,
+): PlayerSaveV2 {
+  if (!storage) return createDefaultSave(now)
+  const primary = storage.getItem(storageKey)
+  const fromPrimary = primary ? parseSaveJson(primary, now) : null
+  if (fromPrimary) return fromPrimary
+  const backup = storage.getItem(backupKeyFor(storageKey))
+  const fromBackup = backup ? parseSaveJson(backup, now) : null
+  if (fromBackup) return fromBackup
+  return createDefaultSave(now)
+}
+
+export function writeSaveRecord(
+  storage: Storage,
+  json: string,
+  storageKey = SAVE_STORAGE_KEY,
+): void {
+  const previous = storage.getItem(storageKey)
+  if (previous && previous !== json) {
+    try {
+      storage.setItem(backupKeyFor(storageKey), previous)
+    } catch (error) {
+      console.warn('[save] backup write failed', error)
+    }
+  }
+  storage.setItem(storageKey, json)
 }
