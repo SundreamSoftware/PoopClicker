@@ -40,12 +40,12 @@ Without this, Firebase stays a no-op. In-app `app_error` breadcrumbs still fire 
 
 Create a real AdMob app and units. **Do not** ship Google sample IDs (`3940256099942544`). The release workflow rejects them when `production=true`.
 
-| Secret | What it is |
-| --- | --- |
-| `ADMOB_APP_ID` | `ca-app-pub-xxxx~yyyy` (also used as `VITE_ADMOB_APP_ID`) |
-| `VITE_ADMOB_BANNER_ID` | Banner unit (optional if unused) |
-| `VITE_ADMOB_INTERSTITIAL_ID` | Interstitial unit |
-| `VITE_ADMOB_REWARDED_ID` | Rewarded unit |
+| Secret                       | What it is                                                |
+| ---------------------------- | --------------------------------------------------------- |
+| `ADMOB_APP_ID`               | `ca-app-pub-xxxx~yyyy` (also used as `VITE_ADMOB_APP_ID`) |
+| `VITE_ADMOB_BANNER_ID`       | Banner unit (optional if unused)                          |
+| `VITE_ADMOB_INTERSTITIAL_ID` | Interstitial unit                                         |
+| `VITE_ADMOB_REWARDED_ID`     | Rewarded unit                                             |
 
 - [ ] All four IDs created in AdMob
 - [ ] Secrets set on the GitHub repo
@@ -58,15 +58,16 @@ Create a real AdMob app and units. **Do not** ship Google sample IDs (`394025609
 
 Create **one-time** in-app products whose IDs match the catalog exactly:
 
-| Play product ID | Type in game | Grant |
-| --- | --- | --- |
-| `com.sundreamsoftware.poopclicker.remove_ads` | non-consumable | Remove interstitials |
-| `com.sundreamsoftware.poopclicker.gtp_small` | consumable | 50 GTP |
-| `com.sundreamsoftware.poopclicker.gtp_medium` | consumable | 180 GTP |
-| `com.sundreamsoftware.poopclicker.gtp_large` | consumable | 350 GTP |
-| `com.sundreamsoftware.poopclicker.gtp_huge` | consumable | 800 GTP |
-| `com.sundreamsoftware.poopclicker.gtp_mega` | consumable | 2000 GTP |
-| `com.sundreamsoftware.poopclicker.toilet_tycoon_pack` | one-time bundle | Remove ads + 250 GTP + `toilet_tycoon` skin |
+| Play product ID                                       | Type in game    | Grant                                                                   |
+| ----------------------------------------------------- | --------------- | ----------------------------------------------------------------------- |
+| `com.sundreamsoftware.poopclicker.remove_ads`         | non-consumable  | Remove interstitials                                                    |
+| `com.sundreamsoftware.poopclicker.gtp_small`          | consumable      | 50 GTP                                                                  |
+| `com.sundreamsoftware.poopclicker.gtp_medium`         | consumable      | 180 GTP                                                                 |
+| `com.sundreamsoftware.poopclicker.gtp_large`          | consumable      | 350 GTP                                                                 |
+| `com.sundreamsoftware.poopclicker.gtp_huge`           | consumable      | 800 GTP                                                                 |
+| `com.sundreamsoftware.poopclicker.gtp_mega`           | consumable      | 2000 GTP                                                                |
+| `com.sundreamsoftware.poopclicker.toilet_tycoon_pack` | one-time bundle | Remove ads + 250 GTP + `toilet_tycoon` skin                             |
+| `com.sundreamsoftware.poopclicker.convenience_pack`   | one-time bundle | Auto-Buy + permanent 2× production + Remove Ads ($29.99, after 1 Flush) |
 
 - [ ] Every ID above exists and is **active**
 - [ ] License testers added
