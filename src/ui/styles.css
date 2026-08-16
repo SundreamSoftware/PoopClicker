@@ -664,6 +664,18 @@ button:disabled {
   font-size: 1.4rem;
 }
 
+.float-num.splash {
+  color: #9be7c4;
+}
+
+.build-card {
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(13, 42, 50, 0.2);
+}
+
 @keyframes floatUp {
   to {
     transform: translate(-50%, -70px);

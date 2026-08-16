@@ -117,70 +117,70 @@ Rozkład: 30 tap · 10 combo/frenzy · 10 crit · 3 idle.
 
 Każdy poziom dodaje podany procent do mnożnika tapa.
 
-| Nazwa                     | Na poziom | Max | Unlock                      |
-| ------------------------- | --------- | --: | --------------------------- |
-| More Fiber                | +15% tap  |  25 | Start                       |
-| Premium Fiber             | +20% tap  |  25 | Needs More Fiber            |
-| Questionable Burrito      | +25% tap  |  25 | Needs Premium Fiber         |
-| Emergency Espresso        | +30% tap  |  25 | Start                       |
-| Double Espresso           | +35% tap  |  25 | Needs Emergency Espresso    |
-| Chili Accelerator         | +40% tap  |  25 | Start                       |
-| Triple Chili Disaster     | +45% tap  |  25 | Needs Chili Accelerator     |
-| Reinforced Toilet Seat    | +50% tap  |  25 | Start                       |
-| Titanium Toilet Seat      | +55% tap  |  25 | Needs Reinforced Seat       |
-| Industrial Plunger        | +60% tap  |  25 | Start                       |
-| Hydraulic Plunger         | +70% tap  |  25 | Start                       |
-| Diamond Plunger           | +80% tap  |  25 | Needs Hydraulic Plunger     |
-| Turbo Digestion           | +90% tap  |  25 | Start                       |
-| Military Grade Fiber      | +100% tap |  25 | Start                       |
-| Advanced Bathroom Physics | +110% tap |  25 | Start                       |
-| Experimental Digestion    | +125% tap |  25 | 1 Flush                     |
-| NASA Flush Technology     | +140% tap |  25 | 1 Flush + Experimental      |
-| Nuclear Fiber             | +160% tap |  25 | 3 Flushe                    |
-| Quantum Pooping           | +200% tap |  15 | 10 Flushy + Ice Chamber     |
-| Dark Matter Digestion     | +220% tap |  15 | 12 Flushy + Quantum Pooping |
-| Antimatter Burrito        | +250% tap |  12 | 15 Flushy                   |
-| Relativistic Taco         | +280% tap |  12 | 18 Flushy                   |
-| Temporal Digestion        | +320% tap |  10 | 20 Flushy                   |
-| Interdimensional Fiber    | +360% tap |  10 | 25 Flushy                   |
-| Multiverse Metabolism     | +400% tap |  10 | 30 Flushy                   |
-| Reality-Bending Burrito   | +450% tap |   8 | 40 Flushy                   |
-| Infinite Digestion        | +500% tap |   8 | 50 Flushy                   |
-| Forbidden Taco            | +550% tap |   8 | 60 Flushy                   |
-| The Brown Equation        | +600% tap |   5 | 75 Flushy                   |
-| Ultimate Poop Theory      | +800% tap |   5 | 100 Flushy                  |
+| Nazwa                     | Na poziom         | Max | Unlock                      |
+| ------------------------- | ----------------- | --: | --------------------------- |
+| More Fiber                | +15% tap          |  25 | Start                       |
+| Premium Fiber             | +20% tap          |  25 | Needs More Fiber            |
+| Questionable Burrito      | +25% tap          |  25 | Needs Premium Fiber         |
+| Emergency Espresso        | +30% tap          |  25 | Start                       |
+| Double Espresso           | +35% tap          |  25 | Needs Emergency Espresso    |
+| Chili Accelerator         | Splash co 5 tapów |  25 | Start                       |
+| Triple Chili Disaster     | Silniejszy splash |  25 | Needs Chili Accelerator     |
+| Reinforced Toilet Seat    | Tap bierze % PPS  |  25 | Start                       |
+| Titanium Toilet Seat      | Milestone → tap   |  25 | Needs Reinforced Seat       |
+| Industrial Plunger        | +60% tap          |  25 | Start                       |
+| Hydraulic Plunger         | +70% tap          |  25 | Start                       |
+| Diamond Plunger           | +80% tap          |  25 | Needs Hydraulic Plunger     |
+| Turbo Digestion           | +90% tap          |  25 | Start                       |
+| Military Grade Fiber      | +100% tap         |  25 | Start                       |
+| Advanced Bathroom Physics | Best gen amp      |  25 | Start                       |
+| Experimental Digestion    | +125% tap         |  25 | 1 Flush                     |
+| NASA Flush Technology     | +140% tap         |  25 | 1 Flush + Experimental      |
+| Nuclear Fiber             | +160% tap         |  25 | 3 Flushe                    |
+| Quantum Pooping           | +200% tap         |  15 | 10 Flushy + Ice Chamber     |
+| Dark Matter Digestion     | +220% tap         |  15 | 12 Flushy + Quantum Pooping |
+| Antimatter Burrito        | +250% tap         |  12 | 15 Flushy                   |
+| Relativistic Taco         | +280% tap         |  12 | 18 Flushy                   |
+| Temporal Digestion        | +320% tap         |  10 | 20 Flushy                   |
+| Interdimensional Fiber    | +360% tap         |  10 | 25 Flushy                   |
+| Multiverse Metabolism     | +400% tap         |  10 | 30 Flushy                   |
+| Reality-Bending Burrito   | +450% tap         |   8 | 40 Flushy                   |
+| Infinite Digestion        | +500% tap         |   8 | 50 Flushy                   |
+| Forbidden Taco            | +550% tap         |   8 | 60 Flushy                   |
+| The Brown Equation        | +600% tap         |   5 | 75 Flushy                   |
+| Ultimate Poop Theory      | +800% tap         |   5 | 100 Flushy                  |
 
 ### Combo i frenzy (10)
 
-| Nazwa                  | Efekt na poziom       | Max | Unlock    |
-| ---------------------- | --------------------- | --: | --------- |
-| Sticky Combo           | −0.05 combo decay /s  |  20 | Start     |
-| Combo Ceiling Raise    | +2 max combo          |  15 | Start     |
-| Frenzy Warm-Up         | −0.3 próg Frenzy CPS  |  10 | Start     |
-| Frenzy Encore          | +0.5 s trwania Frenzy |  10 | Start     |
-| Overdrive Gloves       | +3 max combo          |   8 | 1 Flush   |
-| Rhythm Plumbing        | +20% tap              |  10 | 2 Flushe  |
-| Combo Insurance        | −0.08 combo decay /s  |  12 | 8 Flushy  |
-| Frenzy Festival        | +1 s trwania Frenzy   |   8 | 12 Flushy |
-| Maximum Poopacity Prep | −0.4 próg Frenzy CPS  |   6 | 25 Flushy |
-| Eternal Combo          | +5 max combo          |   5 | 40 Flushy |
+| Nazwa                  | Efekt na poziom         | Max | Unlock    |
+| ---------------------- | ----------------------- | --: | --------- |
+| Sticky Combo           | −0.05 combo decay /s    |  20 | Start     |
+| Combo Ceiling Raise    | +2 max combo            |  15 | Start     |
+| Frenzy Warm-Up         | −0.3 próg Frenzy CPS    |  10 | Start     |
+| Frenzy Encore          | +0.5 s trwania Frenzy   |  10 | Start     |
+| Overdrive Gloves       | +0.35× crit w Overdrive |   8 | 1 Flush   |
+| Rhythm Plumbing        | Combo podnosi crit      |  10 | 2 Flushe  |
+| Combo Insurance        | −0.08 combo decay /s    |  12 | 8 Flushy  |
+| Frenzy Festival        | Frenzy bufuje PPS       |   8 | 12 Flushy |
+| Maximum Poopacity Prep | −0.4 próg Frenzy CPS    |   6 | 25 Flushy |
+| Eternal Combo          | Combo 8+ → PPS          |   5 | 40 Flushy |
 
 ### Crit (10)
 
 Bazowy crit: **2% szansy × 5**. Szansa jest ucięta na **75%**.
 
-| Nazwa                 | Efekt na poziom        | Max | Unlock    |
-| --------------------- | ---------------------- | --: | --------- |
-| Lucky Seat            | +0.5% crit chance      |  20 | Start     |
-| Crit Plunger          | +0.5× crit multiplier  |  15 | Start     |
-| Precision Wipe        | +0.8% crit chance      |  15 | Start     |
-| Golden Flush Instinct | +0.75× crit multiplier |  12 | Start     |
-| Critical Mass         | +1% crit chance        |  10 | 1 Flush   |
-| Chain Reaction Seat   | +1.2% crit chance      |   8 | 3 Flushe  |
-| Supernova Splat       | +1.0× crit multiplier  |  10 | 10 Flushy |
-| Probability Plunger   | +1.5% crit chance      |   8 | 15 Flushy |
-| Destiny Dump          | +1.5× crit multiplier  |   6 | 30 Flushy |
-| Final Crit Form       | +2% crit chance        |   5 | 50 Flushy |
+| Nazwa                 | Efekt na poziom           | Max | Unlock    |
+| --------------------- | ------------------------- | --: | --------- |
+| Lucky Seat            | +0.5% crit chance         |  20 | Start     |
+| Crit Plunger          | +0.5× crit multiplier     |  15 | Start     |
+| Precision Wipe        | +0.8% crit chance         |  15 | Start     |
+| Golden Flush Instinct | Golden przedłuża Frenzy   |  12 | Start     |
+| Critical Mass         | +1% crit chance           |  10 | 1 Flush   |
+| Chain Reaction Seat   | Crit może się łańcuchować |   8 | 3 Flushe  |
+| Supernova Splat       | +1.0× crit multiplier     |  10 | 10 Flushy |
+| Probability Plunger   | +1.5% crit chance         |   8 | 15 Flushy |
+| Destiny Dump          | +1.5× crit multiplier     |   6 | 30 Flushy |
+| Final Crit Form       | +2% crit chance           |   5 | 50 Flushy |
 
 ### Idle (3)
 
@@ -276,3 +276,13 @@ Top-bar jest kontekstowy: ten sam komponent, inne priorytety.
 ### Matematyka za HUD-em
 
 Bazowy tap to **1 PP**. Mnożą go: upgrade’y tap, combo `(1 + 0.05 × combo)`, Flush Power, bonus świata, bonusy stałe i 2× z Convenience Pack. Crity liczą się osobno (bazowo 2% × 5). Idle PP/s = baza generatora × poziomy × milestone’y × upgrade’y idle/generator × ten sam globalny mnożnik.
+
+## Build archetypes (P2)
+
+Te same ID upgrade’ów. Zmienił się efekt, nie save. Wczesne `+X% tap` zostają kręgosłupem TAPPERA.
+
+| Archetyp | Jakościowe ID                                                                                              | Mechanika                                                                     |
+| -------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| TAPPER   | `chili_accelerator`, `triple_chili_disaster`, `chain_reaction_seat`, `rhythm_plumbing`, `overdrive_gloves` | Splash co 5 tapów, crit chain, combo→crit, Overdrive crit                     |
+| IDLER    | `frenzy_festival`, `advanced_bathroom_physics`                                                             | Frenzy bufuje PPS, najlepszy generator dostaje amp                            |
+| HYBRID   | `reinforced_toilet_seat`, `titanium_toilet_seat`, `eternal_combo`, `golden_flush_instinct`                 | Tap bierze % PPS, milestone→tap, combo 8+ budzi idle, Golden przedłuża Frenzy |

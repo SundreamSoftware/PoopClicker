@@ -78,7 +78,7 @@ import {
 import { buyChestShopOfferByIndex, openChest } from './systems/chestSystem'
 import type { ChestTier } from './types/gameTypes'
 import { buildFlushPreview, canFlush, performFlush } from './systems/flush'
-import { computeProduction, resolveTapSpeedState } from './systems/production'
+import { QUALITY, computeProduction, resolveTapSpeedState } from './systems/production'
 import { equipSkin, grantEligibleSkins, purchaseSkin } from './systems/skins'
 import {
   claimSessionMission,
@@ -102,6 +102,8 @@ export interface TapResult {
   crit: boolean
   combo: number
   state: TapSpeedState
+  splash: boolean
+  critChains: number
 }
 
 export interface EngineSnapshot {
@@ -144,6 +146,8 @@ export class GameEngine {
   private cachedProduction: ReturnType<typeof computeProduction> | null = null
   private cachedProductionSave: PlayerSaveV2 | null = null
   private cachedProductionCombo = Number.NaN
+  private cachedProductionFrenzy = false
+  private cachedProductionTapState: TapSpeedState = 'idle'
   private cachedProductionAt = 0
   private dirty = false
   private readonly listeners = new Set<Listener>()
@@ -445,12 +449,33 @@ export class GameEngine {
       }
     }
 
-    const crit = Math.random() < production.critChance
+    const nextTapCount = this.save.tapCount + 1
+    let splash = false
     let gained = production.tapPower
+    if (
+      production.splashEveryN &&
+      nextTapCount % production.splashEveryN === 0 &&
+      production.splashMultiplier > 0
+    ) {
+      gained = gained.add(production.tapPower.mul(production.splashMultiplier))
+      splash = true
+    }
+
+    const crit = Math.random() < production.critChance
+    let critChains = 0
     if (crit) {
       gained = gained.mul(production.critMultiplier)
       this.save = { ...this.save, critCount: this.save.critCount + 1 }
       this.save = progressChallenge(this.save, 'crit_taps', 1)
+      while (
+        critChains < QUALITY.critChainCap &&
+        production.critChainChance > 0 &&
+        Math.random() < production.critChainChance
+      ) {
+        gained = gained.mul(production.critMultiplier)
+        critChains += 1
+        this.save = { ...this.save, critCount: this.save.critCount + 1 }
+      }
     }
 
     if (this.eventRuntime && this.eventRuntime.type === 'mega_clog') {
@@ -507,7 +532,7 @@ export class GameEngine {
     this.syncMeta(now)
     this.dirty = true
     this.emit()
-    return { gained, crit, combo: this.combo, state: this.tapState }
+    return { gained, crit, combo: this.combo, state: this.tapState, splash, critChains }
   }
 
   private refreshTapState(now: number, frenzyThreshold?: number): void {
@@ -553,19 +578,33 @@ export class GameEngine {
 
   private getProduction() {
     const now = this.time.now()
+    const frenzyActive = now < this.frenzyActiveUntil
     if (
       this.cachedProduction &&
       this.cachedProductionSave === this.save &&
       this.cachedProductionCombo === this.combo &&
+      this.cachedProductionFrenzy === frenzyActive &&
+      this.cachedProductionTapState === this.tapState &&
       now - this.cachedProductionAt < 100
     ) {
       return this.cachedProduction
     }
-    this.cachedProduction = computeProduction(this.save, this.combo, now)
+    this.cachedProduction = computeProduction(this.save, this.combo, now, {
+      frenzyActive,
+      tapState: this.tapState,
+    })
     this.cachedProductionSave = this.save
     this.cachedProductionCombo = this.combo
+    this.cachedProductionFrenzy = frenzyActive
+    this.cachedProductionTapState = this.tapState
     this.cachedProductionAt = now
     return this.cachedProduction
+  }
+
+  private extendFrenzyFromGolden(now: number): void {
+    const extraSec = this.getProduction().goldenFrenzySec
+    if (extraSec <= 0 || now >= this.frenzyActiveUntil) return
+    this.frenzyActiveUntil += extraSec * 1000
   }
 
   buyGenerator(generatorId: string, count?: number): ClaimResult {
@@ -999,6 +1038,7 @@ export class GameEngine {
         lastGoldenPoopAt: now,
       }
       this.goldenInSession += 1
+      this.extendFrenzyFromGolden(now)
     }
 
     if (runtime.completed && !runtime.rewardClaimed) {
@@ -1358,6 +1398,7 @@ export class GameEngine {
         goldenPoopsCaught: this.save.goldenPoopsCaught + 1,
         lastGoldenPoopAt: this.time.now(),
       }
+      this.extendFrenzyFromGolden(this.time.now())
     }
     if (runtime.type === 'mega_clog') {
       this.save = { ...this.save, clogsCompleted: this.save.clogsCompleted + 1 }

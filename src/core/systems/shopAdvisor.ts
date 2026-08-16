@@ -111,7 +111,24 @@ export function scoreUpgradeBuy(
       : group === 'tap' || group === 'combo' || group === 'crit'
         ? 'tap'
         : 'other'
-  const value = (tapDelta + idleDelta) / Math.max(1e-9, cost.toNumber())
+  let extra = 0
+  if (def.effectType === 'splash_power') {
+    extra +=
+      (after.tapPower.toNumber() * after.splashMultiplier * TAP_RATE_FOR_VALUE) /
+      Math.max(1, after.splashEveryN ?? 5)
+  }
+  if (def.effectType === 'crit_chain') {
+    extra +=
+      after.tapPower.toNumber() *
+      TAP_RATE_FOR_VALUE *
+      after.critChance *
+      after.critChainChance *
+      (after.critMultiplier - 1)
+  }
+  if (def.effectType === 'golden_frenzy') {
+    extra += after.pps.toNumber() * after.goldenFrenzySec * 0.15
+  }
+  const value = (tapDelta + idleDelta + extra) / Math.max(1e-9, cost.toNumber())
   return { cost, value, lane }
 }
 

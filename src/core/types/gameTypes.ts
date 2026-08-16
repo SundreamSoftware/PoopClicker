@@ -38,6 +38,16 @@ export type EffectType =
   | 'event_reward'
   | 'global_production'
   | 'auto_buy_interval'
+  | 'splash_power'
+  | 'crit_chain'
+  | 'combo_crit'
+  | 'tap_from_pps'
+  | 'milestone_tap'
+  | 'frenzy_idle'
+  | 'best_gen_amp'
+  | 'golden_frenzy'
+  | 'overdrive_crit'
+  | 'combo_gen'
 
 export type TapSpeedState = 'idle' | 'slow' | 'active' | 'fast' | 'frenzy' | 'overdrive'
 

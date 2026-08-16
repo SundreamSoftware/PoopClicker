@@ -275,7 +275,7 @@ function GameScreen() {
 
   const onTap: PointerEventHandler<HTMLButtonElement> = (event) => {
     const result = engine.tap()
-    push(`+${formatNumber(result.gained)}`, result.crit)
+    push(`+${formatNumber(result.gained)}`, result.crit, result.splash)
     setSquish(true)
     window.setTimeout(() => setSquish(false), 230)
     if (snap.save.settings.haptics) void tapHaptic(result.crit)
@@ -362,7 +362,10 @@ function GameScreen() {
               )}
               <div className="float-layer">
                 {items.map((item) => (
-                  <div key={item.id} className={`float-num ${item.crit ? 'crit' : ''}`}>
+                  <div
+                    key={item.id}
+                    className={`float-num ${item.crit ? 'crit' : ''} ${item.splash ? 'splash' : ''}`}
+                  >
                     {item.text}
                   </div>
                 ))}

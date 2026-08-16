@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CHEST_SHOP_OFFERS, chestRewardOdds } from '../../content/chests'
-import { formatUpgradeEffect, UPGRADE_BY_ID } from '../../content/upgrades'
+import { formatUpgradeEffect, scoreBuildArchetypes, UPGRADE_BY_ID } from '../../content/upgrades'
 import { formatIapGrantSummary, IAP_BY_ID } from '../../content/iapProducts'
 import {
   assetUrl,
@@ -311,6 +311,23 @@ export function ShopPanel({ initialSection = 'production' }: { initialSection?: 
 
       {section === 'upgrades' && (
         <>
+          {(() => {
+            const build = scoreBuildArchetypes(snap.save.purchasedRunUpgrades)
+            const lead =
+              build.tapper >= build.idler && build.tapper >= build.hybrid
+                ? 'TAPPER'
+                : build.idler >= build.hybrid
+                  ? 'IDLER'
+                  : 'HYBRID'
+            return (
+              <div className="build-card" aria-label="Build archetype">
+                <strong>Build · {lead}</strong>
+                <div className="meta-line">
+                  TAPPER {build.tapper} · IDLER {build.idler} · HYBRID {build.hybrid}
+                </div>
+              </div>
+            )
+          })()}
           {(Object.keys(UPGRADE_GROUP_LABEL) as UpgradeGroupId[]).map((groupId) => {
             const items = upgradeView.groups[groupId]
             if (items.length === 0) return null
