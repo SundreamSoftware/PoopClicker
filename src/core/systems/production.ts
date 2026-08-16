@@ -131,7 +131,8 @@ export function computeProduction(
   const comboDecayBonus = sumEffect(save, 'combo_decay')
   const frenzyThresholdBonus = sumEffect(save, 'frenzy_threshold')
   const frenzyDurationBonus = sumEffect(save, 'frenzy_duration')
-  const offlineCapHoursBonus = sumEffect(save, 'offline_cap')
+  const offlineCapHoursBonus =
+    sumEffect(save, 'offline_cap') + Math.max(0, save.paidOfflineCapHours)
   const goldenChanceBonus = sumEffect(save, 'golden_chance')
   const eventRewardBonus = sumEffect(save, 'event_reward')
   const splashPower = sumEffect(save, 'splash_power')
@@ -274,7 +275,7 @@ export function computeMultiplierBreakdown(
       { id: 'world', label: world?.name ?? 'World', value: worldBonus },
       { id: 'permanent', label: 'Permanent milestone', value: permanentMilestone },
       { id: 'royal', label: 'Royal Flush / bonuses', value: royalFlushGlobal },
-      { id: 'paid', label: 'Convenience Pack', value: paid },
+      { id: 'paid', label: 'Paid production', value: paid },
       { id: 'boost', label: 'Active boost', value: boostIdle },
     ],
   }

@@ -25,6 +25,11 @@ export const ECONOMY = {
   autoBuyGtpCost: 2_000,
 } as const
 
+/** Base 2 charges plus any paid Convenience Pack bonus. Never reduces an existing bonus. */
+export function bathroomMaxCharges(paidBathroomChargeBonus = 0): number {
+  return ECONOMY.bathroomBreakMaxCharges + Math.max(0, paidBathroomChargeBonus)
+}
+
 export function geometricCost(baseCost: LargeNumber, growth: number, level: number): LargeNumber {
   if (level <= 0) return baseCost
   return baseCost.mul(LargeNumber.from(growth).pow(level))

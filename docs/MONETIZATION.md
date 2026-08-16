@@ -34,11 +34,12 @@ Contexts: `flush`, `shop`, `world_change`.
 
 ## IAP catalog (stub / Play Console placeholders)
 
-| Product                  | Kind           | Grant                                   |
-| ------------------------ | -------------- | --------------------------------------- |
-| `remove_ads`             | non_consumable | Remove interstitials                    |
-| `gtp_small` … `gtp_mega` | consumable     | GTP packs                               |
-| `toilet_tycoon_pack`     | bundle         | Remove ads + GTP + `toilet_tycoon` skin |
+| Product                  | Kind           | Grant                                                                               |
+| ------------------------ | -------------- | ----------------------------------------------------------------------------------- |
+| `remove_ads`             | non_consumable | Remove interstitials                                                                |
+| `gtp_small` … `gtp_mega` | consumable     | GTP packs                                                                           |
+| `toilet_tycoon_pack`     | bundle         | Remove ads + GTP + `toilet_tycoon` skin                                             |
+| `convenience_pack`       | bundle         | Auto-Buy + ads off + 4h offline + 1 Bathroom Break (after 1 Flush). Legacy 2× kept. |
 
 Store IDs use prefix `com.sundreamsoftware.poopclicker.*`.
 

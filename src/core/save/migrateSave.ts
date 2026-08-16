@@ -261,6 +261,12 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     royalFlushLevels[AUTO_BUY_SPEED_NODE_ID] = mergedSpeed
   }
 
+  const ownedIapProducts = Array.isArray(raw.ownedIapProducts)
+    ? Array.from(new Set(raw.ownedIapProducts.map(String).filter((id) => Boolean(IAP_BY_ID[id]))))
+    : []
+  const convenienceGrant = IAP_BY_ID.convenience_pack?.grants
+  const ownsConveniencePack = ownedIapProducts.includes('convenience_pack')
+
   return {
     ...base,
     schemaVersion: SAVE_SCHEMA_VERSION,
@@ -285,9 +291,7 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     inventoryChests: sanitizeChestInventory(raw.inventoryChests),
     inventoryKeys: sanitizeChestInventory(raw.inventoryKeys),
     removeAds: asBool(raw.removeAds),
-    ownedIapProducts: Array.isArray(raw.ownedIapProducts)
-      ? Array.from(new Set(raw.ownedIapProducts.map(String).filter((id) => Boolean(IAP_BY_ID[id]))))
-      : [],
+    ownedIapProducts,
     ownedSkins: withCollectionMaterialSkins(
       Array.isArray(raw.ownedSkins)
         ? Array.from(new Set(['classic_poop', ...raw.ownedSkins.map(String)]))
@@ -358,6 +362,14 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
       : 'balanced',
     autoBuySpeedLevel: mergedSpeed,
     paidProductionMultiplier: Math.max(1, asNumber(raw.paidProductionMultiplier, 1)),
+    paidOfflineCapHours: Math.max(
+      asNonNegInt(raw.paidOfflineCapHours),
+      ownsConveniencePack ? (convenienceGrant?.offlineCapHours ?? 0) : 0,
+    ),
+    paidBathroomChargeBonus: Math.max(
+      asNonNegInt(raw.paidBathroomChargeBonus),
+      ownsConveniencePack ? (convenienceGrant?.bathroomChargeBonus ?? 0) : 0,
+    ),
     permanentProductionBonus: Math.max(0, asNumber(raw.permanentProductionBonus)),
     tutorialFlags: {
       ...base.tutorialFlags,

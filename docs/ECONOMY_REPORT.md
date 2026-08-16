@@ -34,8 +34,8 @@ Stałe z `ECONOMY`:
 | Max crit chance         |                                 75% |
 | Combo: +5% tap / punkt  | baza max 25, decay 1.2 /s (min 0.2) |
 | Próg Frenzy / Overdrive |                         10 / 15 CPS |
-| Offline cap             |                  8 h baza, max 24 h |
-| Bathroom Break          |              1 ładunek / 4 h, max 2 |
+| Offline cap             |  8 h baza, +4 h z packiem, max 24 h |
+| Bathroom Break          |            1 ładunek / 4 h, max 2–3 |
 | Auto-Buy GTP            |                                2000 |
 
 ### Globalny mnożnik
@@ -45,7 +45,7 @@ flushMult     = 1 + FP × 0.05                    gdy FP ≤ 500
               = 1 + 25 + (FP − 500) × 0.025      gdy FP > 500
 worldBonus    = 1 + bonus świata                 (0% … +75%)
 permanent     = 1 + bonus milestone’u            (+25% przy 50, +50% przy 100)
-paid          = 1 albo 2                         (Convenience Pack)
+paid          = 1, albo legacy 2                 (stary Convenience Pack; nowe zakupy = 1)
 globalBonus   = suma efektów global_production   (Royal Flush / osiągnięcia)
 boostIdle     = iloczyn aktywnych boostów idle
 
@@ -61,15 +61,19 @@ Przykład: 20 Flush Power, Castle Keep (+5%), bez packa → `1.20 × 1.05 = 1.26
 tapMultiplier = (1 + tap_multiplier + tap_power)
               × boostTap × flushMult × worldBonus
               × permanent × paid × (1 + globalBonus)
+              × (1 + claimedMilestones × milestone_tap)
 
 tapPower = 1 × tapMultiplier × (1 + 0.05 × combo)
+         + pps × tap_from_pps
 
 jeśli crit: tapPower × critMultiplier
+            (+ overdrive_crit gdy Overdrive)
+co 5. tap: + tapPower × splash_power   (gdy splash_power > 0)
 ```
 
 `tap_multiplier` i `tap_power` sumują się addytywnie z upgrade’ów runu, Royal Flush i claimed achievements. Combo widać na HUD od 2. Boost tapa (Bathroom Break, streak dzień 3) **nie** wchodzi do `globalMultiplier` — tylko do tapa.
 
-Frenzy (8 s + bonus czasu, gdy CPS ≥ próg) to stan UI / daily / achievement. **Nie mnoży** tapa ani idle.
+Frenzy (8 s + bonus czasu, gdy CPS ≥ próg) to stan UI / daily / achievement. **Nie mnoży** tapa. Idle mnoży tylko upgrade `frenzy_idle` (Frenzy Festival), gdy Frenzy jest aktywny.
 
 ### Idle (PP/s)
 
@@ -81,6 +85,10 @@ pps = baseProduction × poziom
     × milestoneMult
     × (1 + idle_multiplier)
     × globalMultiplier
+
+potem: + bestGen × best_gen_amp
+       × (1 + frenzy_idle)     gdy Frenzy aktywny
+       × (1 + combo_gen)       gdy combo ≥ 8
 ```
 
 Milestone’y (ten sam budynek): 10×2, 25×2, 50×3, 100×3, 250×4, 500×5, 1000×10. Mnożą się przez siebie.
@@ -91,8 +99,10 @@ Suma po generatorach to `pps` na HUD. Tick ekonomii co ~100 ms dopisuje `pps × 
 
 ```text
 earned = pps × min(czas_away, offlineCap)
-offlineCap = min(24 h, 8 h + bonusy offline_cap)
+offlineCap = min(24 h, 8 h + bonusy offline_cap + paidOfflineCapHours)
 ```
+
+`paidOfflineCapHours` to **+4 h** z Convenience Pack. Nie mnoży PPS.
 
 Poniżej 5 s away nie ma nagrody. Claim może podwoić za rewarded ad.
 
@@ -200,16 +210,16 @@ Skrzynia + klucz to netto sink: np. regular 8+35 = 43 GTP, EV rolla to głównie
 
 Nic w core loop nie wymaga płatności ani reklamy.
 
-| Produkt          |   Cena | Grant                                        | GTP / $ (grube) |
-| ---------------- | -----: | -------------------------------------------- | --------------: |
-| Remove Ads       |  $2.99 | Brak interstitiali                           |               — |
-| Small GTP        |  $0.99 | 50                                           |             ~50 |
-| Medium           |  $2.99 | 180                                          |             ~60 |
-| Large            |  $4.99 | 350                                          |             ~70 |
-| Huge             |  $9.99 | 800                                          |             ~80 |
-| Mega             | $19.99 | 2000                                         |            ~100 |
-| Toilet Tycoon    |  $6.99 | Ads off + 250 GTP + skin                     |               — |
-| Convenience Pack | $29.99 | Auto-Buy + stałe **2×** tap i idle + ads off |     po 1 Flushu |
+| Produkt          |   Cena | Grant                                                         | GTP / $ (grube) |
+| ---------------- | -----: | ------------------------------------------------------------- | --------------: |
+| Remove Ads       |  $2.99 | Brak interstitiali                                            |               — |
+| Small GTP        |  $0.99 | 50                                                            |             ~50 |
+| Medium           |  $2.99 | 180                                                           |             ~60 |
+| Large            |  $4.99 | 350                                                           |             ~70 |
+| Huge             |  $9.99 | 800                                                           |             ~80 |
+| Mega             | $19.99 | 2000                                                          |            ~100 |
+| Toilet Tycoon    |  $6.99 | Ads off + 250 GTP + skin                                      |               — |
+| Convenience Pack | $29.99 | Auto-Buy + ads off + **+4 h offline** + **+1 Bathroom Break** |     po 1 Flushu |
 
 Rewarded (cooldown **10 min** na placement):
 
@@ -254,3 +264,4 @@ Symulacja `tests/economy/economySimulation.test.ts` odpala profile (nowy gracz �
 - Zakup generatora/upgrade’u nie obcina `runPPEarned`.
 - Auto-Buy nie przyspiesza się sam (Turbo Servo jest ręczne, permanentne, za GTP).
 - Daily Dump punktuje tap niezależnie od tap power runu (fair PvE dnia).
+- Nowy Convenience Pack **nie** mnoży tap/idle. Legacy save z `paidProductionMultiplier = 2` zachowuje 2× — migracja tego nie obcina.

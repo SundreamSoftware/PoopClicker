@@ -70,11 +70,11 @@ Cykl: `x1 → x10 → x25 → MAX`. Określa, ile poziomów generatora kupuje je
 - Remove Ads — $2.99
 - Paczki GTP: 50 / 180 / 350 / 800 / 2000
 - Toilet Tycoon Pack — $6.99: wyłączenie reklam + 250 GTP + skin
-- Convenience Pack — $29.99 (po 1 Flushu): Auto-Buy + stałe 2× produkcji + wyłączenie reklam
+- Convenience Pack — $29.99 (po 1 Flushu): Auto-Buy + wyłączenie reklam + 4 h offline + 1 ładunek Bathroom Break. Stare save’y z 2× produkcji zachowują mnożnik.
 
 ## Generatory
 
-Każdy posiadany poziom dodaje bazowe PP/s tego budynku. Potem mnożą to: upgrade’y idle, upgrade’y produkcji generatorów, kamienie milowe poziomu, Flush Power, bonus świata, stałe bonusy z milestone’ów Flush oraz 2× z Convenience Pack (jeśli kupiony).
+Każdy posiadany poziom dodaje bazowe PP/s tego budynku. Potem mnożą to: upgrade’y idle, upgrade’y produkcji generatorów, kamienie milowe poziomu, Flush Power, bonus świata, stałe bonusy z milestone’ów Flush oraz legacy 2× z Convenience Pack (tylko stare zakupy).
 
 Wszystkie 22 generatory mają tę samą drabinę milestone’ów. Próg mnoży **tylko ten** budynek: 10×2, 25×2, 50×3, 100×3, 250×4, 500×5, 1000×10.
 
@@ -254,15 +254,15 @@ Top-bar jest kontekstowy: ten sam komponent, inne priorytety.
 - **Prestige:** Flush Power, zysk, mnożnik, next milestone
 - Tap w globalny mnożnik otwiera breakdown z `computeMultiplierBreakdown` (ta sama logika co produkcja).
 
-| Odczyt         | Znaczenie                                                                          | Kiedy się zmienia                                         |
-| -------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| PP             | Wydawalne Poop Points w tym runie. Tap, idle, eventy, skrzynie, offline            | Każdy tick ekonomii i każdy tap                           |
-| GTP            | Golden Toilet Paper. Auto-Buy, skrzynie/klucze, część skinów. Eventy, daily, IAP   | Przy grantcie albo wydatku                                |
-| CPS            | Średnie kliknięcia na sekundę. Napędza Frenzy / Overdrive i Plumber Inspection     | Na bieżąco z ostatnich tapów                              |
-| PP/s           | Idle z generatorów po wszystkich mnożnikach                                        | Gdy zmienią się geny, upgrade’y, Flush, świat albo boosty |
-| COMBO          | Tylko od combo 2+. Każdy punkt to +5% tap. Maleje z czasem                         | Przy tapie; spada co tick                                 |
-| Flush Power    | Dożywotnie punkty prestiżu. Tooltip: prestiż pod Royal Flush                       | Po każdym Flushu                                          |
-| Linia mnożnika | Flush Power × świat × stały milestone × płatne 2× × global upgrade’y × boosty idle | Gdy któreś z tego się zmieni                              |
+| Odczyt         | Znaczenie                                                                                 | Kiedy się zmienia                                         |
+| -------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| PP             | Wydawalne Poop Points w tym runie. Tap, idle, eventy, skrzynie, offline                   | Każdy tick ekonomii i każdy tap                           |
+| GTP            | Golden Toilet Paper. Auto-Buy, skrzynie/klucze, część skinów. Eventy, daily, IAP          | Przy grantcie albo wydatku                                |
+| CPS            | Średnie kliknięcia na sekundę. Napędza Frenzy / Overdrive i Plumber Inspection            | Na bieżąco z ostatnich tapów                              |
+| PP/s           | Idle z generatorów po wszystkich mnożnikach                                               | Gdy zmienią się geny, upgrade’y, Flush, świat albo boosty |
+| COMBO          | Tylko od combo 2+. Każdy punkt to +5% tap. Maleje z czasem                                | Przy tapie; spada co tick                                 |
+| Flush Power    | Dożywotnie punkty prestiżu. Tooltip: prestiż pod Royal Flush                              | Po każdym Flushu                                          |
+| Linia mnożnika | Flush Power × świat × stały milestone × paid (legacy 2×) × global upgrade’y × boosty idle | Gdy któreś z tego się zmieni                              |
 
 ### Pod sceną (nie w top-barze)
 
@@ -275,7 +275,7 @@ Top-bar jest kontekstowy: ten sam komponent, inne priorytety.
 
 ### Matematyka za HUD-em
 
-Bazowy tap to **1 PP**. Mnożą go: upgrade’y tap, combo `(1 + 0.05 × combo)`, Flush Power, bonus świata, bonusy stałe i 2× z Convenience Pack. Crity liczą się osobno (bazowo 2% × 5). Idle PP/s = baza generatora × poziomy × milestone’y × upgrade’y idle/generator × ten sam globalny mnożnik.
+Bazowy tap to **1 PP**. Mnożą go: upgrade’y tap, combo `(1 + 0.05 × combo)`, Flush Power, bonus świata, bonusy stałe i ewentualny legacy 2× z Convenience Pack. Crity liczą się osobno (bazowo 2% × 5). Idle PP/s = baza generatora × poziomy × milestone’y × upgrade’y idle/generator × ten sam globalny mnożnik.
 
 ## Build archetypes (P2)
 

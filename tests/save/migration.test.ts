@@ -203,6 +203,27 @@ describe('Save migration', () => {
     expect(migrated.autoBuyStrategy).toBe('balanced')
   })
 
+  it('keeps legacy Convenience Pack 2× and adds QoL extras', () => {
+    const migrated = migrateSave({
+      schemaVersion: 2,
+      ownedIapProducts: ['convenience_pack'],
+      paidProductionMultiplier: 2,
+    } as never)
+    expect(migrated.paidProductionMultiplier).toBe(2)
+    expect(migrated.paidOfflineCapHours).toBe(4)
+    expect(migrated.paidBathroomChargeBonus).toBe(1)
+  })
+
+  it('does not invent a production multiplier for new pack owners', () => {
+    const migrated = migrateSave({
+      schemaVersion: 2,
+      ownedIapProducts: ['convenience_pack'],
+    } as never)
+    expect(migrated.paidProductionMultiplier).toBe(1)
+    expect(migrated.paidOfflineCapHours).toBe(4)
+    expect(migrated.paidBathroomChargeBonus).toBe(1)
+  })
+
   it('keeps the higher of tree and legacy Auto-Buy speed', () => {
     const migrated = migrateSave({
       schemaVersion: 2,

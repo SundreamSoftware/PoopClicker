@@ -91,6 +91,11 @@ export function applyIapGrant(
     removeAds: save.removeAds || Boolean(grant.removeAds),
     autoBuyUnlocked: save.autoBuyUnlocked || Boolean(grant.autoBuy),
     paidProductionMultiplier: paidMultiplier,
+    paidOfflineCapHours: Math.max(save.paidOfflineCapHours ?? 0, grant.offlineCapHours ?? 0),
+    paidBathroomChargeBonus: Math.max(
+      save.paidBathroomChargeBonus ?? 0,
+      grant.bathroomChargeBonus ?? 0,
+    ),
     gtp: save.gtp + (grant.gtp ?? 0),
     ownedSkins: Array.from(ownedSkins),
     ownedIapProducts: Array.from(ownedIapProducts),

@@ -58,16 +58,16 @@ Create a real AdMob app and units. **Do not** ship Google sample IDs (`394025609
 
 Create **one-time** in-app products whose IDs match the catalog exactly:
 
-| Play product ID                                       | Type in game    | Grant                                                                   |
-| ----------------------------------------------------- | --------------- | ----------------------------------------------------------------------- |
-| `com.sundreamsoftware.poopclicker.remove_ads`         | non-consumable  | Remove interstitials                                                    |
-| `com.sundreamsoftware.poopclicker.gtp_small`          | consumable      | 50 GTP                                                                  |
-| `com.sundreamsoftware.poopclicker.gtp_medium`         | consumable      | 180 GTP                                                                 |
-| `com.sundreamsoftware.poopclicker.gtp_large`          | consumable      | 350 GTP                                                                 |
-| `com.sundreamsoftware.poopclicker.gtp_huge`           | consumable      | 800 GTP                                                                 |
-| `com.sundreamsoftware.poopclicker.gtp_mega`           | consumable      | 2000 GTP                                                                |
-| `com.sundreamsoftware.poopclicker.toilet_tycoon_pack` | one-time bundle | Remove ads + 250 GTP + `toilet_tycoon` skin                             |
-| `com.sundreamsoftware.poopclicker.convenience_pack`   | one-time bundle | Auto-Buy + permanent 2× production + Remove Ads ($29.99, after 1 Flush) |
+| Play product ID                                       | Type in game    | Grant                                                                         |
+| ----------------------------------------------------- | --------------- | ----------------------------------------------------------------------------- |
+| `com.sundreamsoftware.poopclicker.remove_ads`         | non-consumable  | Remove interstitials                                                          |
+| `com.sundreamsoftware.poopclicker.gtp_small`          | consumable      | 50 GTP                                                                        |
+| `com.sundreamsoftware.poopclicker.gtp_medium`         | consumable      | 180 GTP                                                                       |
+| `com.sundreamsoftware.poopclicker.gtp_large`          | consumable      | 350 GTP                                                                       |
+| `com.sundreamsoftware.poopclicker.gtp_huge`           | consumable      | 800 GTP                                                                       |
+| `com.sundreamsoftware.poopclicker.gtp_mega`           | consumable      | 2000 GTP                                                                      |
+| `com.sundreamsoftware.poopclicker.toilet_tycoon_pack` | one-time bundle | Remove ads + 250 GTP + `toilet_tycoon` skin                                   |
+| `com.sundreamsoftware.poopclicker.convenience_pack`   | one-time bundle | Auto-Buy + Remove Ads + 4h offline + 1 Bathroom Break ($29.99, after 1 Flush) |
 
 - [ ] Every ID above exists and is **active**
 - [ ] License testers added

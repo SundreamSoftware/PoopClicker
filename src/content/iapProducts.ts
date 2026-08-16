@@ -5,8 +5,15 @@ export interface IapGrant {
   gtp?: number
   skinIds?: string[]
   autoBuy?: boolean
-  /** Permanent production multiplier (1 = none, 2 = double). */
+  /**
+   * Permanent production multiplier. New Convenience Pack purchases omit this.
+   * Legacy owners who already have 2× keep it via save migration — never stripped.
+   */
   productionMultiplier?: number
+  /** Extra offline hours (still capped at 24h total). */
+  offlineCapHours?: number
+  /** Extra Bathroom Break charge slots. */
+  bathroomChargeBonus?: number
 }
 
 export interface IapProductDef {
@@ -99,14 +106,15 @@ export const IAP_PRODUCTS: IapProductDef[] = [
     id: 'convenience_pack',
     storeId: 'com.sundreamsoftware.poopclicker.convenience_pack',
     title: 'Convenience Pack',
-    description: 'Grants: Auto-Buy, permanent 2× tap & idle production, Remove Ads.',
+    description: 'Grants: Auto-Buy, Remove Ads, +4h offline cap, +1 Bathroom Break charge.',
     kind: 'bundle',
     displayPrice: '$29.99',
     unlockFlushCount: 1,
     grants: {
       removeAds: true,
       autoBuy: true,
-      productionMultiplier: 2,
+      offlineCapHours: 4,
+      bathroomChargeBonus: 1,
     },
   },
 ]
@@ -124,6 +132,10 @@ export function formatIapGrantSummary(def: IapProductDef): string {
   if (def.grants.autoBuy) parts.push('Auto-Buy')
   if ((def.grants.productionMultiplier ?? 1) > 1) {
     parts.push(`permanent ${def.grants.productionMultiplier}× production`)
+  }
+  if (def.grants.offlineCapHours) parts.push(`+${def.grants.offlineCapHours}h offline cap`)
+  if (def.grants.bathroomChargeBonus) {
+    parts.push(`+${def.grants.bathroomChargeBonus} Bathroom Break charge`)
   }
   if (def.grants.removeAds) parts.push('Remove Ads')
   if (def.grants.gtp) parts.push(`${def.grants.gtp} GTP`)

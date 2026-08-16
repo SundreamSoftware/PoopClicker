@@ -5,6 +5,7 @@ import { IAP_BY_ID } from '../content/iapProducts'
 import { ROYAL_FLUSH_BY_ID } from '../content/royalFlush'
 import { WORLDS } from '../content/worlds'
 import {
+  bathroomMaxCharges,
   ECONOMY,
   geometricCost,
   geometricSeriesCost,
@@ -252,7 +253,7 @@ export class GameEngine {
       this.save,
       now,
       ECONOMY.bathroomBreakIntervalMs,
-      ECONOMY.bathroomBreakMaxCharges,
+      bathroomMaxCharges(this.save.paidBathroomChargeBonus),
     )
     const production = computeProduction(this.save, 0, now)
     this.save = ensureDailyState(this.save, now, production.pps)
@@ -389,7 +390,7 @@ export class GameEngine {
       this.save,
       now,
       ECONOMY.bathroomBreakIntervalMs,
-      ECONOMY.bathroomBreakMaxCharges,
+      bathroomMaxCharges(this.save.paidBathroomChargeBonus),
     )
 
     if (now - this.lastDailyStateCheckAt >= 30_000) {
@@ -1580,7 +1581,7 @@ export class GameEngine {
       this.save,
       now,
       ECONOMY.bathroomBreakIntervalMs,
-      ECONOMY.bathroomBreakMaxCharges,
+      bathroomMaxCharges(this.save.paidBathroomChargeBonus),
     )
     if (away > 5_000 && (!this.offlineReward || this.offlineReward.claimed)) {
       const production = this.getProduction()
