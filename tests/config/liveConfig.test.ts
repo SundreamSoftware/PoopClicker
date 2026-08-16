@@ -16,9 +16,9 @@ describe('liveConfig', () => {
     expect(parseLiveConfig(null)).toEqual(DEFAULT_LIVE_CONFIG)
     expect(parseLiveConfig('nope')).toEqual(DEFAULT_LIVE_CONFIG)
     expect(parseLiveConfig({ features: { iapEnabled: false } }).features.iapEnabled).toBe(false)
-    expect(parseLiveConfig({ features: { interstitialsEnabled: false } }).features.interstitialsEnabled).toBe(
-      false,
-    )
+    expect(
+      parseLiveConfig({ features: { interstitialsEnabled: false } }).features.interstitialsEnabled,
+    ).toBe(false)
   })
 
   it('detects an active season window', () => {

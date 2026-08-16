@@ -1,8 +1,14 @@
 import { ACHIEVEMENT_BY_ID } from '../../content/achievements'
+import { withCollectionMaterialSkins } from '../systems/skins'
 import { GENERATOR_BY_ID } from '../../content/generators'
 import { IAP_BY_ID } from '../../content/iapProducts'
 import { ROYAL_FLUSH_BY_ID } from '../../content/royalFlush'
 import { UPGRADE_BY_ID } from '../../content/upgrades'
+import {
+  AUTO_BUY_SPEED_NODE_ID,
+  AUTO_BUY_STRATEGIES,
+  clampAutoBuySpeedLevel,
+} from '../systems/autoBuy'
 import { createDefaultSave } from './defaultSave'
 import {
   SAVE_BACKUP_KEY,
@@ -229,9 +235,11 @@ function migrateV1(raw: PlayerSaveV1, now: number): PlayerSaveV2 {
     flushCount: asNonNegInt(raw.flushCount),
     flushPower,
     gtp: asNonNegInt(gtp),
-    ownedSkins: Array.isArray(raw.ownedSkins)
-      ? Array.from(new Set(['classic_poop', ...raw.ownedSkins.map(String)]))
-      : ['classic_poop'],
+    ownedSkins: withCollectionMaterialSkins(
+      Array.isArray(raw.ownedSkins)
+        ? Array.from(new Set(['classic_poop', ...raw.ownedSkins.map(String)]))
+        : ['classic_poop'],
+    ),
     equippedSkinId: asString(raw.equippedSkin, 'classic_poop') || 'classic_poop',
     lastSaveTimestamp: asNumber(raw.lastSave, now),
     lastActiveTimestamp: asNumber(raw.lastSave, now),
@@ -243,6 +251,15 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
   const settings = asRecord(raw.settings)
   const dump = asRecord(raw.dailyDumpState)
   const autoBuyPreferences = asRecord(raw.autoBuyPreferences)
+  const royalFlushLevels = sanitizeLevelMap(raw.royalFlushLevels, (id) =>
+    Boolean(ROYAL_FLUSH_BY_ID[id]),
+  )
+  const legacySpeed = clampAutoBuySpeedLevel(asNonNegInt(raw.autoBuySpeedLevel))
+  const treeSpeed = royalFlushLevels[AUTO_BUY_SPEED_NODE_ID] ?? 0
+  const mergedSpeed = clampAutoBuySpeedLevel(Math.max(treeSpeed, legacySpeed))
+  if (mergedSpeed > 0) {
+    royalFlushLevels[AUTO_BUY_SPEED_NODE_ID] = mergedSpeed
+  }
 
   return {
     ...base,
@@ -263,19 +280,19 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
     claimedGeneratorMilestones: sanitizeClaimedMilestones(raw.claimedGeneratorMilestones),
     flushCount: asNonNegInt(raw.flushCount),
     flushPower: asNonNegInt(raw.flushPower),
-    royalFlushLevels: sanitizeLevelMap(raw.royalFlushLevels, (id) => Boolean(ROYAL_FLUSH_BY_ID[id])),
+    royalFlushLevels,
     gtp: asNonNegInt(raw.gtp),
     inventoryChests: sanitizeChestInventory(raw.inventoryChests),
     inventoryKeys: sanitizeChestInventory(raw.inventoryKeys),
     removeAds: asBool(raw.removeAds),
     ownedIapProducts: Array.isArray(raw.ownedIapProducts)
-      ? Array.from(
-          new Set(raw.ownedIapProducts.map(String).filter((id) => Boolean(IAP_BY_ID[id]))),
-        )
+      ? Array.from(new Set(raw.ownedIapProducts.map(String).filter((id) => Boolean(IAP_BY_ID[id]))))
       : [],
-    ownedSkins: Array.isArray(raw.ownedSkins)
-      ? Array.from(new Set(['classic_poop', ...raw.ownedSkins.map(String)]))
-      : ['classic_poop'],
+    ownedSkins: withCollectionMaterialSkins(
+      Array.isArray(raw.ownedSkins)
+        ? Array.from(new Set(['classic_poop', ...raw.ownedSkins.map(String)]))
+        : ['classic_poop'],
+    ),
     equippedSkinId:
       asString(raw.equippedSkinId ?? raw.equippedSkin, 'classic_poop') || 'classic_poop',
     unlockedWorlds: Array.isArray(raw.unlockedWorlds)
@@ -334,6 +351,13 @@ function sanitizeV2(raw: Record<string, unknown>, now: number): PlayerSaveV2 {
       generators: asBool(autoBuyPreferences.generators, true),
       upgrades: asBool(autoBuyPreferences.upgrades, true),
     },
+    autoBuyStrategy: AUTO_BUY_STRATEGIES.includes(
+      raw.autoBuyStrategy as (typeof AUTO_BUY_STRATEGIES)[number],
+    )
+      ? (raw.autoBuyStrategy as (typeof AUTO_BUY_STRATEGIES)[number])
+      : 'balanced',
+    autoBuySpeedLevel: mergedSpeed,
+    paidProductionMultiplier: Math.max(1, asNumber(raw.paidProductionMultiplier, 1)),
     permanentProductionBonus: Math.max(0, asNumber(raw.permanentProductionBonus)),
     tutorialFlags: {
       ...base.tutorialFlags,

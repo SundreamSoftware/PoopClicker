@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { LargeNumber } from '../../src/core/numbers/LargeNumber'
-import { formatDuration, formatMultiplier, formatNumber, formatPercent } from '../../src/core/numbers/formatNumber'
+import {
+  formatDuration,
+  formatMultiplier,
+  formatNumber,
+  formatPercent,
+} from '../../src/core/numbers/formatNumber'
 
 describe('LargeNumber', () => {
   it('adds and compares large values', () => {

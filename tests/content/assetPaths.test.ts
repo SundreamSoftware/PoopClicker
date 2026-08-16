@@ -11,12 +11,13 @@ import {
   resolveSharedExpressionPathForPlay,
   resolveSkinBodyPath,
   resolveSkinThumbnailPath,
+  goldenShowerFramePath,
   resolveToiletPath,
   resolveWorldBackdropPath,
   worldLayerPath,
 } from '../../src/content/assetPaths'
 import { ASSET_MANIFEST } from '../../src/content/assetManifest'
-import { SKINS } from '../../src/content/skins'
+import { COLLECTION_SKINS, SKINS } from '../../src/content/skins'
 import { WORLDS } from '../../src/content/worlds'
 
 function publicPath(runtimeUrl: string): string {
@@ -54,6 +55,21 @@ describe('authored asset paths', () => {
       expect(existsSync(`public/assets/P4_expressions/${id}.png`), id).toBe(true)
     }
     expect(existsSync(publicPath(resolveSharedExpressionPathForPlay(20, 'overdrive')))).toBe(true)
+  })
+
+  it('shows one Collection skin per P4 material', () => {
+    expect(COLLECTION_SKINS).toHaveLength(P4_MATERIAL_IDS.length)
+    const materials = COLLECTION_SKINS.map((skin) => resolveP4Material(skin.id))
+    expect(new Set(materials).size).toBe(P4_MATERIAL_IDS.length)
+    for (const material of P4_MATERIAL_IDS) {
+      expect(materials).toContain(material)
+    }
+  })
+
+  it('uses display-sized golden shower frames', () => {
+    for (let i = 1; i <= 6; i++) {
+      expect(existsSync(publicPath(goldenShowerFramePath(i))), `frame ${i}`).toBe(true)
+    }
   })
 
   it('maps roster skins to P4 material body PNGs', () => {

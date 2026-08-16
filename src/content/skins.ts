@@ -461,6 +461,167 @@ export const SKINS: SkinDef[] = [
     animationVariant: 'tycoon',
     vfx: 'money',
   },
+  {
+    id: 'wood',
+    name: 'Wood',
+    description: 'Grainy, stubborn, and slightly splintered.',
+    rarity: 'common',
+    unlock: { type: 'gtp', amount: 25 },
+    asset: 'skins/wood',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'stone',
+    name: 'Stone',
+    description: 'Carved by pressure and poor decisions.',
+    rarity: 'common',
+    unlock: { type: 'gtp', amount: 40 },
+    asset: 'skins/stone',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'pink',
+    name: 'Pink',
+    description: 'Unapologetically extra.',
+    rarity: 'rare',
+    unlock: { type: 'gtp', amount: 75 },
+    asset: 'skins/pink',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'ooze',
+    name: 'Ooze',
+    description: 'Still moving. Do not ask how.',
+    rarity: 'rare',
+    unlock: { type: 'gtp', amount: 100 },
+    asset: 'skins/ooze',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'lava',
+    name: 'Lava',
+    description: 'Hotter than chili night.',
+    rarity: 'rare',
+    unlock: { type: 'flush', count: 5 },
+    asset: 'skins/lava',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'cosmic',
+    name: 'Cosmic',
+    description: 'Swirls through several zip codes.',
+    rarity: 'rare',
+    unlock: { type: 'gtp', amount: 150 },
+    asset: 'skins/cosmic',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'obsidian',
+    name: 'Obsidian',
+    description: 'Cooled rage in swirl form.',
+    rarity: 'epic',
+    unlock: { type: 'gtp', amount: 250 },
+    asset: 'skins/obsidian',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'gold',
+    name: 'Gold',
+    description: 'Royal flush optional.',
+    rarity: 'epic',
+    unlock: { type: 'flush', count: 10 },
+    asset: 'skins/gold',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'pearl',
+    name: 'Pearl',
+    description: 'Polished. Judgmental. Expensive.',
+    rarity: 'epic',
+    unlock: { type: 'gtp', amount: 400 },
+    asset: 'skins/pearl',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'emerald',
+    name: 'Emerald',
+    description: 'Green with envy and fiber.',
+    rarity: 'legendary',
+    unlock: { type: 'gtp', amount: 600 },
+    asset: 'skins/emerald',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'rainbow',
+    name: 'Rainbow',
+    description: 'Taste the fiber spectrum.',
+    rarity: 'legendary',
+    unlock: { type: 'gtp', amount: 800 },
+    asset: 'skins/rainbow',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'strawberry_jam',
+    name: 'Strawberry Jam',
+    description: 'Sticky, sweet, and a little late.',
+    rarity: 'epic',
+    unlock: { type: 'streak', day: 7 },
+    asset: 'skins/strawberry_jam',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
+  {
+    id: 'black_crystal',
+    name: 'Black Crystal',
+    description: 'Absorbs snacks and hope.',
+    rarity: 'mythic',
+    unlock: { type: 'collection', percent: 50 },
+    asset: 'skins/black_crystal',
+    animationVariant: 'default',
+    vfx: 'none',
+  },
 ]
 
+/** One Collection row per P4 material. Legacy costume IDs stay in SKINS for saves. */
+export const P4_COLLECTION_SKIN_IDS = [
+  'classic_poop',
+  'wood',
+  'stone',
+  'pink',
+  'ooze',
+  'lava',
+  'cosmic',
+  'obsidian',
+  'gold',
+  'diamond_poop',
+  'pearl',
+  'emerald',
+  'rainbow',
+  'strawberry_jam',
+  'black_crystal',
+] as const
+
 export const SKIN_BY_ID = Object.fromEntries(SKINS.map((s) => [s.id, s]))
+
+export const COLLECTION_SKINS = P4_COLLECTION_SKIN_IDS.map((id) => {
+  const skin = SKIN_BY_ID[id]
+  if (!skin) {
+    throw new Error(`Missing P4 collection skin: ${id}`)
+  }
+  return skin
+})
+
+export function isCollectionSkin(skinId: string): boolean {
+  return (P4_COLLECTION_SKIN_IDS as readonly string[]).includes(skinId)
+}

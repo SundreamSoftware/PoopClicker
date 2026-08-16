@@ -16,11 +16,11 @@ export const FLUSH_MILESTONES: FlushMilestoneDef[] = [
     startBonusPpMinutes: 5,
   },
   {
-    id: 'flush_5_autobuy',
+    id: 'flush_5_events',
     flushCount: 5,
-    name: 'Auto-Buy',
-    description: 'Convenience for busy flushers.',
-    unlockAutoBuy: true,
+    name: 'Event Warmup',
+    description: 'Events pay a little better.',
+    eventBonusPercent: 0.1,
   },
   {
     id: 'flush_10_generator',
@@ -56,7 +56,7 @@ export const FLUSH_MILESTONES: FlushMilestoneDef[] = [
   {
     id: 'flush_100_world',
     flushCount: 100,
-    name: 'Omni Throne',
+    name: 'Royal Throne',
     description: 'Ultimate world and Final Poop.',
     unlockWorldId: 'omni_throne',
     unlockSkinId: 'the_final_poop',

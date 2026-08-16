@@ -74,6 +74,19 @@ export const ASSET_MANIFEST = {
     schrodingers_poop: skinEntry('box', '#ABB2B9', 'schrodingers_poop'),
     the_final_poop: skinEntry('final', '#F5B041', 'the_final_poop'),
     toilet_tycoon: skinEntry('tycoon', '#C0C0C0', 'toilet_tycoon'),
+    wood: skinEntry('default', '#8B5A2B', 'wood'),
+    stone: skinEntry('default', '#7F8C8D', 'stone'),
+    pink: skinEntry('default', '#FF6BCB', 'pink'),
+    ooze: skinEntry('default', '#7D8F69', 'ooze'),
+    lava: skinEntry('default', '#E67E22', 'lava'),
+    cosmic: skinEntry('default', '#7B2CBF', 'cosmic'),
+    obsidian: skinEntry('default', '#1C1C1C', 'obsidian'),
+    gold: skinEntry('default', '#F4D03F', 'gold'),
+    pearl: skinEntry('default', '#F5F5F5', 'pearl'),
+    emerald: skinEntry('default', '#2ECC71', 'emerald'),
+    rainbow: skinEntry('default', '#FF6BCB', 'rainbow'),
+    strawberry_jam: skinEntry('default', '#C0392B', 'strawberry_jam'),
+    black_crystal: skinEntry('default', '#2C003E', 'black_crystal'),
   },
   animations: {
     idle: { status: 'PROCEDURAL_FINAL' },
@@ -138,7 +151,7 @@ export const ASSET_MANIFEST = {
     volcanic_spa_toilet: { status: 'FINAL', path: 'P4_environments/L9.png' },
     cloud_restroom: { status: 'FINAL', path: 'P4_environments/L10.png' },
     void_washroom: { status: 'FINAL', path: 'P4_environments/L10.png' },
-    omni_throne: { status: 'FINAL', path: 'P4_environments/L5.png' },
+    omni_throne: { status: 'FINAL', path: 'P4_environments/L10.png' },
   },
   /** Raster/illustration finals still outstanding (procedural stand-ins ship). */
   missingFinalArt: [

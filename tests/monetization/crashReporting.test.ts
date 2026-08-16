@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { setAnalyticsTracker } from '../../src/services/analytics'
-import { installCrashReporting, resetCrashReportingForTests } from '../../src/services/crashReporting'
+import {
+  installCrashReporting,
+  resetCrashReportingForTests,
+} from '../../src/services/crashReporting'
 
 describe('crashReporting', () => {
   afterEach(() => {
@@ -20,9 +23,7 @@ describe('crashReporting', () => {
       },
     } as unknown as Window
     installCrashReporting(target)
-    listeners.get('error')?.(
-      { error: new TypeError('secret') } as ErrorEvent,
-    )
+    listeners.get('error')?.({ error: new TypeError('secret') } as ErrorEvent)
     expect(events).toEqual([
       { event: 'app_error', payload: { name: 'TypeError', source: 'window_error' } },
     ])

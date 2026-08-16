@@ -21,6 +21,8 @@ export const ECONOMY = {
   frenzyCpsThreshold: 10,
   overdriveCpsThreshold: 15,
   buyMultipliers: [1, 10, 25] as const,
+  /** GTP price for Auto-Buy — matches the $19.99 Mega GTP pack. */
+  autoBuyGtpCost: 2_000,
 } as const
 
 export function geometricCost(baseCost: LargeNumber, growth: number, level: number): LargeNumber {

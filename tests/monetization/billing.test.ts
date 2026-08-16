@@ -88,6 +88,17 @@ describe('GameEngine applyIapGrant', () => {
     expect(engine.exportSave().removeAds).toBe(true)
   })
 
+  it('convenience pack grants Auto-Buy, 2x production, and Remove Ads', () => {
+    const engine = createTestEngine()
+    expect(engine.applyIapGrant('convenience_pack').ok).toBe(true)
+    const save = engine.exportSave()
+    expect(save.removeAds).toBe(true)
+    expect(save.autoBuyUnlocked).toBe(true)
+    expect(save.paidProductionMultiplier).toBe(2)
+    expect(save.ownedIapProducts).toContain('convenience_pack')
+    expect(engine.applyIapGrant('convenience_pack').ok).toBe(false)
+  })
+
   it('applyIapGrant mutates save idempotently for bundles', () => {
     let save = createDefaultSave()
     save = applyIapGrant(
@@ -154,6 +165,12 @@ describe('native purchase grant filters', () => {
 })
 
 describe('IAP catalog store IDs', () => {
+  it('locks Convenience Pack until the first Flush at $29.99', () => {
+    const pack = IAP_PRODUCTS.find((p) => p.id === 'convenience_pack')
+    expect(pack?.displayPrice).toBe('$29.99')
+    expect(pack?.unlockFlushCount).toBe(1)
+  })
+
   it('uses the production package prefix and no placeholder tokens', () => {
     for (const product of IAP_PRODUCTS) {
       expect(product.storeId.startsWith('com.sundreamsoftware.poopclicker.')).toBe(true)

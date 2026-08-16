@@ -603,3 +603,41 @@ export const UPGRADES: UpgradeDef[] = [
 ]
 
 export const UPGRADE_BY_ID = Object.fromEntries(UPGRADES.map((u) => [u.id, u]))
+
+export function formatUpgradeEffect(upgrade: UpgradeDef): string {
+  const value = upgrade.effectValue
+  const pct = `${Math.round(Math.abs(value) * 1000) / 10}%`
+  switch (upgrade.effectType) {
+    case 'tap_multiplier':
+    case 'tap_power':
+      return `+${pct} tap power / level`
+    case 'idle_multiplier':
+      return `+${pct} idle production / level`
+    case 'generator_production':
+      return `+${pct} generator production / level`
+    case 'global_production':
+      return `+${pct} all production / level`
+    case 'crit_chance':
+      return `+${pct} crit chance / level`
+    case 'crit_multiplier':
+      return `+${value}× crit multiplier / level`
+    case 'combo_max':
+      return `+${value} max combo / level`
+    case 'combo_decay':
+      return `${value > 0 ? '+' : ''}${value} combo decay / level`
+    case 'frenzy_threshold':
+      return `${value > 0 ? '+' : ''}${value} frenzy CPS threshold / level`
+    case 'frenzy_duration':
+      return `+${value}s frenzy duration / level`
+    case 'offline_cap':
+      return `+${value}h offline cap / level`
+    case 'golden_chance':
+      return `+${pct} golden chance / level`
+    case 'event_reward':
+      return `+${pct} event rewards / level`
+    case 'auto_buy_interval':
+      return `${value}s Auto-Buy interval / level`
+    default:
+      return upgrade.effectType
+  }
+}

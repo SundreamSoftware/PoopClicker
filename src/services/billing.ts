@@ -81,9 +81,16 @@ export function applyIapGrant(
     ownedIapProducts.add(productId)
   }
 
+  const paidMultiplier = Math.max(
+    save.paidProductionMultiplier ?? 1,
+    grant.productionMultiplier ?? 1,
+  )
+
   return {
     ...save,
     removeAds: save.removeAds || Boolean(grant.removeAds),
+    autoBuyUnlocked: save.autoBuyUnlocked || Boolean(grant.autoBuy),
+    paidProductionMultiplier: paidMultiplier,
     gtp: save.gtp + (grant.gtp ?? 0),
     ownedSkins: Array.from(ownedSkins),
     ownedIapProducts: Array.from(ownedIapProducts),
@@ -375,10 +382,7 @@ export class CapacitorBillingService implements BillingService {
     return results
   }
 
-  private async finishNativeTransaction(
-    txn: NativePurchase,
-    def: IapProductDef,
-  ): Promise<void> {
+  private async finishNativeTransaction(txn: NativePurchase, def: IapProductDef): Promise<void> {
     const token = txn.purchaseToken
     if (!token || !this.native) return
     try {

@@ -1,7 +1,13 @@
 export { GENERATORS, GENERATOR_BY_ID } from './generators'
-export { UPGRADES, UPGRADE_BY_ID } from './upgrades'
-export { SKINS, SKIN_BY_ID } from './skins'
-export { WORLDS, WORLD_BY_ID } from './worlds'
+export { UPGRADES, UPGRADE_BY_ID, formatUpgradeEffect } from './upgrades'
+export {
+  SKINS,
+  SKIN_BY_ID,
+  COLLECTION_SKINS,
+  P4_COLLECTION_SKIN_IDS,
+  isCollectionSkin,
+} from './skins'
+export { WORLDS, WORLD_BY_ID, COLLECTION_WORLDS, COLLECTION_WORLD_IDS } from './worlds'
 export { ACHIEVEMENTS, ACHIEVEMENT_BY_ID } from './achievements'
 export { CHALLENGE_TEMPLATES, CHALLENGE_BY_ID } from './challenges'
 export { EVENTS, EVENT_BY_ID } from './events'
@@ -49,5 +55,5 @@ export type {
   SkinAura,
   FaceStyle,
 } from './skinsVisual'
-export { IAP_PRODUCTS, IAP_BY_ID, IAP_BY_STORE_ID } from './iapProducts'
+export { IAP_PRODUCTS, IAP_BY_ID, IAP_BY_STORE_ID, formatIapGrantSummary } from './iapProducts'
 export type { IapProductDef, IapGrant } from './iapProducts'

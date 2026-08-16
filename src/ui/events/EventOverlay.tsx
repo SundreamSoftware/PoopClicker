@@ -1,8 +1,14 @@
-import type { CSSProperties } from 'react'
-import type { ActiveEventRuntime } from '../../core/types/eventRuntime'
-import { assetUrl, EVENT_ASSETS, goldenShowerFramePath } from '../../content/assetPaths'
-import { EVENT_BY_ID } from '../../content/events'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import type { ActiveEventRuntime, FloatingTarget } from '../../core/types/eventRuntime'
+import {
+  assetUrl,
+  EVENT_ASSETS,
+  goldenShowerFramePath,
+  goldenShowerFrameUrls,
+} from '../../content/assetPaths'
+import { EVENT_BY_ID, GOLDEN_SHOWER } from '../../content/events'
 import { formatDuration } from '../../core/numbers/formatNumber'
+import { floatingTargetPosition } from '../../core/systems/eventSystem'
 
 export interface EventOverlayProps {
   runtime: ActiveEventRuntime | null
@@ -55,6 +61,116 @@ const targetStyle = (x: number, y: number, size: number): CSSProperties => ({
 
 function remainingMs(runtime: ActiveEventRuntime, now: number): number {
   return Math.max(0, runtime.endsAt - now)
+}
+
+function formatCountdown(ms: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+function useClock(active: boolean): number {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!active) return
+    const id = window.setInterval(() => setNow(Date.now()), 100)
+    return () => window.clearInterval(id)
+  }, [active])
+  return now
+}
+
+function EventTimer({ runtime }: { runtime: ActiveEventRuntime }) {
+  const now = useClock(true)
+  const left = remainingMs(runtime, now)
+  return (
+    <div
+      className={`event-timer${left === 0 ? ' event-timer-done' : ''}`}
+      aria-live="polite"
+      aria-label={`Time left ${formatCountdown(left)}`}
+    >
+      <span className="event-timer-value">{formatCountdown(left)}</span>
+    </div>
+  )
+}
+
+function applyTargetTransform(el: HTMLElement, target: FloatingTarget, now: number): void {
+  const pos = floatingTargetPosition(target, now)
+  el.style.left = `${pos.x}%`
+  el.style.top = `${pos.y}%`
+}
+
+function GoldenShowerLayer({
+  targets,
+  onCatchTarget,
+}: {
+  targets: FloatingTarget[]
+  onCatchTarget: (id: string) => void
+}) {
+  const layerRef = useRef<HTMLDivElement>(null)
+  const targetsRef = useRef(targets)
+  targetsRef.current = targets
+
+  useEffect(() => {
+    for (const src of goldenShowerFrameUrls()) {
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = src
+    }
+  }, [])
+
+  useEffect(() => {
+    let frame = 0
+    const tick = () => {
+      const now = Date.now()
+      const root = layerRef.current
+      if (root) {
+        for (const node of root.querySelectorAll<HTMLElement>('[data-target-id]')) {
+          const id = node.dataset.targetId
+          const target = targetsRef.current.find((t) => t.id === id)
+          if (target) applyTargetTransform(node, target, now)
+        }
+      }
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  return (
+    <div ref={layerRef}>
+      {targets.map((target) => (
+        <button
+          key={target.id}
+          type="button"
+          data-target-id={target.id}
+          aria-label="Catch golden poop"
+          style={targetStyle(target.x, target.y, GOLDEN_SHOWER.targetSizePx)}
+          onClick={(e) => {
+            e.stopPropagation()
+            onCatchTarget(target.id)
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <img
+            src={goldenShowerFramePath(target.frame)}
+            alt=""
+            width={GOLDEN_SHOWER.targetSizePx}
+            height={GOLDEN_SHOWER.targetSizePx}
+            draggable={false}
+            decoding="async"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              pointerEvents: 'none',
+              display: 'block',
+            }}
+          />
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function BossBar({
@@ -219,16 +335,28 @@ export function EventOverlay({
     )
   }
 
-  if (runtime.type === 'golden_poop' || runtime.type === 'golden_rain') {
+  if (runtime.type === 'golden_rain') {
+    return (
+      <div style={overlayRoot} data-event={runtime.type}>
+        <div className="event-shower-hud">
+          <EventTimer runtime={runtime} />
+          <div className="event-shower-caught">
+            {runtime.caughtCount}/{runtime.tapTarget}
+          </div>
+        </div>
+        <GoldenShowerLayer targets={runtime.targets} onCatchTarget={onCatchTarget} />
+      </div>
+    )
+  }
+
+  if (runtime.type === 'golden_poop') {
     const live = runtime.targets
-    const isShower = runtime.type === 'golden_rain'
     return (
       <div style={overlayRoot} data-event={runtime.type}>
         <div style={bannerStyle}>
           <div style={{ fontWeight: 800 }}>{title}</div>
           <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>
-            Caught {runtime.caughtCount}
-            {isShower ? `/${runtime.tapTarget}` : ''} · {formatDuration(remainingMs(runtime, now))}
+            Caught {runtime.caughtCount} · {formatDuration(remainingMs(runtime, now))}
           </div>
         </div>
         {live.map((target) => (
@@ -236,7 +364,7 @@ export function EventOverlay({
             key={target.id}
             type="button"
             aria-label="Catch golden poop"
-            style={targetStyle(target.x, target.y, isShower ? 56 : 72)}
+            style={targetStyle(target.x, target.y, 72)}
             onClick={(e) => {
               e.stopPropagation()
               onCatchTarget(target.id)
@@ -244,7 +372,7 @@ export function EventOverlay({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <img
-              src={isShower ? goldenShowerFramePath(target.frame) : EVENT_ASSETS.golden_poop}
+              src={EVENT_ASSETS.golden_poop}
               alt=""
               draggable={false}
               decoding="async"

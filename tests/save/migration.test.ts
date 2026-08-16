@@ -49,8 +49,20 @@ describe('Save migration', () => {
     const migrated = migrateSave({
       schemaVersion: 2,
       achievements: {
-        taps_100: { progress: 100, completed: true, claimed: false, completedAt: 1, discovered: true },
-        fake_ach: { progress: 99, completed: true, claimed: true, completedAt: 1, discovered: true },
+        taps_100: {
+          progress: 100,
+          completed: true,
+          claimed: false,
+          completedAt: 1,
+          discovered: true,
+        },
+        fake_ach: {
+          progress: 99,
+          completed: true,
+          claimed: true,
+          completedAt: 1,
+          discovered: true,
+        },
       },
       claimedGeneratorMilestones: {
         plunger_intern: [10, -3, 25],
@@ -176,5 +188,28 @@ describe('Save migration', () => {
       },
     } as never)
     expect(corruptRuntime.dailyDumpState.activeRuntime).toBeNull()
+  })
+
+  it('merges legacy Faster Auto-Buy PP levels into Royal Flush Turbo Servo', () => {
+    const migrated = migrateSave({
+      schemaVersion: 2,
+      autoBuyUnlocked: true,
+      autoBuySpeedLevel: 4,
+      royalFlushLevels: { rf_tap_1: 1 },
+    } as never)
+    expect(migrated.autoBuySpeedLevel).toBe(4)
+    expect(migrated.royalFlushLevels.rf_autobuy_speed).toBe(4)
+    expect(migrated.royalFlushLevels.rf_tap_1).toBe(1)
+    expect(migrated.autoBuyStrategy).toBe('balanced')
+  })
+
+  it('keeps the higher of tree and legacy Auto-Buy speed', () => {
+    const migrated = migrateSave({
+      schemaVersion: 2,
+      autoBuySpeedLevel: 2,
+      royalFlushLevels: { rf_autobuy_speed: 6 },
+    } as never)
+    expect(migrated.autoBuySpeedLevel).toBe(6)
+    expect(migrated.royalFlushLevels.rf_autobuy_speed).toBe(6)
   })
 })

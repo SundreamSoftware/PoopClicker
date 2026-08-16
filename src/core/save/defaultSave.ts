@@ -81,6 +81,9 @@ export function createDefaultSave(now = Date.now()): PlayerSaveV2 {
       generators: true,
       upgrades: true,
     },
+    autoBuyStrategy: 'balanced',
+    autoBuySpeedLevel: 0,
+    paidProductionMultiplier: 1,
     permanentProductionBonus: 0,
     tutorialFlags: {
       core: false,

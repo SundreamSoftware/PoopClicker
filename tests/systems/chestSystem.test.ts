@@ -55,7 +55,9 @@ describe('chestSystem', () => {
   })
 
   it('buys a shop offer by catalog index and rejects a missing index', () => {
-    const chestIndex = CHEST_SHOP_OFFERS.findIndex((o) => o.kind === 'chest' && o.tier === 'regular')
+    const chestIndex = CHEST_SHOP_OFFERS.findIndex(
+      (o) => o.kind === 'chest' && o.tier === 'regular',
+    )
     expect(chestIndex).toBeGreaterThanOrEqual(0)
     const bought = buyChestShopOfferByIndex({ ...createDefaultSave(), gtp: 500 }, chestIndex)
     expect(bought.ok).toBe(true)

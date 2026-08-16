@@ -35,4 +35,10 @@ describe('decideAndroidBack', () => {
     expect(decideAndroidBack({ ...base, tab: 'shop' })).toEqual({ type: 'go_play' })
     expect(decideAndroidBack(base)).toEqual({ type: 'none' })
   })
+
+  it('closes play sheets before leaving Play', () => {
+    expect(decideAndroidBack({ ...base, playSheetOpen: true })).toEqual({
+      type: 'close_play_sheet',
+    })
+  })
 })

@@ -109,183 +109,183 @@ export function DailyDumpModal({
       dismissible={!inRun}
       closeOnBackdrop={runtime.phase === 'idle'}
     >
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-          <div>
-            <div style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 24, fontWeight: 700 }}>
-              Daily Dump
-            </div>
-            <div style={{ fontSize: 13, color: '#5d6d76' }}>60s local tap trial</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+        <div>
+          <div style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 24, fontWeight: 700 }}>
+            Daily Dump
           </div>
-          {runtime.phase === 'idle' && (
-            <button type="button" style={ghostBtn} onClick={onClose} aria-label="Close">
-              ✕
-            </button>
-          )}
-          {(runtime.phase === 'countdown' || runtime.phase === 'running') && (
-            <button
-              type="button"
-              style={ghostBtn}
-              onClick={() => {
-                if (confirmAbandonDailyDump()) {
-                  onAbandon()
-                }
-              }}
-              aria-label="Abandon"
-            >
-              ✕
-            </button>
-          )}
+          <div style={{ fontSize: 13, color: '#5d6d76' }}>60s local tap trial</div>
         </div>
-
         {runtime.phase === 'idle' && (
-          <div style={{ marginTop: 18 }}>
-            <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.4 }}>
-              Tap as fast as you can for one minute. Combos boost your score. Tiers: Bronze{' '}
-              {DAILY_DUMP.tiers.bronze}+ · Silver {DAILY_DUMP.tiers.silver}+ · Gold{' '}
-              {DAILY_DUMP.tiers.gold}+ · Diamond {DAILY_DUMP.tiers.diamond}+.
+          <button type="button" style={ghostBtn} onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        )}
+        {(runtime.phase === 'countdown' || runtime.phase === 'running') && (
+          <button
+            type="button"
+            style={ghostBtn}
+            onClick={() => {
+              if (confirmAbandonDailyDump()) {
+                onAbandon()
+              }
+            }}
+            aria-label="Abandon"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {runtime.phase === 'idle' && (
+        <div style={{ marginTop: 18 }}>
+          <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.4 }}>
+            Tap as fast as you can for one minute. Combos boost your score. Tiers: Bronze{' '}
+            {DAILY_DUMP.tiers.bronze}+ · Silver {DAILY_DUMP.tiers.silver}+ · Gold{' '}
+            {DAILY_DUMP.tiers.gold}+ · Diamond {DAILY_DUMP.tiers.diamond}+.
+          </p>
+          {weeklyBestScore > 0 && (
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: '#5d6d76' }}>
+              This week&apos;s best: {weeklyBestScore}
             </p>
-            {weeklyBestScore > 0 && (
-              <p style={{ margin: '0 0 12px', fontSize: 13, color: '#5d6d76' }}>
-                This week&apos;s best: {weeklyBestScore}
-              </p>
-            )}
-            <button type="button" style={{ ...primaryBtn, width: '100%' }} onClick={onStart}>
-              START DAILY DUMP
-            </button>
-          </div>
-        )}
+          )}
+          <button type="button" style={{ ...primaryBtn, width: '100%' }} onClick={onStart}>
+            START DAILY DUMP
+          </button>
+        </div>
+      )}
 
-        {runtime.phase === 'countdown' && (
-          <div style={{ marginTop: 28, textAlign: 'center' }}>
-            <div style={{ fontSize: 14, color: '#5d6d76', marginBottom: 8 }}>Get ready</div>
-            <div
-              style={{
-                fontFamily: 'Fredoka, sans-serif',
-                fontSize: 96,
-                lineHeight: 1,
-                fontWeight: 700,
-                color: '#e07a3d',
-              }}
-            >
-              {countdownValue(runtime, now)}
-            </div>
-            <button
-              type="button"
-              style={{ ...ghostBtn, marginTop: 16 }}
-              onClick={() => {
-                if (confirmAbandonDailyDump()) {
-                  onAbandon()
-                }
-              }}
-            >
-              Abandon
-            </button>
+      {runtime.phase === 'countdown' && (
+        <div style={{ marginTop: 28, textAlign: 'center' }}>
+          <div style={{ fontSize: 14, color: '#5d6d76', marginBottom: 8 }}>Get ready</div>
+          <div
+            style={{
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 96,
+              lineHeight: 1,
+              fontWeight: 700,
+              color: '#e07a3d',
+            }}
+          >
+            {countdownValue(runtime, now)}
           </div>
-        )}
+          <button
+            type="button"
+            style={{ ...ghostBtn, marginTop: 16 }}
+            onClick={() => {
+              if (confirmAbandonDailyDump()) {
+                onAbandon()
+              }
+            }}
+          >
+            Abandon
+          </button>
+        </div>
+      )}
 
-        {runtime.phase === 'running' && (
-          <div style={{ marginTop: 14 }}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                gap: 8,
-                marginBottom: 12,
-              }}
-            >
-              <Stat label="Time" value={formatDuration(timeLeft)} />
-              <Stat label="Score" value={String(runtime.score)} />
-              <Stat label="CPS" value={runtime.rollingCps.toFixed(0)} />
-            </div>
-            <div style={{ fontSize: 13, color: '#5d6d76', marginBottom: 10 }}>
-              Combo {Math.floor(runtime.combo)} · Peak {Math.floor(runtime.peakCombo)} · Taps{' '}
-              {runtime.taps}
-              {' · '}
-              {tierProgress.next
-                ? `${tierProgress.remaining} to ${tierLabel(tierProgress.next)}`
-                : 'Diamond reached'}
-            </div>
-            <button
-              type="button"
-              onPointerDown={(e) => {
-                e.preventDefault()
-                onTap()
-              }}
-              style={{
-                width: '100%',
-                minHeight: 180,
-                borderRadius: 22,
-                border: 'none',
-                cursor: 'pointer',
-                touchAction: 'manipulation',
-                userSelect: 'none',
-                background: dumpTapBackground(tierProgress.current),
-                boxShadow: '0 12px 28px rgba(20,30,40,0.28)',
-                color: '#fff8e6',
-                fontFamily: 'Fredoka, sans-serif',
-                fontSize: 28,
-                fontWeight: 700,
-              }}
-              aria-label="Tap for Daily Dump points"
-            >
-              TAP!
-            </button>
-            <button
-              type="button"
-              style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
-              onClick={() => {
-                if (confirmAbandonDailyDump()) {
-                  onAbandon()
-                }
-              }}
-            >
-              Abandon
-            </button>
+      {runtime.phase === 'running' && (
+        <div style={{ marginTop: 14 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: 8,
+              marginBottom: 12,
+            }}
+          >
+            <Stat label="Time" value={formatDuration(timeLeft)} />
+            <Stat label="Score" value={String(runtime.score)} />
+            <Stat label="CPS" value={runtime.rollingCps.toFixed(0)} />
           </div>
-        )}
+          <div style={{ fontSize: 13, color: '#5d6d76', marginBottom: 10 }}>
+            Combo {Math.floor(runtime.combo)} · Peak {Math.floor(runtime.peakCombo)} · Taps{' '}
+            {runtime.taps}
+            {' · '}
+            {tierProgress.next
+              ? `${tierProgress.remaining} to ${tierLabel(tierProgress.next)}`
+              : 'Diamond reached'}
+          </div>
+          <button
+            type="button"
+            onPointerDown={(e) => {
+              e.preventDefault()
+              onTap()
+            }}
+            style={{
+              width: '100%',
+              minHeight: 180,
+              borderRadius: 22,
+              border: 'none',
+              cursor: 'pointer',
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              background: dumpTapBackground(tierProgress.current),
+              boxShadow: '0 12px 28px rgba(20,30,40,0.28)',
+              color: '#fff8e6',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 28,
+              fontWeight: 700,
+            }}
+            aria-label="Tap for Daily Dump points"
+          >
+            TAP!
+          </button>
+          <button
+            type="button"
+            style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
+            onClick={() => {
+              if (confirmAbandonDailyDump()) {
+                onAbandon()
+              }
+            }}
+          >
+            Abandon
+          </button>
+        </div>
+      )}
 
-        {runtime.phase === 'finished' && (
-          <div style={{ marginTop: 18, textAlign: 'center' }}>
-            <div style={{ fontSize: 14, color: '#5d6d76' }}>Run complete</div>
-            <div
-              style={{
-                fontFamily: 'Fredoka, sans-serif',
-                fontSize: 36,
-                fontWeight: 700,
-                marginTop: 4,
-              }}
-            >
-              {tierLabel(runtime.rewardTier)}
-            </div>
-            <div style={{ marginTop: 8, fontSize: 15 }}>
-              Score {runtime.score} · Peak combo {Math.floor(runtime.peakCombo)}
-            </div>
-            <div style={{ marginTop: 4, fontSize: 14, color: '#5d6d76' }}>
-              Reward +{runtime.gtpReward} GTP
-            </div>
-            <button
-              type="button"
-              style={{ ...primaryBtn, width: '100%', marginTop: 16 }}
-              onClick={onClaim}
-            >
-              CLAIM & CLOSE
-            </button>
-            <button
-              type="button"
-              style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
-              onClick={handleShare}
-            >
-              Share Score
-            </button>
-            <button
-              type="button"
-              style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
-              onClick={onClose}
-            >
-              Close
-            </button>
+      {runtime.phase === 'finished' && (
+        <div style={{ marginTop: 18, textAlign: 'center' }}>
+          <div style={{ fontSize: 14, color: '#5d6d76' }}>Run complete</div>
+          <div
+            style={{
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 36,
+              fontWeight: 700,
+              marginTop: 4,
+            }}
+          >
+            {tierLabel(runtime.rewardTier)}
           </div>
-        )}
+          <div style={{ marginTop: 8, fontSize: 15 }}>
+            Score {runtime.score} · Peak combo {Math.floor(runtime.peakCombo)}
+          </div>
+          <div style={{ marginTop: 4, fontSize: 14, color: '#5d6d76' }}>
+            Reward +{runtime.gtpReward} GTP
+          </div>
+          <button
+            type="button"
+            style={{ ...primaryBtn, width: '100%', marginTop: 16 }}
+            onClick={onClaim}
+          >
+            CLAIM & CLOSE
+          </button>
+          <button
+            type="button"
+            style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
+            onClick={handleShare}
+          >
+            Share Score
+          </button>
+          <button
+            type="button"
+            style={{ ...ghostBtn, width: '100%', marginTop: 8 }}
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </div>
+      )}
     </ModalHost>
   )
 }

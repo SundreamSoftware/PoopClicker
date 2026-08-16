@@ -324,6 +324,19 @@ export const ROYAL_FLUSH_NODES: RoyalFlushNodeDef[] = [
     requires: ['rf_offline_cap_2'],
     unlockFlushCount: 15,
   }),
+  node({
+    id: 'rf_autobuy_speed',
+    category: 'idle',
+    name: 'Turbo Servo',
+    description: 'Auto-Buy interval −1s per level (15s → 5s). Permanent.',
+    maxLevel: 10,
+    baseCost: 20,
+    costGrowth: 1.75,
+    effectType: 'auto_buy_interval',
+    effectValue: -1,
+    requires: [],
+    unlockFlushCount: 1,
+  }),
 
   // LUCK
   node({
@@ -408,22 +421,18 @@ export const ROYAL_FLUSH_NODES: RoyalFlushNodeDef[] = [
 
 export const ROYAL_FLUSH_BY_ID = Object.fromEntries(ROYAL_FLUSH_NODES.map((n) => [n.id, n]))
 
-export const ROYAL_FLUSH_CATEGORY_ORDER = [
-  'pressure',
-  'plumbing',
-  'combo',
-  'idle',
-  'luck',
-] as const
+export const ROYAL_FLUSH_CATEGORY_ORDER = ['pressure', 'plumbing', 'combo', 'idle', 'luck'] as const
 
-export const ROYAL_FLUSH_CATEGORY_LABEL: Record<(typeof ROYAL_FLUSH_CATEGORY_ORDER)[number], string> =
-  {
-    pressure: 'Pressure',
-    plumbing: 'Plumbing',
-    combo: 'Combo',
-    idle: 'Idle',
-    luck: 'Luck',
-  }
+export const ROYAL_FLUSH_CATEGORY_LABEL: Record<
+  (typeof ROYAL_FLUSH_CATEGORY_ORDER)[number],
+  string
+> = {
+  pressure: 'Pressure',
+  plumbing: 'Plumbing',
+  combo: 'Combo',
+  idle: 'Idle',
+  luck: 'Luck',
+}
 
 export function royalFlushMissingPrerequisiteNames(
   nodeId: string,

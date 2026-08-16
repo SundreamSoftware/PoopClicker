@@ -1,6 +1,7 @@
 import type {
   ActiveBoost,
   ActiveEvent,
+  AutoBuyStrategy,
   ChestInventory,
   DailyChallengeInstance,
 } from '../types/gameTypes'
@@ -130,6 +131,11 @@ export interface PlayerSaveV2 {
     generators: boolean
     upgrades: boolean
   }
+  autoBuyStrategy: AutoBuyStrategy
+  /** Mirrored Royal Flush Turbo Servo level (0–10). Survives Flush. */
+  autoBuySpeedLevel: number
+  /** 1 = none, 2 = paid convenience pack. */
+  paidProductionMultiplier: number
   permanentProductionBonus: number
   tutorialFlags: Record<string, boolean>
   lastSaveTimestamp: number

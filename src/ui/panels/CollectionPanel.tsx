@@ -1,11 +1,15 @@
 import { useMemo, useState } from 'react'
 import { ACHIEVEMENTS } from '../../content/achievements'
 import { ASSET_MANIFEST } from '../../content/assetManifest'
-import { resolveSkinBodyPath, resolveSkinThumbnailPath } from '../../content/assetPaths'
+import {
+  resolveP4Material,
+  resolveSkinBodyPath,
+  resolveSkinThumbnailPath,
+} from '../../content/assetPaths'
 import { EVENTS } from '../../content/events'
 import { GENERATORS } from '../../content/generators'
-import { SKINS } from '../../content/skins'
-import { WORLDS } from '../../content/worlds'
+import { COLLECTION_SKINS, SKINS } from '../../content/skins'
+import { COLLECTION_WORLDS } from '../../content/worlds'
 import { collectionPercent } from '../../core/systems/achievements'
 import { getSkinStatus, isSkinUnlockRequirementMet } from '../../core/systems/skins'
 import { useGameContext } from '../../state/useGameContext'
@@ -17,8 +21,10 @@ export function CollectionPanel() {
   const [tab, setTab] = useState<'overview' | 'skins' | 'worlds'>('overview')
 
   const stats = useMemo(() => {
-    const skins = snap.save.ownedSkins.length
-    const worlds = snap.save.unlockedWorlds.length
+    const skins = COLLECTION_SKINS.filter((skin) => snap.save.ownedSkins.includes(skin.id)).length
+    const worlds = COLLECTION_WORLDS.filter((world) =>
+      snap.save.unlockedWorlds.includes(world.id),
+    ).length
     const events = Object.values(snap.save.eventCompletions).filter((n) => n > 0).length
     const generators = Object.values(snap.save.generators).filter((n) => n > 0).length
     const achievements = Object.values(snap.save.achievements).filter((a) => a.completed).length
@@ -43,10 +49,18 @@ export function CollectionPanel() {
         >
           Overview
         </button>
-        <button type="button" className={tab === 'skins' ? 'active' : ''} onClick={() => setTab('skins')}>
+        <button
+          type="button"
+          className={tab === 'skins' ? 'active' : ''}
+          onClick={() => setTab('skins')}
+        >
           Skins
         </button>
-        <button type="button" className={tab === 'worlds' ? 'active' : ''} onClick={() => setTab('worlds')}>
+        <button
+          type="button"
+          className={tab === 'worlds' ? 'active' : ''}
+          onClick={() => setTab('worlds')}
+        >
           Worlds
         </button>
       </div>
@@ -63,10 +77,14 @@ export function CollectionPanel() {
               />
               <div>
                 <div style={{ fontWeight: 700 }}>
-                  {SKINS.find((s) => s.id === snap.save.equippedSkinId)?.name || 'Unknown'}
+                  {COLLECTION_SKINS.find(
+                    (s) => resolveP4Material(s.id) === resolveP4Material(snap.save.equippedSkinId),
+                  )?.name ||
+                    SKINS.find((s) => s.id === snap.save.equippedSkinId)?.name ||
+                    'Unknown'}
                 </div>
                 <div className="meta-line">
-                  Collection {stats.total}% · {stats.skins}/{SKINS.length} skins
+                  Collection {stats.total}% · {stats.skins}/{COLLECTION_SKINS.length} skins
                 </div>
               </div>
             </div>
@@ -74,7 +92,7 @@ export function CollectionPanel() {
           <div className="list-row">
             <span>WORLDS</span>
             <strong>
-              {stats.worlds} / {WORLDS.length}
+              {stats.worlds} / {COLLECTION_WORLDS.length}
             </strong>
           </div>
           <div className="list-row">
@@ -99,7 +117,7 @@ export function CollectionPanel() {
       )}
 
       {tab === 'skins' &&
-        SKINS.map((skin) => {
+        COLLECTION_SKINS.map((skin) => {
           const status = getSkinStatus(snap.save, skin.id)
           const met = isSkinUnlockRequirementMet(snap.save, skin.id)
           const color =
@@ -168,7 +186,7 @@ export function CollectionPanel() {
         })}
 
       {tab === 'worlds' &&
-        WORLDS.map((world) => {
+        COLLECTION_WORLDS.map((world) => {
           const unlocked = snap.save.unlockedWorlds.includes(world.id)
           return (
             <div className="list-row" key={world.id}>

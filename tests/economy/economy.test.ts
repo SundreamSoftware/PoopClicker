@@ -8,7 +8,7 @@ import {
 } from '../../src/core/economy/formulas'
 import { LargeNumber } from '../../src/core/numbers/LargeNumber'
 import { createTestEngine } from '../../src/core/GameEngine'
-import { computeProduction } from '../../src/core/systems/production'
+import { computeMultiplierBreakdown, computeProduction } from '../../src/core/systems/production'
 
 describe('economy formulas', () => {
   it('computes geometric series cost', () => {
@@ -56,6 +56,18 @@ describe('production & upgrades', () => {
     engine.debugSetSave((s) => ({ ...s, flushPower: 100 }))
     const after = computeProduction(engine.exportSave()).tapPower
     expect(after.gt(before)).toBe(true)
+  })
+
+  it('multiplier breakdown matches production global multiplier', () => {
+    const save = createTestEngine({
+      flushPower: 40,
+      paidProductionMultiplier: 2,
+      permanentProductionBonus: 0.1,
+    }).exportSave()
+    const production = computeProduction(save)
+    const breakdown = computeMultiplierBreakdown(save)
+    expect(breakdown.total).toBeCloseTo(production.globalMultiplier, 8)
+    expect(breakdown.parts.some((part) => part.id === 'paid' && part.value === 2)).toBe(true)
   })
 
   it('upgrade cost curves grow', () => {

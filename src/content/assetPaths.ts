@@ -7,7 +7,21 @@ export function assetUrl(path: string): string {
 
 /** Material body ids under `public/assets/P4_skins/<id>.png`. */
 export type P4MaterialId =
-  'basic' | 'cosmic' | 'diamond' | 'gold' | 'lava' | 'obsidian' | 'ooze' | 'pink' | 'stone' | 'wood'
+  | 'basic'
+  | 'black_crystal'
+  | 'cosmic'
+  | 'diamond'
+  | 'emerald'
+  | 'gold'
+  | 'lava'
+  | 'obsidian'
+  | 'ooze'
+  | 'pearl'
+  | 'pink'
+  | 'rainbow'
+  | 'stone'
+  | 'strawberry_jam'
+  | 'wood'
 
 /** Shared face overlay step 1–6 from `public/assets/P4_expressions/`. */
 export type SharedExpressionId =
@@ -20,15 +34,20 @@ export type WorldLayer = 'background' | 'midground' | 'foreground' | 'vfx'
 
 export const P4_MATERIAL_IDS: readonly P4MaterialId[] = [
   'basic',
-  'cosmic',
-  'diamond',
-  'gold',
-  'lava',
-  'obsidian',
-  'ooze',
-  'pink',
-  'stone',
   'wood',
+  'stone',
+  'pink',
+  'ooze',
+  'lava',
+  'cosmic',
+  'obsidian',
+  'gold',
+  'diamond',
+  'pearl',
+  'emerald',
+  'rainbow',
+  'strawberry_jam',
+  'black_crystal',
 ] as const
 
 /**
@@ -82,6 +101,19 @@ const P4_MATERIAL_BY_SKIN: Record<string, P4MaterialId> = {
   schrodingers_poop: 'cosmic',
   the_final_poop: 'gold',
   toilet_tycoon: 'gold',
+  wood: 'wood',
+  stone: 'stone',
+  pink: 'pink',
+  ooze: 'ooze',
+  lava: 'lava',
+  cosmic: 'cosmic',
+  obsidian: 'obsidian',
+  gold: 'gold',
+  pearl: 'pearl',
+  emerald: 'emerald',
+  rainbow: 'rainbow',
+  strawberry_jam: 'strawberry_jam',
+  black_crystal: 'black_crystal',
 }
 
 /** Legacy P1 SVG folder map (fallback when P4 body missing). */
@@ -147,7 +179,7 @@ const P4_WORLD_LEVEL: Partial<Record<string, number>> = {
   volcanic_spa_toilet: 9,
   cloud_restroom: 10,
   void_washroom: 10,
-  omni_throne: 5,
+  omni_throne: 10,
 }
 
 export const SHARED_EXPRESSION_IDS: readonly SharedExpressionId[] = [
@@ -373,7 +405,11 @@ export const CHEST_ASSETS = {
 
 export function goldenShowerFramePath(frame: number): string {
   const n = Math.min(6, Math.max(1, Math.floor(frame)))
-  return assetUrl(`P4_misc/golden_poop_shower/golden_poop_0${n}.png`)
+  return assetUrl(`P4_misc/golden_poop_shower/_display/golden_poop_0${n}.png`)
+}
+
+export function goldenShowerFrameUrls(): string[] {
+  return Array.from({ length: 6 }, (_, i) => goldenShowerFramePath(i + 1))
 }
 
 /** P4 flush VFX frames (`flush_1.png` …). Currently 5 authored frames. */

@@ -37,6 +37,7 @@ export type EffectType =
   | 'golden_chance'
   | 'event_reward'
   | 'global_production'
+  | 'auto_buy_interval'
 
 export type TapSpeedState = 'idle' | 'slow' | 'active' | 'fast' | 'frenzy' | 'overdrive'
 
@@ -286,8 +287,11 @@ export interface OfflineReward {
   claimed: boolean
 }
 
+export type AutoBuyStrategy = 'balanced' | 'production' | 'tap' | 'smart'
+
 export interface NextGoal {
-  kind: 'upgrade' | 'generator' | 'flush' | 'daily' | 'achievement'
+  kind:
+    'upgrade' | 'generator' | 'flush' | 'daily' | 'achievement' | 'milestone' | 'world' | 'claim'
   title: string
   subtitle: string
   progress: number

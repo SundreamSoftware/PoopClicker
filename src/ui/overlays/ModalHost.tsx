@@ -47,8 +47,7 @@ export function ModalHost({
     restoreFocusRef.current = document.activeElement as HTMLElement | null
     const panel = panelRef.current
     if (panel) {
-      const focusable = getFocusable(panel)
-      ;(focusable[0] ?? panel).focus()
+      panel.focus()
     }
 
     const onKeyDown = (e: KeyboardEvent) => {

@@ -169,7 +169,7 @@ function engineAtFlushCount(flushCount: number, now = Date.UTC(2026, 0, 15, 12))
     ...createDefaultSave(now),
     flushCount,
     flushPower,
-    autoBuyUnlocked: flushCount >= 5,
+    autoBuyUnlocked: false,
     permanentProductionBonus: flushCount >= 100 ? 0.5 : flushCount >= 50 ? 0.25 : 0,
     generators: {
       plunger_intern: 12 + flushCount * 6,

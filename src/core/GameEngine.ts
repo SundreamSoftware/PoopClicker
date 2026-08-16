@@ -1,6 +1,6 @@
 import { FLUSH_MILESTONES } from '../content/flushMilestones'
 import { GENERATOR_BY_ID } from '../content/generators'
-import { UPGRADES, UPGRADE_BY_ID } from '../content/upgrades'
+import { UPGRADE_BY_ID } from '../content/upgrades'
 import { IAP_BY_ID } from '../content/iapProducts'
 import { ROYAL_FLUSH_BY_ID } from '../content/royalFlush'
 import { WORLDS } from '../content/worlds'
@@ -21,18 +21,26 @@ import {
   writeSaveRecord,
 } from './save/migrateSave'
 import { SAVE_STORAGE_KEY, type PlayerSaveV2 } from './save/saveSchema'
-import {
-  FixedClock,
-  SystemClock,
-  TimeService,
-  safeElapsed,
-  type Clock,
-} from './time/TimeService'
-import type { ClaimResult, NextGoal, OfflineReward, TapSpeedState } from './types/gameTypes'
+import { FixedClock, SystemClock, TimeService, safeElapsed, type Clock } from './time/TimeService'
+import type {
+  AutoBuyStrategy,
+  ClaimResult,
+  NextGoal,
+  OfflineReward,
+  TapSpeedState,
+} from './types/gameTypes'
 import type { ActiveEventRuntime } from './types/eventRuntime'
 import { EVENT_SCHEDULER, scheduleNextRandomEventAt } from './types/eventRuntime'
 import { claimAchievement, syncAchievements } from './systems/achievements'
-import { decideAutoBuy } from './systems/autoBuy'
+import {
+  AUTO_BUY,
+  AUTO_BUY_SPEED_NODE_ID,
+  AUTO_BUY_STRATEGIES,
+  autoBuyIntervalMsForSave,
+  autoBuySpeedLevelFromSave,
+  decideAutoBuy,
+} from './systems/autoBuy'
+import { computeNextBestGoals } from './systems/nextGoals'
 import {
   canStartDailyDump,
   createIdleDailyDumpRuntime,
@@ -62,7 +70,9 @@ import {
   computeEventRewards,
   createEventRuntime,
   evaluateEventCompletion,
+  isGoldenShowerTargetLive,
   pickScheduledEvent,
+  refillGoldenShower,
   tickEventRuntime,
 } from './systems/eventSystem'
 import { buyChestShopOfferByIndex, openChest } from './systems/chestSystem'
@@ -85,10 +95,7 @@ const ECONOMY_CATCH_UP_DT_MS = 250
 
 export type RewardedPlacement = 'income_boost' | 'instant_pps' | 'event_retry' | 'golden_spawn'
 import type { AnalyticsSink } from '../services/analytics'
-import {
-  applyIapGrant as applyIapGrantToSave,
-  type IapGrantSource,
-} from '../services/billing'
+import { applyIapGrant as applyIapGrantToSave, type IapGrantSource } from '../services/billing'
 
 export interface TapResult {
   gained: LargeNumber
@@ -261,7 +268,7 @@ export class GameEngine {
         this.save.flushCount,
       )
       if (hydrated) {
-        this.eventRuntime = {
+        const merged = {
           ...hydrated,
           taps: this.save.activeEvent.taps,
           tapTarget: this.save.activeEvent.tapTarget,
@@ -273,7 +280,12 @@ export class GameEngine {
           spawnedCount: this.save.activeEvent.spawnedCount ?? hydrated.spawnedCount,
           inBandMs: this.save.activeEvent.inBandMs ?? hydrated.inBandMs,
           bandScore: this.save.activeEvent.bandScore ?? hydrated.bandScore,
+          targets: [],
         }
+        this.eventRuntime =
+          merged.type === 'golden_rain'
+            ? refillGoldenShower(merged, now)
+            : { ...merged, targets: hydrated.targets }
       }
     }
 
@@ -396,10 +408,14 @@ export class GameEngine {
       activeBoosts: this.save.activeBoosts.filter((b) => b.expiresAt > now),
     }
 
-    if (this.save.autoBuyUnlocked && this.save.autoBuyEnabled && now - this.lastAutoBuyAt >= 1500) {
-      this.lastAutoBuyAt = now
+    if (
+      this.save.autoBuyUnlocked &&
+      this.save.autoBuyEnabled &&
+      now - this.lastAutoBuyAt >= autoBuyIntervalMsForSave(this.save)
+    ) {
       const decision = decideAutoBuy(this.save)
       if (decision) {
+        this.lastAutoBuyAt = now
         if (decision.kind === 'generator') {
           this.buyGenerator(decision.id, decision.count)
         } else {
@@ -622,12 +638,21 @@ export class GameEngine {
       }
     }
     if (changed) {
+      const previous = new Set(this.save.claimedGeneratorMilestones[generatorId] ?? [])
       this.save = {
         ...this.save,
         claimedGeneratorMilestones: {
           ...this.save.claimedGeneratorMilestones,
           [generatorId]: Array.from(claimed).sort((a, b) => a - b),
         },
+      }
+      for (const milestone of def.milestones) {
+        if (claimed.has(milestone.level) && !previous.has(milestone.level)) {
+          this.analytics.track('generator_milestone_reached', {
+            generatorId,
+            level: milestone.level,
+          })
+        }
       }
     }
   }
@@ -850,6 +875,7 @@ export class GameEngine {
       ...this.save,
       gtp: this.save.gtp - cost,
       royalFlushLevels: { ...this.save.royalFlushLevels, [nodeId]: level + 1 },
+      ...(nodeId === AUTO_BUY_SPEED_NODE_ID ? { autoBuySpeedLevel: level + 1 } : {}),
     }
     this.analytics.track('royal_flush_upgrade', { nodeId, level: level + 1 })
     this.syncMeta(this.time.now())
@@ -987,9 +1013,11 @@ export class GameEngine {
   catchGoldenPoop(): ClaimResult {
     if (!this.eventRuntime) return { ok: false, reason: 'inactive' }
     const now = this.time.now()
-    const target = this.eventRuntime.targets.find(
-      (t) => t.kind === 'golden' && !t.caught && t.expiresAt > now,
-    )
+    const target = this.eventRuntime.targets.find((t) => {
+      if (t.kind !== 'golden' || t.caught) return false
+      if (this.eventRuntime?.type === 'golden_rain') return isGoldenShowerTargetLive(t, now)
+      return t.expiresAt > now
+    })
     if (!target) return { ok: false, reason: 'miss' }
     return this.catchEventTarget(target.id)
   }
@@ -1038,8 +1066,43 @@ export class GameEngine {
     }
   }
 
+  buyAutoBuy(): ClaimResult {
+    if (this.save.autoBuyUnlocked) return { ok: false, reason: 'owned' }
+    if (this.save.gtp < ECONOMY.autoBuyGtpCost) return { ok: false, reason: 'insufficient_gtp' }
+    this.save = {
+      ...this.save,
+      gtp: this.save.gtp - ECONOMY.autoBuyGtpCost,
+      autoBuyUnlocked: true,
+      autoBuyEnabled: true,
+    }
+    this.analytics.track('auto_buy_unlock', { method: 'gtp', cost: ECONOMY.autoBuyGtpCost })
+    this.persistImmediate()
+    this.emit()
+    return { ok: true }
+  }
+
+  buyAutoBuySpeed(): ClaimResult {
+    if (!this.save.autoBuyUnlocked) return { ok: false, reason: 'locked' }
+    if (autoBuySpeedLevelFromSave(this.save) >= AUTO_BUY.maxSpeedLevel) {
+      return { ok: false, reason: 'maxed' }
+    }
+    const result = this.buyRoyalFlush(AUTO_BUY_SPEED_NODE_ID)
+    if (result.ok) {
+      this.analytics.track('auto_buy_speed', { level: this.save.autoBuySpeedLevel })
+    }
+    return result
+  }
+
   setAutoBuyEnabled(enabled: boolean): void {
     this.save = { ...this.save, autoBuyEnabled: enabled }
+    this.persistImmediate()
+    this.emit()
+  }
+
+  setAutoBuyStrategy(strategy: AutoBuyStrategy): void {
+    if (!AUTO_BUY_STRATEGIES.includes(strategy)) return
+    this.save = { ...this.save, autoBuyStrategy: strategy }
+    this.analytics.track('auto_buy_strategy_changed', { strategy })
     this.persistImmediate()
     this.emit()
   }
@@ -1051,6 +1114,10 @@ export class GameEngine {
     }
     this.persistImmediate()
     this.emit()
+  }
+
+  trackUi(event: string, payload: Record<string, unknown> = {}): void {
+    this.analytics.track(event, payload)
   }
 
   updateSettings(partial: Partial<PlayerSaveV2['settings']>): void {
@@ -1460,65 +1527,7 @@ export class GameEngine {
   }
 
   private computeNextGoals(_production: ReturnType<typeof computeProduction>): NextGoal[] {
-    const goals: NextGoal[] = []
-    const dailyDone = this.save.dailyChallenges.filter((c) => c.completed).length
-    if (this.save.dailyChallenges.length > 0 && dailyDone < 3) {
-      goals.push({
-        kind: 'daily',
-        title: 'DAILY',
-        subtitle: `${dailyDone} / 3`,
-        progress: dailyDone / 3,
-      })
-    }
-
-    const runPP = LargeNumber.deserialize(this.save.runPPEarned)
-    const nextMilestone = FLUSH_MILESTONES.find((m) => m.flushCount > this.save.flushCount)
-    if (!canFlush(this.save)) {
-      goals.push({
-        kind: 'flush',
-        title: 'NEXT FLUSH',
-        subtitle: `+${buildFlushPreview(this.save, this.time.now()).flushPowerGain} Flush Power`,
-        progress: Math.min(1, runPP.div(ECONOMY.firstFlushRequirement).toNumber()),
-      })
-    } else if (nextMilestone) {
-      goals.push({
-        kind: 'flush',
-        title: 'NEXT MILESTONE',
-        subtitle: nextMilestone.name,
-        progress: Math.min(1, this.save.flushCount / nextMilestone.flushCount),
-      })
-    } else {
-      goals.push({
-        kind: 'flush',
-        title: 'FLUSH READY',
-        subtitle: `+${buildFlushPreview(this.save, this.time.now()).flushPowerGain} Flush Power`,
-        progress: 1,
-      })
-    }
-
-    const balance = LargeNumber.deserialize(this.save.currentPP)
-    const nextUpgrade = UPGRADES.find((u) => {
-      const level = this.save.purchasedRunUpgrades[u.id] ?? 0
-      if (level >= u.maxLevel) return false
-      if ((u.requiresFlushCount ?? 0) > this.save.flushCount) return false
-      return true
-    })
-    if (nextUpgrade) {
-      const level = this.save.purchasedRunUpgrades[nextUpgrade.id] ?? 0
-      const cost = geometricCost(
-        LargeNumber.from(nextUpgrade.baseCost),
-        nextUpgrade.costGrowth,
-        level,
-      )
-      goals.push({
-        kind: 'upgrade',
-        title: 'NEXT UPGRADE',
-        subtitle: nextUpgrade.name,
-        progress: Math.min(1, balance.div(cost).toNumber()),
-      })
-    }
-
-    return goals.slice(0, 3)
+    return computeNextBestGoals(this.save, this.time.now())
   }
 
   foreground(): void {

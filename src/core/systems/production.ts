@@ -85,6 +85,7 @@ export function computeProduction(
   const world = WORLDS.find((w) => w.id === save.currentWorldId)
   const worldBonus = 1 + (world?.productionBonus ?? 0)
   const permanent = 1 + save.permanentProductionBonus
+  const paid = save.paidProductionMultiplier > 0 ? save.paidProductionMultiplier : 1
 
   const tapMultBonus = sumEffect(save, 'tap_multiplier')
   const tapPowerBonus = sumEffect(save, 'tap_power')
@@ -110,7 +111,7 @@ export function computeProduction(
     }
   }
 
-  const globalMultiplier = flushMult * worldBonus * permanent * (1 + globalBonus) * boostIdle
+  const globalMultiplier = flushMult * worldBonus * permanent * paid * (1 + globalBonus) * boostIdle
 
   let generatorPps = LargeNumber.zero()
   for (const def of GENERATORS) {
@@ -133,6 +134,7 @@ export function computeProduction(
     flushMult *
     worldBonus *
     permanent *
+    paid *
     (1 + globalBonus)
   const tapPower = LargeNumber.from(ECONOMY.tapBase).mul(tapMultiplier).mul(comboMult)
 
@@ -157,6 +159,46 @@ export function computeProduction(
     globalMultiplier,
     tapMultiplier,
     idleMultiplier: (1 + idleBonus) * globalMultiplier,
+  }
+}
+
+export interface MultiplierPart {
+  id: string
+  label: string
+  value: number
+}
+
+export interface MultiplierBreakdown {
+  total: number
+  parts: MultiplierPart[]
+}
+
+/** Same factors as `computeProduction` globalMultiplier — UI must not re-derive these. */
+export function computeMultiplierBreakdown(
+  save: PlayerSaveV2,
+  now = Date.now(),
+): MultiplierBreakdown {
+  const flushPower = flushPowerMultiplier(save.flushPower)
+  const world = WORLDS.find((w) => w.id === save.currentWorldId)
+  const worldBonus = 1 + (world?.productionBonus ?? 0)
+  const permanentMilestone = 1 + save.permanentProductionBonus
+  const paid = save.paidProductionMultiplier > 0 ? save.paidProductionMultiplier : 1
+  const royalFlushGlobal = 1 + sumEffect(save, 'global_production')
+  let boostIdle = 1
+  for (const boost of save.activeBoosts) {
+    if (boost.expiresAt > now) boostIdle *= boost.idleMultiplier
+  }
+  const total = flushPower * worldBonus * permanentMilestone * paid * royalFlushGlobal * boostIdle
+  return {
+    total,
+    parts: [
+      { id: 'flush', label: 'Flush Power', value: flushPower },
+      { id: 'world', label: world?.name ?? 'World', value: worldBonus },
+      { id: 'permanent', label: 'Permanent milestone', value: permanentMilestone },
+      { id: 'royal', label: 'Royal Flush / bonuses', value: royalFlushGlobal },
+      { id: 'paid', label: 'Convenience Pack', value: paid },
+      { id: 'boost', label: 'Active boost', value: boostIdle },
+    ],
   }
 }
 
