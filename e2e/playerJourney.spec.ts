@@ -57,6 +57,7 @@ test('launches, taps, persists currency, and navigates core panels', async ({ pa
   await expect(page.getByText('Privacy choices')).toBeVisible()
   await expect(page.getByText('Notifications')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Restore' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Reset all progress' })).toBeVisible()
   await page.getByRole('button', { name: 'Manage' }).click()
   await expect(page.getByText(/Privacy form|Privacy choices updated/)).toBeVisible()
 })

@@ -56,14 +56,14 @@ Cykl: `x1 → x10 → x25 → MAX`. Określa, ile poziomów generatora kupuje je
 
 ### Mechaniki sklepu
 
-| Reguła             | Szczegół                                                                                 |
-| ------------------ | ---------------------------------------------------------------------------------------- |
-| Koszt generatora   | Geometryczny: następny poziom = `baseCost × growth^poziom`. Buy Multiplier sumuje szereg |
-| Koszt upgrade’u    | Ta sama formuła. Domyślnie max 25 poziomów; późne mają 5–15                              |
-| Unlock generatorów | Wczesne: lifetime lub current PP. Od Quantum Septic: też liczba Flushy                   |
-| Unlock upgrade’ów  | Poprzedni upgrade, liczba Flushy albo świat (Quantum Pooping wymaga Ice Chamber)         |
-| Kolory             | Wiersze generatorów: can-afford / cannot-afford. Locked pokazuje brakujący Flush albo PP |
-| Skrzynie           | Regular / silver / golden. Nagrody: GTP, minuty obecnego PPS albo Golden Poop Shower     |
+| Reguła             | Szczegół                                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------------------------- |
+| Koszt generatora   | Geometryczny: następny poziom = `baseCost × growth^poziom`. Buy Multiplier sumuje szereg             |
+| Koszt upgrade’u    | Ta sama formuła. Domyślnie max 25 poziomów; późne mają 5–15                                          |
+| Unlock generatorów | Wczesne: lifetime lub current PP. Od Quantum Septic: też liczba Flushy                               |
+| Unlock upgrade’ów  | Poprzedni upgrade, liczba Flushy albo świat (Quantum Pooping wymaga Ice Chamber)                     |
+| Kolory             | Wiersze generatorów: can-afford / cannot-afford. Locked pokazuje brakujący Flush albo PP             |
+| Skrzynie           | Regular / silver / golden. 40% GTP poniżej kosztu, 20% powyżej, 10–30 min PP, combo, 2× idle, shower |
 
 **IAP (Store)**
 

@@ -15,6 +15,7 @@ import {
 import { LargeNumber } from './numbers/LargeNumber'
 import { createDefaultSave } from './save/defaultSave'
 import {
+  clearSaveRecords,
   isImportableSave,
   loadSaveFromStorage,
   migrateSave,
@@ -1081,7 +1082,7 @@ export class GameEngine {
       return { ok: false, reason: 'event_busy' }
     }
     const production = this.getProduction()
-    const result = openChest(this.save, tier, production)
+    const result = openChest(this.save, tier, production, Math.random, this.time.now())
     if (!result.ok || !result.reward) return { ok: false, reason: result.reason }
     this.save = result.save
     if (result.ppGranted && result.ppGranted.gt(0)) {
@@ -1100,7 +1101,7 @@ export class GameEngine {
     this.emit()
     return {
       ok: true,
-      gtp: result.reward.kind === 'gtp' ? result.reward.amount : undefined,
+      gtp: result.reward.gtp > 0 ? result.reward.gtp : undefined,
       pp: result.ppGranted,
       label: result.reward.label,
       startedShower,
@@ -1705,6 +1706,42 @@ export class GameEngine {
     this.save = migrateSave(raw as PlayerSaveV2, this.time.now())
     this.bootstrap(this.time.now(), { countSession: false })
     this.persistImmediate()
+    this.emit()
+    return { ok: true }
+  }
+
+  /** Wipes run and meta progress. Keeps audio/haptics/notification preferences. */
+  resetProgress(): ClaimResult {
+    const settings = this.save.settings
+    const now = this.time.now()
+    if (this.storage) clearSaveRecords(this.storage, this.storageKey)
+
+    this.save = { ...createDefaultSave(now), settings }
+    this.combo = 0
+    this.rollingCps = 0
+    this.instantCps = 0
+    this.tapState = 'idle'
+    this.tapTimestamps = []
+    this.lastTapAt = 0
+    this.offlineReward = null
+    this.goldenInSession = 0
+    this.absenceMs = 0
+    this.flushWithCorny = 0
+    this.pendingEconomyDt = 0
+    this.cachedProduction = null
+    this.cachedProductionSave = null
+    this.eventRuntime = null
+    this.dailyDumpRuntime = createIdleDailyDumpRuntime()
+    this.lastAutoBuyAt = 0
+    this.frenzyStartedAt = 0
+    this.frenzyActiveUntil = 0
+    this.firstTapTracked = false
+    this.sessionMissions = restoreSessionMissions(undefined)
+    this.lastTickAt = now
+
+    this.bootstrap(now, { countSession: false })
+    this.persistImmediate()
+    this.analytics.track('progress_reset', {})
     this.emit()
     return { ok: true }
   }

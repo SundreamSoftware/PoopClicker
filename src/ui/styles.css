@@ -515,7 +515,8 @@ button:focus:not(:focus-visible) {
 
 .list-row button,
 .primary-btn,
-.ghost-btn {
+.ghost-btn,
+.danger-btn {
   border-radius: 12px;
   padding: 10px 14px;
   min-height: 44px;
@@ -546,8 +547,20 @@ button:focus:not(:focus-visible) {
     0 3px 0 rgba(30, 55, 62, 0.14);
 }
 
+.danger-btn {
+  border: 1px solid rgba(120, 28, 22, 0.28);
+  background: linear-gradient(180deg, #e57368, var(--danger) 55%, #9b2b22);
+  color: white;
+  text-shadow: 0 1px 1px rgba(70, 12, 10, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 4px 0 #7a1f19,
+    0 8px 14px rgba(120, 28, 22, 0.22);
+}
+
 .primary-btn:active:not(:disabled),
 .ghost-btn:active:not(:disabled),
+.danger-btn:active:not(:disabled),
 .list-row button:active:not(:disabled) {
   transform: translateY(3px);
   box-shadow: none;
@@ -734,6 +747,17 @@ button:disabled {
 
 .settings-sheet {
   padding: 20px;
+}
+
+.settings-reset-card {
+  margin-top: 16px;
+}
+
+.settings-reset-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
 }
 
 .shop-card {

@@ -155,7 +155,7 @@ Po Flushu 3+ nowy run startuje z 5 minutami PPS (liczone **po** resecie, więc b
 | Offline                    | `pps × czas` do capu; ad może ×2                        |
 | Sukces eventu              | `pps × rewardPpMinutes × 60 × eventMult`                |
 | Golden Poop Shower (catch) | `tapPower × 40` za każdą kupę (osobno od nagrody końca) |
-| Skrzynia                   | 2 / 5 / 12 minut PPS (waga zależy od tieru)             |
+| Skrzynia                   | 10 / 20 / 30 minut PPS, czasem razem z GTP              |
 | Bathroom Break             | 15 minut PPS **albo** 2× tap na 10 min                  |
 | Rewarded Instant PPS       | 1 minuta PPS                                            |
 | Start runu (Flush 3+)      | 5 minut PPS po resecie                                  |
@@ -189,7 +189,7 @@ Shower: do 30 catchy × 40 tapów w 15 s — to główny burst PP, nie końcowe 
 | Daily Dump (1 / UTC)             | 0 / 8 / 15 / 25 / 40 (none→diamond)                                                  |
 | Session missions                 | 2 + 3 + 5, **cap 20 GTP / dzień**                                                    |
 | Osiągnięcia                      | zwykle 5–60; hidden do 300                                                           |
-| Skrzynia (roll)                  | 5–100 zależnie od tieru                                                              |
+| Skrzynia (roll)                  | 40% GTP poniżej kosztu otwarcia, 20% powyżej; 10–30 min PP; combo; 2× idle 5 min     |
 | IAP                              | 50 / 180 / 350 / 800 / 2000; Tycoon +250                                             |
 
 Streak: cykl max 5. Dni 3 i 5 w tabeli bazowej dają 0 GTP (dzień 3 to boost, dzień 5 dostaje +15). Saver: 1 dzień przerwy przy ładunku (max 2; +1 przy dniu 7).
@@ -204,7 +204,7 @@ Streak: cykl max 5. Dni 3 i 5 w tabeli bazowej dają 0 GTP (dzień 3 to boost, d
 | Royal Flush                     | `floor(baseCost × growth^poziom)` GTP; próg Flush Power = `baseCost` węzła |
 | Skiny GTP                       | 25–1500 (stare ID + materiały P4)                                          |
 
-Skrzynia + klucz to netto sink: np. regular 8+35 = 43 GTP, EV rolla to głównie 5–10 GTP plus rzadki shower. Klucze są droższe niż skrzynie z założenia.
+Skrzynia + klucz nadal jest średnio sinkiem GTP, ale 20% otwarć zwraca więcej GTP niż koszt (regular 43 / silver 110 / golden 265). 40% zwraca mniej GTP. Reszta to 10–30 min PP, combo GTP+PP, 2× idle na 5 min albo rzadki Golden Shower.
 
 ## IAP i ads
 

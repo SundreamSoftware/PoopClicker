@@ -458,6 +458,12 @@ export function loadSaveFromStorage(
   return createDefaultSave(now)
 }
 
+/** Removes the live save and its backup so a full reset cannot be undone from storage. */
+export function clearSaveRecords(storage: Storage, storageKey = SAVE_STORAGE_KEY): void {
+  storage.removeItem(storageKey)
+  storage.removeItem(backupKeyFor(storageKey))
+}
+
 export function writeSaveRecord(
   storage: Storage,
   json: string,

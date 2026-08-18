@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CHEST_SHOP_OFFERS, chestRewardOdds } from '../../content/chests'
+import { CHEST_SHOP_OFFERS, chestRewardOddsSummary } from '../../content/chests'
 import { formatUpgradeEffect, scoreBuildArchetypes, UPGRADE_BY_ID } from '../../content/upgrades'
 import { formatIapGrantSummary, IAP_BY_ID } from '../../content/iapProducts'
 import {
@@ -476,12 +476,7 @@ export function ShopPanel({ initialSection = 'production' }: { initialSection?: 
                     </strong>
                     <ProgressionBadge kind="permanent" />
                     <div className="meta-line">Keys ×{keys}</div>
-                    <div className="meta-line">
-                      Odds:{' '}
-                      {chestRewardOdds(tier)
-                        .map((row) => `${row.label} ${row.percent}%`)
-                        .join(' · ')}
-                    </div>
+                    <div className="meta-line">{chestRewardOddsSummary(tier)}</div>
                   </div>
                 </div>
                 <button
