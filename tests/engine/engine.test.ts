@@ -1,10 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createTestEngine } from '../../src/core/GameEngine'
 import { MemoryAnalytics } from '../../src/services/analytics'
+import { LargeNumber } from '../../src/core/numbers/LargeNumber'
 import { FixedClock } from '../../src/core/time/TimeService'
 import { createDefaultSave } from '../../src/core/save/defaultSave'
 import { GameEngine } from '../../src/core/GameEngine'
 import { DAILY_DUMP } from '../../src/core/systems/dailyDump'
+
+function purchasedItemCount(save: ReturnType<GameEngine['exportSave']>): number {
+  const generators = Object.values(save.generators).reduce((sum, level) => sum + level, 0)
+  const upgrades = Object.values(save.purchasedRunUpgrades).reduce((sum, level) => sum + level, 0)
+  return generators + upgrades
+}
 
 describe('GameEngine integration', () => {
   it('does not spam random events per tick (scheduler uses timestamps only)', () => {
@@ -113,6 +120,65 @@ describe('GameEngine integration', () => {
     })
     engine.tick(16)
     expect(engine.getSnapshot().eventRuntime?.type).toBe('golden_poop')
+  })
+
+  it('buys Auto-Buy for Mega-pack GTP and rejects a second purchase', () => {
+    const engine = createTestEngine({ gtp: 2000 })
+    expect(engine.buyAutoBuy().ok).toBe(true)
+    expect(engine.exportSave().autoBuyUnlocked).toBe(true)
+    expect(engine.exportSave().autoBuyEnabled).toBe(true)
+    expect(engine.exportSave().gtp).toBe(0)
+    expect(engine.buyAutoBuy()).toEqual({ ok: false, reason: 'owned' })
+  })
+
+  it('buys Auto-Buy speed via Royal Flush GTP and refuses past max', () => {
+    const engine = createTestEngine({
+      autoBuyUnlocked: true,
+      flushCount: 1,
+      flushPower: 20,
+      gtp: 20,
+    })
+    expect(engine.buyAutoBuySpeed().ok).toBe(true)
+    expect(engine.exportSave().autoBuySpeedLevel).toBe(1)
+    expect(engine.exportSave().royalFlushLevels.rf_autobuy_speed).toBe(1)
+    expect(engine.buyAutoBuySpeed()).toEqual({ ok: false, reason: 'insufficient_gtp' })
+
+    const maxed = createTestEngine({
+      autoBuyUnlocked: true,
+      autoBuySpeedLevel: 10,
+      royalFlushLevels: { rf_autobuy_speed: 10 },
+      flushCount: 1,
+      flushPower: 20,
+      gtp: 9_999,
+    })
+    expect(maxed.buyAutoBuySpeed()).toEqual({ ok: false, reason: 'maxed' })
+    expect(createTestEngine().buyAutoBuySpeed()).toEqual({ ok: false, reason: 'locked' })
+  })
+
+  it('auto-buys only one item every 15 seconds', () => {
+    const now = 1_000_000
+    const clock = new FixedClock(now)
+    const engine = new GameEngine({
+      clock,
+      save: {
+        ...createDefaultSave(now),
+        autoBuyUnlocked: true,
+        autoBuyEnabled: true,
+        currentPP: LargeNumber.from(10_000).serialize(),
+      },
+      storage: null,
+    })
+
+    engine.tick(100)
+    expect(purchasedItemCount(engine.exportSave())).toBe(1)
+
+    clock.advance(14_000)
+    engine.tick(100)
+    expect(purchasedItemCount(engine.exportSave())).toBe(1)
+
+    clock.advance(1_000)
+    engine.tick(100)
+    expect(purchasedItemCount(engine.exportSave())).toBe(2)
   })
 
   it('applyIapGrant is idempotent for non-consumables', () => {

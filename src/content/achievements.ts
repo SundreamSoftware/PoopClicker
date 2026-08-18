@@ -228,7 +228,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'office_long_session',
     name: 'Boss Makes a Dollar',
-    description: 'Spend 30 minutes in Office Toilet.',
+    description: 'Spend 30 minutes in Castle Keep.',
     category: 'hidden',
     hidden: true,
     metric: 'officeSessionMs',

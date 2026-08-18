@@ -38,18 +38,62 @@ function uid(prefix: string): string {
 }
 
 function spawnFloating(now: number, lifeMs: number, index = 0): FloatingTarget {
+  const x = 12 + ((index * 17 + Math.random() * 40) % 76)
+  const y = -8 - Math.random() * 12
   return {
     id: uid('golden'),
     kind: 'golden',
-    x: 12 + ((index * 17 + Math.random() * 40) % 76),
-    y: -8 - Math.random() * 18,
-    vx: (Math.random() - 0.5) * 0.022,
-    // Slower than the original 0.035–0.08 fall; still clears in time for 60/20s.
-    vy: 0.026 + Math.random() * 0.018,
+    x,
+    y,
+    originX: x,
+    originY: y,
+    vx: (Math.random() - 0.5) * 0.012,
+    vy: 0.034 + Math.random() * 0.006,
     bornAt: now,
     expiresAt: now + lifeMs,
     caught: false,
     frame: 1 + Math.floor(Math.random() * GOLDEN_SHOWER.frameCount),
+  }
+}
+
+export function floatingTargetPosition(
+  target: FloatingTarget,
+  now: number,
+): { x: number; y: number } {
+  const elapsed = Math.max(0, now - target.bornAt)
+  return {
+    x: Math.min(92, Math.max(4, target.originX + target.vx * elapsed)),
+    y: target.originY + target.vy * elapsed,
+  }
+}
+
+/** Still on the playfield — catchable until it falls off the bottom. */
+export function isGoldenShowerTargetLive(target: FloatingTarget, now: number): boolean {
+  if (target.caught) return false
+  return floatingTargetPosition(target, now).y < GOLDEN_SHOWER.despawnY
+}
+
+export function refillGoldenShower(runtime: ActiveEventRuntime, now: number): ActiveEventRuntime {
+  if (runtime.type !== 'golden_rain' || runtime.completed || runtime.failed) return runtime
+  if (now >= runtime.endsAt) return runtime
+  const live = runtime.targets.filter((t) => isGoldenShowerTargetLive(t, now))
+  const additions: FloatingTarget[] = []
+  let spawnedCount = runtime.spawnedCount
+  while (
+    live.length + additions.length < GOLDEN_SHOWER.maxLive &&
+    spawnedCount < GOLDEN_SHOWER.totalSpawns
+  ) {
+    additions.push(spawnFloating(now, GOLDEN_SHOWER.targetLifeMs, spawnedCount))
+    spawnedCount += 1
+  }
+  if (!additions.length && live.length === runtime.targets.length) {
+    return spawnedCount === runtime.spawnedCount ? runtime : { ...runtime, spawnedCount }
+  }
+  return {
+    ...runtime,
+    spawnedCount,
+    tapTarget: GOLDEN_SHOWER.totalSpawns,
+    targets: additions.length ? [...live, ...additions] : live,
   }
 }
 
@@ -88,15 +132,16 @@ export function createEventRuntime(
         spawnedCount: 1,
         targets: [spawnFloating(now, def.durationMs)],
       }
-    case 'golden_rain': {
-      const first = spawnFloating(now, 6_500, 0)
-      return {
-        ...base,
-        tapTarget: GOLDEN_SHOWER.totalSpawns,
-        spawnedCount: 1,
-        targets: [first],
-      }
-    }
+    case 'golden_rain':
+      return refillGoldenShower(
+        {
+          ...base,
+          tapTarget: GOLDEN_SHOWER.totalSpawns,
+          spawnedCount: 0,
+          targets: [],
+        },
+        now,
+      )
     case 'mega_clog': {
       const total = def.tapTarget ?? 120
       return { ...base, phase: 1, phaseTapTarget: Math.ceil(total / 3), tapTarget: total }
@@ -120,35 +165,15 @@ export function tickEventRuntime(
   }
 
   if (next.type === 'golden_rain') {
-    // Move, then drop anything caught / expired / off the bottom — keep the live pool tiny.
     const moved: FloatingTarget[] = []
     for (const t of next.targets) {
-      if (t.caught || t.expiresAt <= now) continue
-      const x = Math.min(92, Math.max(4, t.x + t.vx * dtMs))
-      const y = t.y + t.vy * dtMs
-      if (y >= GOLDEN_SHOWER.despawnY) continue
-      moved.push(y === t.y && x === t.x ? t : { ...t, x, y })
+      if (!isGoldenShowerTargetLive(t, now)) continue
+      const pos = floatingTargetPosition(t, now)
+      moved.push(pos.x === t.x && pos.y === t.y ? t : { ...t, x: pos.x, y: pos.y })
     }
-
-    if (!next.completed && !next.failed) {
-      const elapsed = Math.max(0, now - next.startedAt)
-      const desired = Math.min(
-        GOLDEN_SHOWER.totalSpawns,
-        1 + Math.floor((elapsed / GOLDEN_SHOWER.durationMs) * (GOLDEN_SHOWER.totalSpawns - 1)),
-      )
-      let spawnedCount = next.spawnedCount
-      const additions: FloatingTarget[] = []
-      while (spawnedCount < desired && moved.length + additions.length < GOLDEN_SHOWER.maxLive) {
-        additions.push(spawnFloating(now, 6_500, spawnedCount))
-        spawnedCount += 1
-      }
-      next = {
-        ...next,
-        spawnedCount,
-        targets: additions.length ? [...moved, ...additions] : moved,
-      }
-    } else {
-      next = { ...next, targets: moved }
+    next = { ...next, targets: moved }
+    if (!next.completed && !next.failed && now < next.endsAt) {
+      next = refillGoldenShower(next, now)
     }
   } else {
     next.targets = next.targets.map((t) => {
@@ -184,7 +209,11 @@ export function catchTarget(
   targetId: string,
   now: number,
 ): { runtime: ActiveEventRuntime; caught: boolean } {
-  const idx = runtime.targets.findIndex((t) => t.id === targetId && !t.caught && t.expiresAt > now)
+  const idx = runtime.targets.findIndex((t) => {
+    if (t.id !== targetId || t.caught) return false
+    if (runtime.type === 'golden_rain') return isGoldenShowerTargetLive(t, now)
+    return t.expiresAt > now
+  })
   if (idx < 0) return { runtime, caught: false }
   const caughtCount = runtime.caughtCount + 1
   const taps = runtime.taps + 1
@@ -219,7 +248,8 @@ export function evaluateEventCompletion(
   if (runtime.rewardClaimed) return { completed: true, failed: false }
 
   if (runtime.type === 'golden_rain') {
-    if (now < runtime.endsAt) return { completed: false, failed: false }
+    const leftovers = runtime.targets.some((t) => isGoldenShowerTargetLive(t, now))
+    if (now < runtime.endsAt || leftovers) return { completed: false, failed: false }
     return { completed: runtime.caughtCount >= 1, failed: runtime.caughtCount < 1 }
   }
 

@@ -21,6 +21,7 @@ import {
 } from '../../src/core/systems/eventSystem'
 import { milestoneEventBonus, performFlush } from '../../src/core/systems/flush'
 import { isSkinUnlockRequirementMet } from '../../src/core/systems/skins'
+import { AUTO_BUY, autoBuyIntervalMs } from '../../src/core/systems/autoBuy'
 import { ECONOMY } from '../../src/core/economy/formulas'
 import { LargeNumber } from '../../src/core/numbers/LargeNumber'
 
@@ -98,6 +99,13 @@ describe('Content validation', () => {
       CHALLENGE_TEMPLATES.map((x) => x.id),
       'challenges',
     )
+  })
+
+  it('Auto-Buy speed levels go from 15s to 5s', () => {
+    expect(AUTO_BUY.maxSpeedLevel).toBe(10)
+    expect(autoBuyIntervalMs(0)).toBe(15_000)
+    expect(autoBuyIntervalMs(AUTO_BUY.maxSpeedLevel)).toBe(5_000)
+    expect(AUTO_BUY.speedCostGrowth).toBeGreaterThanOrEqual(4)
   })
 
   it('rejects negative costs and invalid deps', () => {
@@ -227,7 +235,7 @@ describe('Content validation', () => {
     }
     const toFive = performFlush(save, now)
     expect(toFive.save.flushCount).toBe(5)
-    expect(toFive.save.autoBuyUnlocked).toBe(true)
+    expect(toFive.save.autoBuyUnlocked).toBe(false)
 
     const startBonusMilestone = FLUSH_MILESTONES.find((m) => m.startBonusPpMinutes)
     expect(startBonusMilestone).toBeTruthy()
@@ -275,13 +283,7 @@ describe('Content validation', () => {
   it('names missing Royal Flush prerequisites instead of a generic lock', () => {
     expect(royalFlushMissingPrerequisiteNames('rf_tap_2', {})).toEqual(['Firm Sit'])
     expect(royalFlushMissingPrerequisiteNames('rf_tap_2', { rf_tap_1: 1 })).toEqual([])
-    expect(ROYAL_FLUSH_CATEGORY_ORDER).toEqual([
-      'pressure',
-      'plumbing',
-      'combo',
-      'idle',
-      'luck',
-    ])
+    expect(ROYAL_FLUSH_CATEGORY_ORDER).toEqual(['pressure', 'plumbing', 'combo', 'idle', 'luck'])
   })
 
   it('achievement thresholds unique per metric family', () => {

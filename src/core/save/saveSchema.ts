@@ -1,6 +1,7 @@
 import type {
   ActiveBoost,
   ActiveEvent,
+  AutoBuyStrategy,
   ChestInventory,
   DailyChallengeInstance,
 } from '../types/gameTypes'
@@ -130,6 +131,15 @@ export interface PlayerSaveV2 {
     generators: boolean
     upgrades: boolean
   }
+  autoBuyStrategy: AutoBuyStrategy
+  /** Mirrored Royal Flush Turbo Servo level (0–10). Survives Flush. */
+  autoBuySpeedLevel: number
+  /** 1 = none. Legacy Convenience Pack owners may still have 2; new grants do not raise this. */
+  paidProductionMultiplier: number
+  /** Extra offline hours from Convenience Pack (0 if none). */
+  paidOfflineCapHours: number
+  /** Extra Bathroom Break charge slots from Convenience Pack (0 if none). */
+  paidBathroomChargeBonus: number
   permanentProductionBonus: number
   tutorialFlags: Record<string, boolean>
   lastSaveTimestamp: number

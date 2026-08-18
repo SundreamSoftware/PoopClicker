@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react'
 import { FLUSH_ANIM, UI_ASSETS, flushAnimFrameUrls } from '../content/assetPaths'
-import { formatDuration, formatMultiplier, formatNumber } from '../core/numbers/formatNumber'
+import { formatDuration, formatNumber } from '../core/numbers/formatNumber'
 import { ECONOMY } from '../core/economy/formulas'
 import { canStartDailyDump } from '../core/systems/dailyDump'
 import { toUtcDateKey } from '../core/time/TimeService'
@@ -32,6 +32,9 @@ import { DailyPanel } from './panels/DailyPanel'
 import { FlushPanel } from './panels/FlushPanel'
 import { SettingsPanel } from './panels/SettingsPanel'
 import { ShopPanel } from './panels/ShopPanel'
+import { ContextualHud } from './hud/ContextualHud'
+import { BoostsList } from './shop/shopBits'
+import { QuickShopSheet } from './shop/QuickShopSheet'
 import { WorldStage } from './world/WorldStage'
 import { decideAndroidBack } from './androidBack'
 import { ModalHost } from './overlays/ModalHost'
@@ -85,11 +88,22 @@ function GameScreen() {
   const [tab, setTab] = useState<Tab>('play')
   const [squish, setSquish] = useState(false)
   const [flushOpen, setFlushOpen] = useState(false)
+  const [quickShopOpen, setQuickShopOpen] = useState(false)
+  const [boostsOpen, setBoostsOpen] = useState(false)
   const [flushAnimating, setFlushAnimating] = useState(false)
   const [dumpModalOpen, setDumpModalOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimeoutRef = useRef<number | null>(null)
   const flushAnimTimeoutRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!flushOpen) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [flushOpen])
 
   const reducedMotion = snap.save.settings.reducedMotion
   const eventActive = Boolean(snap.eventRuntime)
@@ -124,6 +138,7 @@ function GameScreen() {
       dumpOpen: showDumpModal,
       dumpPhase: snap.dailyDump.phase,
       flushOpen,
+      playSheetOpen: quickShopOpen || boostsOpen,
       offlineUnclaimed: Boolean(snap.offlineReward && !snap.offlineReward.claimed),
       tab,
     })
@@ -151,6 +166,11 @@ function GameScreen() {
       setFlushOpen(false)
       return
     }
+    if (action.type === 'close_play_sheet') {
+      setQuickShopOpen(false)
+      setBoostsOpen(false)
+      return
+    }
     if (action.type === 'go_play') setTab('play')
   }
 
@@ -163,6 +183,9 @@ function GameScreen() {
         setDumpModalOpen(false)
       } else if (flushOpen) {
         setFlushOpen(false)
+      } else if (quickShopOpen || boostsOpen) {
+        setQuickShopOpen(false)
+        setBoostsOpen(false)
       } else if (snap.offlineReward && !snap.offlineReward.claimed) {
         engine.claimOffline(false)
       } else if (tab !== 'play') {
@@ -172,7 +195,16 @@ function GameScreen() {
 
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [showDumpModal, flushOpen, snap.dailyDump.phase, snap.offlineReward, engine, tab])
+  }, [
+    showDumpModal,
+    flushOpen,
+    quickShopOpen,
+    boostsOpen,
+    snap.dailyDump.phase,
+    snap.offlineReward,
+    engine,
+    tab,
+  ])
 
   useEffect(() => {
     let cancelled = false
@@ -223,6 +255,10 @@ function GameScreen() {
     }
   }
 
+  useEffect(() => {
+    if (flushOpen) engine.trackUi('prestige_viewed', {})
+  }, [flushOpen, engine])
+
   const todayKey = toUtcDateKey(Date.now())
   const streakClaimed = snap.save.lastDailyClaim === todayKey
 
@@ -239,7 +275,7 @@ function GameScreen() {
 
   const onTap: PointerEventHandler<HTMLButtonElement> = (event) => {
     const result = engine.tap()
-    push(`+${formatNumber(result.gained)}`, result.crit)
+    push(`+${formatNumber(result.gained)}`, result.crit, result.splash)
     setSquish(true)
     window.setTimeout(() => setSquish(false), 230)
     if (snap.save.settings.haptics) void tapHaptic(result.crit)
@@ -254,34 +290,12 @@ function GameScreen() {
     <div className={`app-shell ${reducedMotion ? 'reduced' : ''}`}>
       {!suppressTutorial && <TutorialOverlay onGoToShop={() => setTab('shop')} />}
 
-      <header className="top-bar">
-        <div className="currency-stack currency-stack-main">
-          <div className="currency-primary">
-            <img className="currency-icon" src={UI_ASSETS.currency.pp} alt="" aria-hidden />
-            <span className="pp-value">{formatNumber(snap.save.currentPP)}</span>
-            <span className="pp-label">PP</span>
-          </div>
-          <div className="currency-gtp">
-            <img src={UI_ASSETS.currency.gtp} alt="" aria-hidden />
-            <span className="gtp-value">{snap.save.gtp}</span>
-            <span className="gtp-label">GTP</span>
-          </div>
-        </div>
-        <div className="stat-stack">
-          <div className="stat-row">
-            <span className="stat-pill stat-cps">CPS {snap.rollingCps.toFixed(1)}</span>
-            <span className="stat-pill">{formatNumber(snap.production.pps)} /s</span>
-            {snap.combo >= 2 && <span className="stat-pill">COMBO {Math.floor(snap.combo)}</span>}
-            <span className="stat-pill" title="Flush Power — permanent prestige for Royal Flush">
-              <img src={UI_ASSETS.currency.flushPower} alt="" aria-hidden />
-              {snap.save.flushPower} Flush
-            </span>
-          </div>
-          <div className="stat-row stat-row-secondary">
-            <span>{formatMultiplier(snap.production.globalMultiplier)}</span>
-          </div>
-        </div>
-      </header>
+      <ContextualHud
+        context={
+          flushOpen ? 'prestige' : tab === 'shop' ? 'shop' : tab === 'play' ? 'play' : 'other'
+        }
+        onFlushProgressClick={() => setFlushOpen(true)}
+      />
 
       <ModalHost
         open={Boolean(snap.offlineReward && !snap.offlineReward.claimed)}
@@ -348,7 +362,10 @@ function GameScreen() {
               )}
               <div className="float-layer">
                 {items.map((item) => (
-                  <div key={item.id} className={`float-num ${item.crit ? 'crit' : ''}`}>
+                  <div
+                    key={item.id}
+                    className={`float-num ${item.crit ? 'crit' : ''} ${item.splash ? 'splash' : ''}`}
+                  >
                     {item.text}
                   </div>
                 ))}
@@ -366,7 +383,19 @@ function GameScreen() {
             </div>
           )}
 
-          <div className="play-actions">
+          <div className="play-actions play-actions-wide">
+            <button
+              className="ghost-btn"
+              onClick={() => {
+                setQuickShopOpen(true)
+                engine.trackUi('quick_shop_opened', {})
+              }}
+            >
+              UPGRADE ↑
+            </button>
+            <button className="ghost-btn" onClick={() => setBoostsOpen(true)}>
+              BOOSTS
+            </button>
             <button
               className={`primary-btn ${snap.canFlush ? 'flush-ready-pulse' : ''}`}
               onClick={() => setFlushOpen(true)}
@@ -413,7 +442,9 @@ function GameScreen() {
         onClose={() => setFlushOpen(false)}
         ariaLabel="Flush & Royal Flush"
         hideChrome
+        closeOnBackdrop={false}
         layerClass="modal-layer-sheet"
+        panelClassName="modal-sheet"
       >
         <FlushPanel
           canFlush={snap.canFlush}
@@ -421,6 +452,35 @@ function GameScreen() {
             setFlushOpen(false)
           }}
           onFlushed={playFlushAnimation}
+        />
+      </ModalHost>
+
+      <ModalHost
+        open={quickShopOpen}
+        onClose={() => setQuickShopOpen(false)}
+        title="Quick Shop"
+        ariaLabel="Quick Shop"
+        layerClass="modal-layer-sheet"
+        panelClassName="modal-sheet"
+      >
+        <QuickShopSheet
+          onFullShop={() => {
+            setQuickShopOpen(false)
+            setTab('shop')
+          }}
+        />
+      </ModalHost>
+
+      <ModalHost
+        open={boostsOpen}
+        onClose={() => setBoostsOpen(false)}
+        title="Boosts"
+        ariaLabel="Play boosts"
+        layerClass="modal-layer-sheet"
+        panelClassName="modal-sheet"
+      >
+        <BoostsList
+          heading={<p className="meta-line">Rewarded boosts stay in the gameplay loop.</p>}
         />
       </ModalHost>
 

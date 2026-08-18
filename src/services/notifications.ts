@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import { ECONOMY } from '../core/economy/formulas'
+import { bathroomMaxCharges, ECONOMY } from '../core/economy/formulas'
 import { LargeNumber } from '../core/numbers/LargeNumber'
 import type { PlayerSaveV2 } from '../core/save/saveSchema'
 
@@ -161,7 +161,7 @@ export function scheduleNotificationReminders(
   }
 
   // Bathroom break reminder
-  if (save.bathroomBreakCharges < ECONOMY.bathroomBreakMaxCharges) {
+  if (save.bathroomBreakCharges < bathroomMaxCharges(save.paidBathroomChargeBonus)) {
     const fireAt = save.lastBathroomBreakGeneration + ECONOMY.bathroomBreakIntervalMs
     if (fireAt > now) scheduleBathroomBreak(scheduler, fireAt)
   }

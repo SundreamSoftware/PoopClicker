@@ -79,36 +79,38 @@ export const UPGRADES: UpgradeDef[] = [
   tap(
     'chili_accelerator',
     'Chili Accelerator',
-    'Science tastes like regret.',
+    'Every 5th tap splashes extra PP.',
     'advanced_plumbing',
     50_000,
     0.4,
+    { effectType: 'splash_power' },
   ),
   tap(
     'triple_chili_disaster',
     'Triple Chili Disaster',
-    'Evacuate the building.',
+    'Splash hits even harder.',
     'advanced_plumbing',
     180_000,
-    0.45,
-    { requiresUpgradeId: 'chili_accelerator' },
+    0.5,
+    { requiresUpgradeId: 'chili_accelerator', effectType: 'splash_power' },
   ),
   tap(
     'reinforced_toilet_seat',
     'Reinforced Toilet Seat',
-    'Supports heavy decisions.',
+    'Each tap siphons a slice of current PPS.',
     'advanced_plumbing',
     500_000,
-    0.5,
+    0.006,
+    { effectType: 'tap_from_pps' },
   ),
   tap(
     'titanium_toilet_seat',
     'Titanium Toilet Seat',
-    'Aerospace-grade sitting.',
+    'Generator milestones harden your tap.',
     'advanced_plumbing',
     1_500_000,
-    0.55,
-    { requiresUpgradeId: 'reinforced_toilet_seat' },
+    0.02,
+    { requiresUpgradeId: 'reinforced_toilet_seat', effectType: 'milestone_tap' },
   ),
   tap(
     'industrial_plunger',
@@ -156,10 +158,11 @@ export const UPGRADES: UpgradeDef[] = [
   tap(
     'advanced_bathroom_physics',
     'Advanced Bathroom Physics',
-    'Swirl theory 101.',
+    'Your best generator gets a swirl bonus.',
     'industrial_digestion',
     3_000_000_000,
-    1.1,
+    0.25,
+    { effectType: 'best_gen_amp' },
   ),
 
   // Tier 4
@@ -359,27 +362,27 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: 'overdrive_gloves',
     name: 'Overdrive Gloves',
-    description: 'Fingers insured separately.',
+    description: 'Crits in Overdrive hit harder.',
     category: 'combo',
     tier: 'nuclear_bathroom',
     baseCost: 80_000_000,
     costGrowth: 1.7,
     maxLevel: 8,
-    effectType: 'combo_max',
-    effectValue: 3,
+    effectType: 'overdrive_crit',
+    effectValue: 0.35,
     requiresFlushCount: 1,
   },
   {
     id: 'rhythm_plumbing',
     name: 'Rhythm Plumbing',
-    description: 'Tap on beat, earn more heat.',
+    description: 'High combo raises crit chance.',
     category: 'combo',
     tier: 'nuclear_bathroom',
     baseCost: 400_000_000,
     costGrowth: 1.75,
     maxLevel: 10,
-    effectType: 'tap_multiplier',
-    effectValue: 0.2,
+    effectType: 'combo_crit',
+    effectValue: 0.0025,
     requiresFlushCount: 2,
   },
   {
@@ -398,14 +401,14 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: 'frenzy_festival',
     name: 'Frenzy Festival',
-    description: 'Confetti optional, intensity not.',
+    description: 'Frenzy buffs generators, not just taps.',
     category: 'combo',
     tier: 'quantum_pooping',
     baseCost: 3e14,
     costGrowth: 1.85,
     maxLevel: 8,
-    effectType: 'frenzy_duration',
-    effectValue: 1,
+    effectType: 'frenzy_idle',
+    effectValue: 0.12,
     requiresFlushCount: 12,
   },
   {
@@ -424,14 +427,14 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: 'eternal_combo',
     name: 'Eternal Combo',
-    description: 'Almost unfair. Almost.',
+    description: 'Combo 8+ wakes the generators.',
     category: 'combo',
     tier: 'multiversal_plumbing',
     baseCost: 5e20,
     costGrowth: 2.0,
     maxLevel: 5,
-    effectType: 'combo_max',
-    effectValue: 5,
+    effectType: 'combo_gen',
+    effectValue: 0.15,
     requiresFlushCount: 40,
   },
 
@@ -475,14 +478,14 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: 'golden_flush_instinct',
     name: 'Golden Flush Instinct',
-    description: 'Crits feel luxurious.',
+    description: 'Catching a Golden Poop extends Frenzy.',
     category: 'critical',
     tier: 'industrial_digestion',
     baseCost: 5_000_000,
     costGrowth: 1.7,
     maxLevel: 12,
-    effectType: 'crit_multiplier',
-    effectValue: 0.75,
+    effectType: 'golden_frenzy',
+    effectValue: 1.5,
   },
   {
     id: 'critical_mass',
@@ -500,14 +503,14 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: 'chain_reaction_seat',
     name: 'Chain Reaction Seat',
-    description: 'One crit inspires another.',
+    description: 'A crit can chain into another crit.',
     category: 'critical',
     tier: 'nuclear_bathroom',
     baseCost: 600_000_000,
     costGrowth: 1.8,
     maxLevel: 8,
-    effectType: 'crit_chance',
-    effectValue: 0.012,
+    effectType: 'crit_chain',
+    effectValue: 0.08,
     requiresFlushCount: 3,
   },
   {
@@ -603,3 +606,102 @@ export const UPGRADES: UpgradeDef[] = [
 ]
 
 export const UPGRADE_BY_ID = Object.fromEntries(UPGRADES.map((u) => [u.id, u]))
+
+export function formatUpgradeEffect(upgrade: UpgradeDef): string {
+  const value = upgrade.effectValue
+  const pct = `${Math.round(Math.abs(value) * 1000) / 10}%`
+  switch (upgrade.effectType) {
+    case 'tap_multiplier':
+    case 'tap_power':
+      return `+${pct} tap power / level`
+    case 'idle_multiplier':
+      return `+${pct} idle production / level`
+    case 'generator_production':
+      return `+${pct} generator production / level`
+    case 'global_production':
+      return `+${pct} all production / level`
+    case 'crit_chance':
+      return `+${pct} crit chance / level`
+    case 'crit_multiplier':
+      return `+${value}× crit multiplier / level`
+    case 'combo_max':
+      return `+${value} max combo / level`
+    case 'combo_decay':
+      return `${value > 0 ? '+' : ''}${value} combo decay / level`
+    case 'frenzy_threshold':
+      return `${value > 0 ? '+' : ''}${value} frenzy CPS threshold / level`
+    case 'frenzy_duration':
+      return `+${value}s frenzy duration / level`
+    case 'offline_cap':
+      return `+${value}h offline cap / level`
+    case 'golden_chance':
+      return `+${pct} golden chance / level`
+    case 'event_reward':
+      return `+${pct} event rewards / level`
+    case 'auto_buy_interval':
+      return `${value}s Auto-Buy interval / level`
+    case 'splash_power':
+      return `+${pct} splash on every 5th tap / level`
+    case 'crit_chain':
+      return `+${pct} chance a crit chains / level`
+    case 'combo_crit':
+      return `+${pct} crit chance per combo / level`
+    case 'tap_from_pps':
+      return `+${pct} of PPS added to each tap / level`
+    case 'milestone_tap':
+      return `+${pct} tap per generator milestone / level`
+    case 'frenzy_idle':
+      return `+${pct} generator PPS during Frenzy / level`
+    case 'best_gen_amp':
+      return `+${pct} to your best generator / level`
+    case 'golden_frenzy':
+      return `+${value}s Frenzy when you catch a Golden Poop / level`
+    case 'overdrive_crit':
+      return `+${value}× crit multiplier in Overdrive / level`
+    case 'combo_gen':
+      return `+${pct} generator PPS at combo 8+ / level`
+    default:
+      return upgrade.effectType
+  }
+}
+
+export type BuildArchetype = 'tapper' | 'idler' | 'hybrid'
+
+/** Quality + spine IDs that define the three readable builds. */
+export const ARCHETYPE_UPGRADE_IDS: Record<BuildArchetype, readonly string[]> = {
+  tapper: [
+    'more_fiber',
+    'chili_accelerator',
+    'triple_chili_disaster',
+    'chain_reaction_seat',
+    'rhythm_plumbing',
+    'overdrive_gloves',
+    'lucky_seat',
+    'sticky_combo',
+  ],
+  idler: [
+    'night_light_loo',
+    'auto_flush_firmware',
+    'long_meeting_bladder',
+    'frenzy_festival',
+    'advanced_bathroom_physics',
+  ],
+  hybrid: [
+    'reinforced_toilet_seat',
+    'titanium_toilet_seat',
+    'eternal_combo',
+    'golden_flush_instinct',
+  ],
+}
+
+export function scoreBuildArchetypes(
+  levels: Record<string, number>,
+): Record<BuildArchetype, number> {
+  const score = (ids: readonly string[]) =>
+    ids.reduce((sum, id) => sum + Math.max(0, levels[id] ?? 0), 0)
+  return {
+    tapper: score(ARCHETYPE_UPGRADE_IDS.tapper),
+    idler: score(ARCHETYPE_UPGRADE_IDS.idler),
+    hybrid: score(ARCHETYPE_UPGRADE_IDS.hybrid),
+  }
+}

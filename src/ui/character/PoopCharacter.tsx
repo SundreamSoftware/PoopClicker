@@ -3,7 +3,6 @@ import {
   isMaskedFaceSkin,
   resolveSharedExpressionPathForPlay,
   resolveSkinBodyPath,
-  resolveSkinExpressionPath,
 } from '../../content/assetPaths'
 import { ASSET_MANIFEST } from '../../content/assetManifest'
 import { SKIN_BY_ID } from '../../content/skins'
@@ -863,19 +862,17 @@ export function PoopCharacter({
   const animVariant = skinDef?.animationVariant ?? manifest.variant
   const authoredBody = resolveSkinBodyPath(skinId)
   const authoredExpression = resolveSharedExpressionPathForPlay(rollingCps, tapState)
-  const authoredLegacy = resolveSkinExpressionPath(skinId, face)
   const maskedFace = isMaskedFaceSkin(skinId)
   const [failedAsset, setFailedAsset] = useState<string | null>(null)
 
   useEffect(() => {
     setFailedAsset(null)
-  }, [authoredBody, authoredExpression, authoredLegacy])
+  }, [authoredBody, authoredExpression])
 
   const layeredOk =
     authoredBody != null && failedAsset !== authoredBody && failedAsset !== authoredExpression
-  const legacyOk = !layeredOk && authoredLegacy != null && failedAsset !== authoredLegacy
 
-  if (layeredOk || legacyOk) {
+  if (layeredOk) {
     return (
       <button
         type="button"
@@ -884,37 +881,26 @@ export function PoopCharacter({
         aria-label={`Tap ${skinDef?.name ?? 'poop'}`}
         data-anim={animVariant}
       >
-        {layeredOk ? (
-          <div
-            className={`authored-character-stack state-${tapState} ${squish ? 'squish' : ''} ${flushing ? 'flushing' : ''} ${skinClass}`}
-          >
-            <img
-              className="authored-character-body"
-              src={authoredBody!}
-              alt=""
-              draggable={false}
-              aria-hidden
-              onError={() => setFailedAsset(authoredBody!)}
-            />
-            <img
-              className={`authored-character-expr p4-expr${maskedFace ? ' masked-face' : ''}`}
-              src={authoredExpression}
-              alt=""
-              draggable={false}
-              aria-hidden
-              onError={() => setFailedAsset(authoredExpression)}
-            />
-          </div>
-        ) : (
+        <div
+          className={`authored-character-stack state-${tapState} ${squish ? 'squish' : ''} ${flushing ? 'flushing' : ''} ${skinClass}`}
+        >
           <img
-            className={`authored-character state-${tapState} ${squish ? 'squish' : ''} ${flushing ? 'flushing' : ''} ${skinClass}`}
-            src={authoredLegacy!}
+            className="authored-character-body"
+            src={authoredBody!}
             alt=""
             draggable={false}
             aria-hidden
-            onError={() => setFailedAsset(authoredLegacy!)}
+            onError={() => setFailedAsset(authoredBody!)}
           />
-        )}
+          <img
+            className={`authored-character-expr p4-expr${maskedFace ? ' masked-face' : ''}`}
+            src={authoredExpression}
+            alt=""
+            draggable={false}
+            aria-hidden
+            onError={() => setFailedAsset(authoredExpression)}
+          />
+        </div>
       </button>
     )
   }

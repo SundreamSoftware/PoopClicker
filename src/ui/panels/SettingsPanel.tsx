@@ -17,6 +17,7 @@ export function SettingsPanel() {
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
   const [restoreStatus, setRestoreStatus] = useState<string | null>(null)
   const [restoreBusy, setRestoreBusy] = useState(false)
+  const [resetConfirm, setResetConfirm] = useState(false)
   const importRef = useRef<HTMLInputElement>(null)
 
   return (
@@ -155,6 +156,40 @@ export function SettingsPanel() {
             }}
           />
         </div>
+      </div>
+
+      <div className="goal-card settings-reset-card">
+        <div className="goal-title">RESET PROGRESS</div>
+        <div className="goal-sub">
+          Erases PP, Flush Power, GTP, upgrades, collection, and local unlocks. Audio preferences
+          stay. Store purchases can be restored after reset.
+        </div>
+        {resetConfirm ? (
+          <div className="settings-reset-actions">
+            <button
+              type="button"
+              className="danger-btn"
+              onClick={() => {
+                engine.resetProgress()
+                window.location.reload()
+              }}
+            >
+              Confirm reset
+            </button>
+            <button type="button" className="ghost-btn" onClick={() => setResetConfirm(false)}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="danger-btn"
+            style={{ marginTop: 8 }}
+            onClick={() => setResetConfirm(true)}
+          >
+            Reset all progress
+          </button>
+        )}
       </div>
     </div>
   )

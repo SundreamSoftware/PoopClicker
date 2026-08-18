@@ -58,27 +58,41 @@ describe('eventSystem', () => {
     expect(runtime.bandScore).toBeGreaterThan(0)
   })
 
-  it('spawns golden shower over 20s, despawns at bottom, no early complete', () => {
+  it('spawns golden shower over 15s with 3 live and 30 total', () => {
     const start = 1_000_000
     let runtime = createEventRuntime('golden_rain', start, 0)!
-    expect(runtime.spawnedCount).toBe(1)
-    for (let t = 200; t <= 20_000; t += 200) {
+    expect(runtime.spawnedCount).toBe(GOLDEN_SHOWER.maxLive)
+    expect(runtime.targets).toHaveLength(GOLDEN_SHOWER.maxLive)
+    for (let t = 200; t <= GOLDEN_SHOWER.durationMs; t += 200) {
       runtime = tickEventRuntime(runtime, start + t, 0, 200)
     }
-    expect(runtime.spawnedCount).toBe(GOLDEN_SHOWER.totalSpawns)
+    expect(runtime.spawnedCount).toBeGreaterThan(GOLDEN_SHOWER.maxLive)
+    expect(runtime.spawnedCount).toBeLessThanOrEqual(GOLDEN_SHOWER.totalSpawns)
     expect(runtime.targets.length).toBeLessThanOrEqual(GOLDEN_SHOWER.maxLive)
     expect(runtime.targets.every((t) => t.y < GOLDEN_SHOWER.despawnY)).toBe(true)
 
     const mid = createEventRuntime('golden_rain', start, 0)!
     let midRt = mid
-    for (let t = 200; t <= 10_000; t += 200) {
+    for (let t = 200; t <= 8_000; t += 200) {
       midRt = tickEventRuntime(midRt, start + t, 0, 200)
     }
     const catchable = midRt.targets.find((t) => !t.caught)!
-    const { runtime: afterCatch } = catchTarget(midRt, catchable.id, start + 10_000)
+    const { runtime: afterCatch } = catchTarget(midRt, catchable.id, start + 8_000)
     expect(afterCatch.completed).toBe(false)
-    expect(evaluateEventCompletion(afterCatch, start + 10_000).completed).toBe(false)
+    expect(afterCatch.targets.length).toBeLessThanOrEqual(GOLDEN_SHOWER.maxLive)
+    expect(evaluateEventCompletion(afterCatch, start + 8_000).completed).toBe(false)
     expect(evaluateEventCompletion(afterCatch, afterCatch.endsAt + 1).completed).toBe(true)
+  })
+
+  it('refills a caught shower slot immediately', () => {
+    const start = 1_000_000
+    const runtime = createEventRuntime('golden_rain', start, 0)!
+    const firstId = runtime.targets[0].id
+    const { runtime: afterCatch } = catchTarget(runtime, firstId, start + 50)
+    const refilled = tickEventRuntime(afterCatch, start + 50, 0, 16)
+    expect(refilled.targets).toHaveLength(GOLDEN_SHOWER.maxLive)
+    expect(refilled.targets.some((t) => t.id === firstId)).toBe(false)
+    expect(refilled.spawnedCount).toBe(GOLDEN_SHOWER.maxLive + 1)
   })
 
   it('removes shower targets that fall past the bottom', () => {
@@ -86,10 +100,20 @@ describe('eventSystem', () => {
     let runtime = createEventRuntime('golden_rain', start, 0)!
     runtime = {
       ...runtime,
-      targets: [{ ...runtime.targets[0], y: GOLDEN_SHOWER.despawnY - 0.1, vy: 1 }],
+      spawnedCount: GOLDEN_SHOWER.totalSpawns,
+      targets: [
+        {
+          ...runtime.targets[0],
+          originY: GOLDEN_SHOWER.despawnY - 0.1,
+          y: GOLDEN_SHOWER.despawnY - 0.1,
+          vy: 1,
+          bornAt: start,
+        },
+      ],
     }
     runtime = tickEventRuntime(runtime, start + 16, 0, 16)
     expect(runtime.targets.every((t) => t.y < GOLDEN_SHOWER.despawnY)).toBe(true)
+    expect(runtime.targets).toHaveLength(0)
   })
 
   it('fails golden shower with zero catches at timeout', () => {
@@ -98,6 +122,48 @@ describe('eventSystem', () => {
     const status = evaluateEventCompletion(runtime, runtime.endsAt + 1)
     expect(status.failed).toBe(true)
     expect(status.completed).toBe(false)
+  })
+
+  it('keeps leftover shower poops falling after the timer ends', () => {
+    const start = 1_000_000
+    const runtime = createEventRuntime('golden_rain', start, 0)!
+    const leftover = {
+      ...runtime.targets[0],
+      bornAt: runtime.endsAt - 200,
+      originY: 24,
+      y: 24,
+      vy: 0.03,
+      expiresAt: runtime.endsAt - 50,
+    }
+    const timedOut = {
+      ...runtime,
+      spawnedCount: GOLDEN_SHOWER.totalSpawns,
+      caughtCount: 2,
+      targets: [leftover],
+    }
+    const justAfter = timedOut.endsAt + 1
+    expect(evaluateEventCompletion(timedOut, justAfter)).toEqual({
+      completed: false,
+      failed: false,
+    })
+
+    const stillFalling = tickEventRuntime(timedOut, justAfter, 0, 16)
+    expect(stillFalling.targets).toHaveLength(1)
+    expect(stillFalling.spawnedCount).toBe(GOLDEN_SHOWER.totalSpawns)
+
+    const earlyCutoff = { ...timedOut, spawnedCount: 5 }
+    const noNewSpawns = tickEventRuntime(earlyCutoff, justAfter, 0, 16)
+    expect(noNewSpawns.spawnedCount).toBe(5)
+    expect(noNewSpawns.targets).toHaveLength(1)
+
+    const { runtime: afterCatch, caught } = catchTarget(timedOut, leftover.id, justAfter)
+    expect(caught).toBe(true)
+    expect(afterCatch.targets).toHaveLength(0)
+    expect(evaluateEventCompletion(afterCatch, justAfter).completed).toBe(true)
+
+    const fallen = tickEventRuntime(timedOut, leftover.bornAt + 10_000, 0, 16)
+    expect(fallen.targets).toHaveLength(0)
+    expect(evaluateEventCompletion(fallen, leftover.bornAt + 10_000).completed).toBe(true)
   })
 
   it('schedules golden when due', () => {

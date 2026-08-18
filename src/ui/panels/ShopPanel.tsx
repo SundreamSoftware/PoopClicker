@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CHEST_SHOP_OFFERS, chestRewardOdds } from '../../content/chests'
-import { GENERATORS } from '../../content/generators'
-import { UPGRADES } from '../../content/upgrades'
+import { CHEST_SHOP_OFFERS, chestRewardOddsSummary } from '../../content/chests'
+import { formatUpgradeEffect, scoreBuildArchetypes, UPGRADE_BY_ID } from '../../content/upgrades'
+import { formatIapGrantSummary, IAP_BY_ID } from '../../content/iapProducts'
 import {
   assetUrl,
   CHEST_ASSETS,
@@ -18,6 +18,18 @@ import {
 import { LargeNumber } from '../../core/numbers/LargeNumber'
 import { formatNumber } from '../../core/numbers/formatNumber'
 import type { ChestTier } from '../../core/types/gameTypes'
+import type { UpgradeGroupId } from '../../core/systems/shopAdvisor'
+import {
+  adviseShop,
+  badgeForItem,
+  generatorPpsForLevel,
+  generatorUnlocked,
+  nextGeneratorMilestone,
+  scoreGeneratorBuy,
+  upgradeRequirementMet,
+  visibleGenerators,
+  visibleUpgrades,
+} from '../../core/systems/shopAdvisor'
 import { trackProduct } from '../../services/analytics'
 import type { StoreProduct } from '../../services/billing'
 import AudioManager from '../../audio/AudioManager'
@@ -27,6 +39,17 @@ import { useGameContext } from '../../state/useGameContext'
 import { useGameSnapshot } from '../../state/useGameSnapshot'
 import { FrameSequencePlayer } from '../assets/FrameSequencePlayer'
 import { ModalHost } from '../overlays/ModalHost'
+import {
+  AutoBuyCompact,
+  AutoBuySheetBody,
+  BoostsList,
+  BuyMultiplierControl,
+  ProgressionBadge,
+  ShopBadgeChip,
+  SHOP_SECTIONS,
+  UPGRADE_GROUP_LABEL,
+  type ShopSection,
+} from '../shop/shopBits'
 
 interface ChestOpenShow {
   label: string
@@ -35,19 +58,12 @@ interface ChestOpenShow {
 
 const CHEST_TIERS: ChestTier[] = ['regular', 'silver', 'golden']
 
-function formatCooldown(ms: number): string {
-  const seconds = Math.ceil(ms / 1000)
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.ceil(seconds / 60)
-  return `${minutes}m`
-}
-
-export function ShopPanel() {
-  const { engine, ads } = useGameContext()
+export function ShopPanel({ initialSection = 'production' }: { initialSection?: ShopSection }) {
+  const { engine } = useGameContext()
   const snap = useGameSnapshot()
-  const [section, setSection] = useState<'generators' | 'upgrades' | 'boosts' | 'chests' | 'iap'>(
-    'generators',
-  )
+  const [section, setSection] = useState<ShopSection>(initialSection)
+  const [autoOpen, setAutoOpen] = useState(false)
+  const [expandedGroup, setExpandedGroup] = useState<UpgradeGroupId | null>(null)
   const [products, setProducts] = useState<StoreProduct[]>([])
   const [iapLoading, setIapLoading] = useState(false)
   const [iapBusy, setIapBusy] = useState<string | null>(null)
@@ -57,6 +73,15 @@ export function ShopPanel() {
   const [chestRewardVisible, setChestRewardVisible] = useState(false)
   const chestOpenFrames = useMemo(() => chestOpenAnimFrameUrls(), [])
   const balance = LargeNumber.deserialize(snap.save.currentPP)
+  const lifetimePP = LargeNumber.deserialize(snap.save.lifetimePPEarned)
+  const buyCount =
+    snap.save.buyMultiplierIndex >= 3 ? 0 : ECONOMY.buyMultipliers[snap.save.buyMultiplierIndex]
+  const advice = useMemo(
+    () => adviseShop(snap.save, Math.max(1, buyCount || 1)),
+    [snap.save, buyCount],
+  )
+  const gens = useMemo(() => visibleGenerators(snap.save), [snap.save])
+  const upgradeView = useMemo(() => visibleUpgrades(snap.save), [snap.save])
 
   useEffect(() => {
     if (!chestOpenShow || !chestRewardVisible) return
@@ -67,25 +92,9 @@ export function ShopPanel() {
     }, 2_200)
     return () => window.clearTimeout(id)
   }, [chestOpenShow, chestRewardVisible])
-  const lifetimePP = LargeNumber.deserialize(snap.save.lifetimePPEarned)
-  const multLabel =
-    snap.save.buyMultiplierIndex >= ECONOMY.buyMultipliers.length
-      ? 'MAX'
-      : `x${ECONOMY.buyMultipliers[snap.save.buyMultiplierIndex]}`
-
-  const incomeBoostCooldown = engine.getRewardedCooldownRemaining('income_boost')
-  const instantPpsCooldown = engine.getRewardedCooldownRemaining('instant_pps')
-  const goldenSpawnCooldown = engine.getRewardedCooldownRemaining('golden_spawn')
-  const eventRetryCooldown = engine.getRewardedCooldownRemaining('event_retry')
-
-  const visibleGenerators = useMemo(
-    () =>
-      GENERATORS.filter((g) => (g.unlockFlushCount ?? 0) <= snap.save.flushCount + 1).slice(0, 22),
-    [snap.save.flushCount],
-  )
 
   useEffect(() => {
-    if (section !== 'iap') return
+    if (section !== 'premium') return
     setIapLoading(true)
     void billing
       .init()
@@ -106,6 +115,15 @@ export function ShopPanel() {
   }
 
   const handlePurchase = async (productId: string) => {
+    const def = IAP_BY_ID[productId]
+    if ((def?.unlockFlushCount ?? 0) > snap.save.flushCount) {
+      setChestToast(
+        (def?.unlockFlushCount ?? 0) === 1
+          ? 'Unlocks after your first Flush'
+          : `Unlocks after ${def?.unlockFlushCount} Flushes`,
+      )
+      return
+    }
     setIapBusy(productId)
     try {
       const result = await billing.purchase(productId)
@@ -140,7 +158,7 @@ export function ShopPanel() {
   }
 
   return (
-    <div className="panel">
+    <div className="panel shop-panel">
       <ModalHost
         open={Boolean(chestOpenShow)}
         onClose={() => {
@@ -168,185 +186,269 @@ export function ShopPanel() {
           </>
         )}
       </ModalHost>
-      <h2>Shop</h2>
+      <ModalHost
+        open={autoOpen}
+        onClose={() => setAutoOpen(false)}
+        title="Auto-Buy"
+        ariaLabel="Auto-Buy settings"
+      >
+        <AutoBuySheetBody />
+      </ModalHost>
 
-      {snap.save.autoBuyUnlocked && (
-        <div className="goal-card" style={{ marginBottom: 8 }}>
-          <label className="list-row" style={{ cursor: 'pointer' }}>
-            <strong>Auto-Buy</strong>
-            <input
-              type="checkbox"
-              checked={snap.save.autoBuyEnabled}
-              onChange={(e) => engine.setAutoBuyEnabled(e.target.checked)}
-            />
-          </label>
-          <div className="meta-line">One predictable purchase every 1.5 seconds.</div>
-          <label className="list-row" style={{ cursor: 'pointer' }}>
-            <span>Generators</span>
-            <input
-              type="checkbox"
-              checked={snap.save.autoBuyPreferences.generators}
-              onChange={(e) => engine.setAutoBuyPreferences({ generators: e.target.checked })}
-            />
-          </label>
-          <label className="list-row" style={{ cursor: 'pointer' }}>
-            <span>Upgrades</span>
-            <input
-              type="checkbox"
-              checked={snap.save.autoBuyPreferences.upgrades}
-              onChange={(e) => engine.setAutoBuyPreferences({ upgrades: e.target.checked })}
-            />
-          </label>
+      <div className="shop-sticky">
+        <div className="shop-sticky-top">
+          <h2>Shop</h2>
+          <AutoBuyCompact onOpen={() => setAutoOpen(true)} />
         </div>
-      )}
-
-      <div style={{ marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-        <strong>Buy Multiplier:</strong>
-        <button
-          className="ghost-btn"
-          onClick={() => engine.setBuyMultiplierIndex((snap.save.buyMultiplierIndex + 1) % 4)}
-        >
-          {multLabel}
-        </button>
+        <div className="tabs">
+          {SHOP_SECTIONS.map((id) => (
+            <button
+              key={id}
+              type="button"
+              className={section === id ? 'active' : ''}
+              onClick={() => setSection(id)}
+            >
+              {id === 'production'
+                ? 'Production'
+                : id === 'upgrades'
+                  ? 'Upgrades'
+                  : id === 'powerups'
+                    ? 'Power-Ups'
+                    : 'Premium'}
+            </button>
+          ))}
+        </div>
+        {section === 'production' && <BuyMultiplierControl />}
       </div>
 
-      <div className="tabs">
-        <button
-          type="button"
-          className={section === 'generators' ? 'active' : ''}
-          onClick={() => setSection('generators')}
-        >
-          Generators
-        </button>
-        <button
-          type="button"
-          className={section === 'upgrades' ? 'active' : ''}
-          onClick={() => setSection('upgrades')}
-        >
-          Upgrades
-        </button>
-        <button
-          type="button"
-          className={section === 'boosts' ? 'active' : ''}
-          onClick={() => setSection('boosts')}
-        >
-          Boosts
-        </button>
-        <button
-          type="button"
-          className={section === 'chests' ? 'active' : ''}
-          onClick={() => setSection('chests')}
-        >
-          Chests
-        </button>
-        <button
-          type="button"
-          className={section === 'iap' ? 'active' : ''}
-          onClick={() => setSection('iap')}
-        >
-          Store
-        </button>
-      </div>
+      {section === 'production' &&
+        gens.map((gen) => {
+          const level = snap.save.generators[gen.id] ?? 0
+          const unlocked = generatorUnlocked(snap.save, gen)
+          const flushLocked = (gen.unlockFlushCount ?? 0) > snap.save.flushCount
+          const ppLocked =
+            Boolean(gen.unlockPP) &&
+            level === 0 &&
+            lifetimePP.lt(gen.unlockPP!) &&
+            balance.lt(gen.unlockPP!)
+          const locked = flushLocked || ppLocked || !unlocked
+          const count =
+            snap.save.buyMultiplierIndex >= 3
+              ? Math.max(
+                  1,
+                  maxAffordableCount(
+                    balance,
+                    LargeNumber.from(gen.baseCost),
+                    gen.costGrowth,
+                    level,
+                  ),
+                )
+              : ECONOMY.buyMultipliers[snap.save.buyMultiplierIndex]
+          const cost = geometricSeriesCost(
+            LargeNumber.from(gen.baseCost),
+            gen.costGrowth,
+            level,
+            count,
+          )
+          const canAfford = balance.gte(cost)
+          const scored = scoreGeneratorBuy(snap.save, gen, count)
+          const currentPps = generatorPpsForLevel(snap.save, gen, level)
+          const next = nextGeneratorMilestone(gen, level)
+          const remaining = next ? next.level - level : 0
+          const near = Boolean(next && remaining <= 5)
+          const crosses = Boolean(next && level + count >= next.level)
+          const badge = badgeForItem(gen.id, advice)
+          let lockReason = ''
+          if (flushLocked) lockReason = `Needs ${gen.unlockFlushCount} Flushes`
+          else if (ppLocked) lockReason = `Needs ${formatNumber(gen.unlockPP!)} lifetime PP`
 
-      {section === 'boosts' && (
-        <>
-          <h3 style={{ marginTop: 16, marginBottom: 8 }}>Quick Boosts</h3>
-          <div className="list-row">
-            <div>
-              <strong>Income Boost (Ad)</strong>
-              <div className="meta-line">2x idle income for 5 minutes</div>
-            </div>
-            <button
-              className="ghost-btn"
-              disabled={incomeBoostCooldown > 0}
-              onClick={async () => {
-                const canApply = engine.canApplyRewarded('income_boost')
-                if (!canApply.ok) return
-                const ad = await ads.showRewarded('income_boost')
-                if (ad.ok) engine.applyRewardedIncomeBoost()
-              }}
+          return (
+            <div
+              className={`list-row shop-card generator-card ${canAfford && !locked ? 'can-afford' : 'cannot-afford'} ${near ? 'near-milestone' : ''}`}
+              key={gen.id}
             >
-              {incomeBoostCooldown > 0
-                ? `Ready in ${formatCooldown(incomeBoostCooldown)}`
-                : 'Watch Ad'}
-            </button>
-          </div>
-          <div className="list-row">
-            <div>
-              <strong>Instant PPS Burst (Ad)</strong>
-              <div className="meta-line">Gain 1 minute of idle PP instantly</div>
-            </div>
-            <button
-              className="ghost-btn"
-              disabled={instantPpsCooldown > 0}
-              onClick={async () => {
-                const canApply = engine.canApplyRewarded('instant_pps')
-                if (!canApply.ok) return
-                const ad = await ads.showRewarded('instant_pps')
-                if (ad.ok) engine.applyRewardedInstantPps()
-              }}
-            >
-              {instantPpsCooldown > 0
-                ? `Ready in ${formatCooldown(instantPpsCooldown)}`
-                : 'Watch Ad'}
-            </button>
-          </div>
-          <div className="list-row">
-            <div>
-              <strong>Golden Poop Shower (Ad)</strong>
-              <div className="meta-line">60 golden poops in 20s — each catch is 40× tap</div>
-              {snap.eventRuntime && (
-                <div className="meta-line" style={{ color: '#ff6b6b' }}>
-                  Event busy
+              <div>
+                <div className="card-title-row">
+                  <strong>
+                    {gen.name} · Lv {level}
+                  </strong>
+                  <ProgressionBadge kind="run" />
+                  <ShopBadgeChip badge={badge} />
                 </div>
-              )}
+                <div className="meta-line">{formatNumber(currentPps)} PP/s</div>
+                {scored && <div className="meta-line">+{formatNumber(scored.deltaPps)} PP/s</div>}
+                {next && (
+                  <div className={`meta-line ${near ? 'milestone-hot' : ''}`}>
+                    NEXT: Lv. {next.level} → ×{next.multiplier}
+                    {remaining > 0 ? ` · ${remaining} left` : ''}
+                    {crosses ? ' · this buy hits it' : ''}
+                  </div>
+                )}
+                {lockReason && (
+                  <div className="meta-line" style={{ color: '#ff6b6b' }}>
+                    {lockReason}
+                  </div>
+                )}
+              </div>
+              <button
+                className="primary-btn"
+                disabled={locked || !canAfford}
+                onClick={() => {
+                  const result = engine.buyGenerator(gen.id)
+                  if (result.ok) {
+                    playPurchaseSfx('generator')
+                    if (badge === 'RECOMMENDED' || badge === 'BEST_VALUE') {
+                      engine.trackUi('recommended_purchase', { id: gen.id })
+                    }
+                  }
+                }}
+              >
+                {locked ? 'Locked' : formatNumber(cost)}
+              </button>
             </div>
-            <button
-              className="ghost-btn"
-              disabled={goldenSpawnCooldown > 0 || Boolean(snap.eventRuntime)}
-              onClick={async () => {
-                const canApply = engine.canApplyRewarded('golden_spawn')
-                if (!canApply.ok) return
-                const ad = await ads.showRewarded('golden_spawn')
-                if (ad.ok) engine.spawnEvent('golden_rain', { rewarded: true })
-              }}
-            >
-              {goldenSpawnCooldown > 0
-                ? `Ready in ${formatCooldown(goldenSpawnCooldown)}`
-                : 'Watch Ad'}
-            </button>
-          </div>
-          <div className="list-row">
-            <div>
-              <strong>Event Retry (Ad)</strong>
-              <div className="meta-line">Force the next random event soon</div>
+          )
+        })}
+
+      {section === 'upgrades' && (
+        <>
+          {(() => {
+            const build = scoreBuildArchetypes(snap.save.purchasedRunUpgrades)
+            const lead =
+              build.tapper >= build.idler && build.tapper >= build.hybrid
+                ? 'TAPPER'
+                : build.idler >= build.hybrid
+                  ? 'IDLER'
+                  : 'HYBRID'
+            return (
+              <div className="build-card" aria-label="Build archetype">
+                <strong>Build · {lead}</strong>
+                <div className="meta-line">
+                  TAPPER {build.tapper} · IDLER {build.idler} · HYBRID {build.hybrid}
+                </div>
+              </div>
+            )
+          })()}
+          {(Object.keys(UPGRADE_GROUP_LABEL) as UpgradeGroupId[]).map((groupId) => {
+            const items = upgradeView.groups[groupId]
+            if (items.length === 0) return null
+            const levels = items.reduce(
+              (sum, up) => sum + (snap.save.purchasedRunUpgrades[up.id] ?? 0),
+              0,
+            )
+            const max = items.reduce((sum, up) => sum + up.maxLevel, 0)
+            const next = items.find((up) => {
+              const level = snap.save.purchasedRunUpgrades[up.id] ?? 0
+              return level < up.maxLevel && upgradeRequirementMet(snap.save, up)
+            })
+            const summary =
+              groupId === 'tap'
+                ? `Tap ${formatNumber(snap.production.tapPower)}`
+                : groupId === 'idle'
+                  ? `Idle ${formatNumber(snap.production.pps)}/s`
+                  : groupId === 'crit'
+                    ? `Crit ${(snap.production.critChance * 100).toFixed(0)}% · ×${snap.production.critMultiplier.toFixed(1)}`
+                    : `Combo max ${snap.production.comboMax}`
+            const open = expandedGroup === groupId
+            return (
+              <section key={groupId} className="upgrade-group">
+                <button
+                  type="button"
+                  className="upgrade-summary"
+                  onClick={() => {
+                    const nextOpen = open ? null : groupId
+                    setExpandedGroup(nextOpen)
+                    if (nextOpen) engine.trackUi('upgrade_category_opened', { group: groupId })
+                  }}
+                >
+                  <div>
+                    <strong>{UPGRADE_GROUP_LABEL[groupId]}</strong>
+                    <ProgressionBadge kind="run" />
+                    <div className="meta-line">
+                      Lv {levels}/{max} · {summary}
+                    </div>
+                    {next && <div className="meta-line">Next: {next.name}</div>}
+                  </div>
+                  <span>{open ? '▾' : '▸'}</span>
+                </button>
+                {open &&
+                  items.map((up) => {
+                    const def = UPGRADE_BY_ID[up.id] ?? up
+                    const level = snap.save.purchasedRunUpgrades[def.id] ?? 0
+                    const reqMet = upgradeRequirementMet(snap.save, def)
+                    const cost = geometricCost(
+                      LargeNumber.from(def.baseCost),
+                      def.costGrowth,
+                      level,
+                    )
+                    const badge = badgeForItem(def.id, advice)
+                    const lockLabel =
+                      (def.requiresFlushCount ?? 0) > snap.save.flushCount
+                        ? `Needs Flush ${def.requiresFlushCount}`
+                        : def.requiresWorldId &&
+                            !snap.save.unlockedWorlds.includes(def.requiresWorldId)
+                          ? 'Needs world'
+                          : def.requiresUpgradeId &&
+                              !(snap.save.purchasedRunUpgrades[def.requiresUpgradeId] > 0)
+                            ? 'Needs upgrade'
+                            : !reqMet
+                              ? 'Locked'
+                              : ''
+                    return (
+                      <div className="list-row shop-card" key={def.id}>
+                        <div>
+                          <div className="card-title-row">
+                            <strong>
+                              {def.name} · {level}/{def.maxLevel}
+                            </strong>
+                            <ShopBadgeChip badge={badge} />
+                          </div>
+                          <div className="meta-line">{formatUpgradeEffect(def)}</div>
+                        </div>
+                        {lockLabel ? (
+                          <span className="badge">{lockLabel}</span>
+                        ) : (
+                          <button
+                            className="primary-btn"
+                            disabled={level >= def.maxLevel || balance.lt(cost)}
+                            onClick={() => {
+                              const result = engine.buyUpgrade(def.id)
+                              if (result.ok) {
+                                playPurchaseSfx('upgrade')
+                                if (badge === 'RECOMMENDED' || badge === 'BEST_VALUE') {
+                                  engine.trackUi('recommended_purchase', { id: def.id })
+                                }
+                              }
+                            }}
+                          >
+                            {level >= def.maxLevel ? 'MAX' : formatNumber(cost)}
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+              </section>
+            )
+          })}
+          {upgradeView.teaser && (
+            <div className="list-row shop-card teaser-card">
+              <div>
+                <strong>NEXT UNLOCK</strong>
+                <div className="meta-line">{upgradeView.teaser.name}</div>
+                <div className="meta-line">
+                  Requires Flush {upgradeView.teaser.requiresFlushCount}
+                </div>
+              </div>
             </div>
-            <button
-              className="ghost-btn"
-              disabled={eventRetryCooldown > 0}
-              onClick={async () => {
-                const canApply = engine.canApplyRewarded('event_retry')
-                if (!canApply.ok) return
-                const ad = await ads.showRewarded('event_retry')
-                if (ad.ok) engine.applyRewardedEventRetry()
-              }}
-            >
-              {eventRetryCooldown > 0
-                ? `Ready in ${formatCooldown(eventRetryCooldown)}`
-                : 'Watch Ad'}
-            </button>
-          </div>
+          )}
         </>
       )}
 
-      {section === 'chests' && (
+      {section === 'powerups' && (
         <>
-          <h3 style={{ marginTop: 16, marginBottom: 8 }}>Your stash</h3>
-          {chestToast && (
-            <div className="meta-line" style={{ marginBottom: 8 }}>
-              {chestToast}
-            </div>
-          )}
+          <h3>Boosts</h3>
+          <BoostsList />
+          <h3 style={{ marginTop: 16 }}>Inventory</h3>
+          {chestToast && <div className="meta-line">{chestToast}</div>}
           {CHEST_TIERS.map((tier) => {
             const chests = snap.save.inventoryChests[tier] ?? 0
             const keys = snap.save.inventoryKeys[tier] ?? 0
@@ -369,16 +471,12 @@ export function ShopPanel() {
                   <img src={chestSrc} alt="" width={40} height={40} />
                   <img src={keySrc} alt="" width={28} height={28} />
                   <div>
-                    <strong style={{ textTransform: 'capitalize' }}>{tier} chest</strong>
-                    <div className="meta-line">
-                      {chests} chest · {keys} key
-                    </div>
-                    <div className="meta-line">
-                      Odds:{' '}
-                      {chestRewardOdds(tier)
-                        .map((row) => `${row.label} ${row.percent}%`)
-                        .join(' · ')}
-                    </div>
+                    <strong style={{ textTransform: 'capitalize' }}>
+                      {tier} Chest ×{chests}
+                    </strong>
+                    <ProgressionBadge kind="permanent" />
+                    <div className="meta-line">Keys ×{keys}</div>
+                    <div className="meta-line">{chestRewardOddsSummary(tier)}</div>
                   </div>
                 </div>
                 <button
@@ -398,14 +496,13 @@ export function ShopPanel() {
                     }
                   }}
                 >
-                  Open
+                  OPEN
                 </button>
               </div>
             )
           })}
-
-          <h3 style={{ marginTop: 20, marginBottom: 8 }}>
-            Buy with GTP{' '}
+          <h3 style={{ marginTop: 20 }}>
+            Acquisition{' '}
             <img
               src={UI_ASSETS.currency.gtp}
               alt=""
@@ -414,9 +511,6 @@ export function ShopPanel() {
               style={{ verticalAlign: 'middle' }}
             />
           </h3>
-          <div className="meta-line" style={{ marginBottom: 8 }}>
-            Chests are cheap. Keys are the real cost.
-          </div>
           {CHEST_SHOP_OFFERS.map((offer, index) => {
             const src = assetUrl(offer.asset)
             const afford = snap.save.gtp >= offer.gtpCost
@@ -428,7 +522,11 @@ export function ShopPanel() {
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <img src={src} alt="" width={40} height={40} />
                   <div>
-                    <strong>{offer.name}</strong>
+                    <strong>
+                      {offer.kind === 'key'
+                        ? `GET KEY · ${offer.name}`
+                        : `GET CHEST · ${offer.name}`}
+                    </strong>
                     <div className="meta-line">{offer.description}</div>
                   </div>
                 </div>
@@ -448,106 +546,12 @@ export function ShopPanel() {
         </>
       )}
 
-      {section === 'generators' && (
-        <>
-          <h3 style={{ marginTop: 16, marginBottom: 8 }}>Generators</h3>
-          {visibleGenerators.map((gen) => {
-            const level = snap.save.generators[gen.id] ?? 0
-            const flushLocked = (gen.unlockFlushCount ?? 0) > snap.save.flushCount
-            const ppLocked =
-              gen.unlockPP && level === 0 && lifetimePP.lt(gen.unlockPP) && balance.lt(gen.unlockPP)
-            const locked = flushLocked || ppLocked
-            const count =
-              snap.save.buyMultiplierIndex >= 3
-                ? Math.max(
-                    1,
-                    maxAffordableCount(
-                      balance,
-                      LargeNumber.from(gen.baseCost),
-                      gen.costGrowth,
-                      level,
-                    ),
-                  )
-                : ECONOMY.buyMultipliers[snap.save.buyMultiplierIndex]
-            const cost = geometricSeriesCost(
-              LargeNumber.from(gen.baseCost),
-              gen.costGrowth,
-              level,
-              count,
-            )
-            const canAfford = balance.gte(cost)
-            let lockReason = ''
-            if (flushLocked) lockReason = `Needs ${gen.unlockFlushCount} flushes`
-            else if (ppLocked) lockReason = `Needs ${formatNumber(gen.unlockPP!)} lifetime PP`
-
-            return (
-              <div
-                className={`list-row shop-card ${canAfford && !locked ? 'can-afford' : 'cannot-afford'}`}
-                key={gen.id}
-              >
-                <div>
-                  <strong>
-                    {gen.name} · Lv {level}
-                  </strong>
-                  <div className="meta-line">{gen.description}</div>
-                  <div className="meta-line">{formatNumber(gen.baseProduction)}/s each</div>
-                  {lockReason && (
-                    <div className="meta-line" style={{ color: '#ff6b6b' }}>
-                      {lockReason}
-                    </div>
-                  )}
-                </div>
-                <button
-                  className="primary-btn"
-                  disabled={locked || !canAfford}
-                  onClick={() => {
-                    const result = engine.buyGenerator(gen.id)
-                    if (result.ok) playPurchaseSfx('generator')
-                  }}
-                >
-                  {locked ? 'Locked' : formatNumber(cost)}
-                </button>
-              </div>
-            )
-          })}
-        </>
-      )}
-
-      {section === 'upgrades' &&
-        UPGRADES.map((up) => {
-          const level = snap.save.purchasedRunUpgrades[up.id] ?? 0
-          const locked =
-            (up.requiresFlushCount ?? 0) > snap.save.flushCount ||
-            (up.requiresWorldId ? !snap.save.unlockedWorlds.includes(up.requiresWorldId) : false)
-          const cost = geometricCost(LargeNumber.from(up.baseCost), up.costGrowth, level)
-          return (
-            <div className="list-row" key={up.id}>
-              <div>
-                <strong>
-                  {up.name} · {level}/{up.maxLevel}
-                </strong>
-                <div className="meta-line">
-                  {up.description} · {up.tier.replaceAll('_', ' ')}
-                </div>
-              </div>
-              <button
-                className="primary-btn"
-                disabled={locked || level >= up.maxLevel || balance.lt(cost)}
-                onClick={() => {
-                  const result = engine.buyUpgrade(up.id)
-                  if (result.ok) playPurchaseSfx('upgrade')
-                }}
-              >
-                {level >= up.maxLevel ? 'MAX' : locked ? 'Locked' : formatNumber(cost)}
-              </button>
-            </div>
-          )
-        })}
-
-      {section === 'iap' && (
+      {section === 'premium' && (
         <>
           <div className="list-row">
-            <span>Remove Ads</span>
+            <span>
+              Remove Ads <ProgressionBadge kind="permanent" />
+            </span>
             <strong>{snap.save.removeAds ? 'Active' : 'Not owned'}</strong>
           </div>
           {iapLoading && <p className="meta-line">Loading products…</p>}
@@ -560,27 +564,40 @@ export function ShopPanel() {
           {!iapLoading &&
             storeAvailable &&
             products.map((product) => {
+              const def = IAP_BY_ID[product.id]
               const owned =
                 product.kind !== 'consumable' && snap.save.ownedIapProducts.includes(product.id)
+              const flushLocked = (def?.unlockFlushCount ?? 0) > snap.save.flushCount
               return (
                 <div className="list-row" key={product.id}>
                   <div>
                     <strong>{product.title}</strong>
-                    <div className="meta-line">{product.description}</div>
+                    <ProgressionBadge kind="permanent" />
+                    <div className="meta-line">
+                      {def ? formatIapGrantSummary(def) : product.description}
+                    </div>
                     <div className="meta-line">{product.priceString}</div>
+                    {flushLocked && (
+                      <div className="meta-line" style={{ color: '#ff6b6b' }}>
+                        Unlocks after {def?.unlockFlushCount} Flush
+                        {(def?.unlockFlushCount ?? 0) === 1 ? '' : 'es'}
+                      </div>
+                    )}
                   </div>
                   <button
                     className="primary-btn"
-                    disabled={owned || iapBusy !== null || !storeAvailable}
+                    disabled={owned || flushLocked || iapBusy !== null || !storeAvailable}
                     onClick={() => void handlePurchase(product.id)}
                   >
                     {iapBusy === product.id
                       ? '…'
                       : owned
                         ? 'Owned'
-                        : product.kind === 'consumable'
-                          ? 'Buy'
-                          : 'Purchase'}
+                        : flushLocked
+                          ? 'Locked'
+                          : product.kind === 'consumable'
+                            ? 'Buy'
+                            : 'Purchase'}
                   </button>
                 </div>
               )

@@ -5,6 +5,9 @@ export interface FloatingTarget {
   kind: 'golden'
   x: number
   y: number
+  /** Spawn position — overlay interpolates from this + velocity. */
+  originX: number
+  originY: number
   vx: number
   vy: number
   bornAt: number

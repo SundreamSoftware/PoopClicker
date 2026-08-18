@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createTestEngine } from '../../src/core/GameEngine'
+import { computeProduction } from '../../src/core/systems/production'
 import { createDefaultSave } from '../../src/core/save/defaultSave'
 import {
   applyIapGrant,
@@ -88,6 +89,21 @@ describe('GameEngine applyIapGrant', () => {
     expect(engine.exportSave().removeAds).toBe(true)
   })
 
+  it('convenience pack grants Auto-Buy, ads off, and QoL — not 2× production', () => {
+    const engine = createTestEngine()
+    const before = computeProduction(engine.exportSave()).globalMultiplier
+    expect(engine.applyIapGrant('convenience_pack').ok).toBe(true)
+    const save = engine.exportSave()
+    expect(save.removeAds).toBe(true)
+    expect(save.autoBuyUnlocked).toBe(true)
+    expect(save.paidProductionMultiplier).toBe(1)
+    expect(save.paidOfflineCapHours).toBe(4)
+    expect(save.paidBathroomChargeBonus).toBe(1)
+    expect(save.ownedIapProducts).toContain('convenience_pack')
+    expect(computeProduction(save).globalMultiplier).toBeCloseTo(before, 8)
+    expect(engine.applyIapGrant('convenience_pack').ok).toBe(false)
+  })
+
   it('applyIapGrant mutates save idempotently for bundles', () => {
     let save = createDefaultSave()
     save = applyIapGrant(
@@ -154,6 +170,15 @@ describe('native purchase grant filters', () => {
 })
 
 describe('IAP catalog store IDs', () => {
+  it('locks Convenience Pack until the first Flush at $29.99 without a 2× grant', () => {
+    const pack = IAP_PRODUCTS.find((p) => p.id === 'convenience_pack')
+    expect(pack?.displayPrice).toBe('$29.99')
+    expect(pack?.unlockFlushCount).toBe(1)
+    expect(pack?.grants.productionMultiplier).toBeUndefined()
+    expect(pack?.grants.offlineCapHours).toBe(4)
+    expect(pack?.grants.bathroomChargeBonus).toBe(1)
+  })
+
   it('uses the production package prefix and no placeholder tokens', () => {
     for (const product of IAP_PRODUCTS) {
       expect(product.storeId.startsWith('com.sundreamsoftware.poopclicker.')).toBe(true)

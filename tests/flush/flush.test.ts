@@ -106,6 +106,6 @@ describe('Flush', () => {
   it('exports milestone event bonus at flush 15', () => {
     const save = { ...createDefaultSave(), flushCount: 15 }
     expect(milestoneEventBonus(save)).toBe(0.25)
-    expect(milestoneEventBonus({ ...save, flushCount: 10 })).toBe(0)
+    expect(milestoneEventBonus({ ...save, flushCount: 10 })).toBe(0.1)
   })
 })

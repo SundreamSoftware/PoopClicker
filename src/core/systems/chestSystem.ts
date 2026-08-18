@@ -56,6 +56,7 @@ export function openChest(
   tier: ChestTier,
   production: ProductionBreakdown,
   random = Math.random,
+  now = Date.now(),
 ): {
   save: PlayerSaveV2
   ok: boolean
@@ -84,26 +85,36 @@ export function openChest(
     },
   }
 
-  let ppGranted = LargeNumber.zero()
-  let startGoldenShower = false
+  if (reward.gtp > 0) {
+    next = { ...next, gtp: next.gtp + reward.gtp }
+  }
 
-  if (reward.kind === 'gtp') {
-    next = { ...next, gtp: next.gtp + reward.amount }
-  } else if (reward.kind === 'pp_minutes') {
-    ppGranted = production.pps.mul(reward.amount * 60)
+  let ppGranted: LargeNumber | undefined
+  if (reward.ppMinutes > 0) {
+    ppGranted = production.pps.mul(reward.ppMinutes * 60)
+  }
+
+  if (reward.idleBoostMinutes > 0) {
     next = {
       ...next,
-      currentPP: next.currentPP, // credit applied by caller via engine
+      activeBoosts: [
+        ...next.activeBoosts,
+        {
+          id: `chest_idle_${now}`,
+          label: 'Chest 2× Idle',
+          tapMultiplier: 1,
+          idleMultiplier: 2,
+          expiresAt: now + reward.idleBoostMinutes * 60_000,
+        },
+      ],
     }
-  } else if (reward.kind === 'golden_shower') {
-    startGoldenShower = true
   }
 
   return {
     save: next,
     ok: true,
     reward,
-    startGoldenShower,
-    ppGranted: reward.kind === 'pp_minutes' ? ppGranted : undefined,
+    startGoldenShower: reward.goldenShower,
+    ppGranted,
   }
 }

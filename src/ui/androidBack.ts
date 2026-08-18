@@ -6,6 +6,7 @@ export type AndroidBackAction =
   | { type: 'claim_dump' }
   | { type: 'confirm_abandon_dump' }
   | { type: 'close_flush' }
+  | { type: 'close_play_sheet' }
   | { type: 'block' }
   | { type: 'go_play' }
   | { type: 'none' }
@@ -15,6 +16,7 @@ export function decideAndroidBack(input: {
   dumpOpen: boolean
   dumpPhase: AndroidBackDumpPhase
   flushOpen: boolean
+  playSheetOpen?: boolean
   offlineUnclaimed: boolean
   tab: string
 }): AndroidBackAction {
@@ -29,6 +31,7 @@ export function decideAndroidBack(input: {
     }
   }
   if (input.flushOpen) return { type: 'close_flush' }
+  if (input.playSheetOpen) return { type: 'close_play_sheet' }
   if (input.offlineUnclaimed) return { type: 'block' }
   if (input.tab !== 'play') return { type: 'go_play' }
   return { type: 'none' }

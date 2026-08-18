@@ -37,6 +37,17 @@ export type EffectType =
   | 'golden_chance'
   | 'event_reward'
   | 'global_production'
+  | 'auto_buy_interval'
+  | 'splash_power'
+  | 'crit_chain'
+  | 'combo_crit'
+  | 'tap_from_pps'
+  | 'milestone_tap'
+  | 'frenzy_idle'
+  | 'best_gen_amp'
+  | 'golden_frenzy'
+  | 'overdrive_crit'
+  | 'combo_gen'
 
 export type TapSpeedState = 'idle' | 'slow' | 'active' | 'fast' | 'frenzy' | 'overdrive'
 
@@ -286,8 +297,11 @@ export interface OfflineReward {
   claimed: boolean
 }
 
+export type AutoBuyStrategy = 'balanced' | 'production' | 'tap' | 'smart'
+
 export interface NextGoal {
-  kind: 'upgrade' | 'generator' | 'flush' | 'daily' | 'achievement'
+  kind:
+    'upgrade' | 'generator' | 'flush' | 'daily' | 'achievement' | 'milestone' | 'world' | 'claim'
   title: string
   subtitle: string
   progress: number

@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
+  bathroomMaxCharges,
   ECONOMY,
   flushPowerGain,
   flushPowerMultiplier,
   geometricSeriesCost,
   maxAffordableCount,
+  offlineCapMs,
 } from '../../src/core/economy/formulas'
 import { LargeNumber } from '../../src/core/numbers/LargeNumber'
 import { createTestEngine } from '../../src/core/GameEngine'
-import { computeProduction } from '../../src/core/systems/production'
+import { computeMultiplierBreakdown, computeProduction } from '../../src/core/systems/production'
 
 describe('economy formulas', () => {
   it('computes geometric series cost', () => {
@@ -56,6 +58,34 @@ describe('production & upgrades', () => {
     engine.debugSetSave((s) => ({ ...s, flushPower: 100 }))
     const after = computeProduction(engine.exportSave()).tapPower
     expect(after.gt(before)).toBe(true)
+  })
+
+  it('multiplier breakdown matches production global multiplier', () => {
+    const save = createTestEngine({
+      flushPower: 40,
+      paidProductionMultiplier: 2,
+      permanentProductionBonus: 0.1,
+    }).exportSave()
+    const production = computeProduction(save)
+    const breakdown = computeMultiplierBreakdown(save)
+    expect(breakdown.total).toBeCloseTo(production.globalMultiplier, 8)
+    expect(breakdown.parts.some((part) => part.id === 'paid' && part.value === 2)).toBe(true)
+  })
+
+  it('legacy paid 2× still doubles production; new Convenience Pack does not', () => {
+    const f2p = createTestEngine({ flushPower: 20 }).exportSave()
+    const legacy = createTestEngine({ flushPower: 20, paidProductionMultiplier: 2 }).exportSave()
+    const pack = createTestEngine({
+      flushPower: 20,
+      paidOfflineCapHours: 4,
+      paidBathroomChargeBonus: 1,
+    }).exportSave()
+    const f2pProd = computeProduction(f2p)
+    expect(computeProduction(legacy).globalMultiplier).toBeCloseTo(f2pProd.globalMultiplier * 2, 8)
+    expect(computeProduction(pack).globalMultiplier).toBeCloseTo(f2pProd.globalMultiplier, 8)
+    expect(offlineCapMs(pack.paidOfflineCapHours)).toBe(offlineCapMs(0) + 4 * 60 * 60 * 1000)
+    expect(bathroomMaxCharges(pack.paidBathroomChargeBonus)).toBe(3)
+    expect(bathroomMaxCharges(0)).toBe(2)
   })
 
   it('upgrade cost curves grow', () => {

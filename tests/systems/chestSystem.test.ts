@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { CHEST_SHOP_OFFERS, chestRewardOdds } from '../../src/content/chests'
+import {
+  CHEST_GTP_LOSS_WEIGHT,
+  CHEST_GTP_WIN_WEIGHT,
+  CHEST_SHOP_OFFERS,
+  chestOpenCostGtp,
+  chestRewardOdds,
+  chestRewardOddsSummary,
+  rollChestReward,
+} from '../../src/content/chests'
 import { createDefaultSave } from '../../src/core/save/defaultSave'
 import {
   buyChestShopOffer,
@@ -9,6 +17,13 @@ import {
 } from '../../src/core/systems/chestSystem'
 import { computeProduction } from '../../src/core/systems/production'
 import { createTestEngine } from '../../src/core/GameEngine'
+import type { ChestTier } from '../../src/core/types/gameTypes'
+
+const TIERS: ChestTier[] = ['regular', 'silver', 'golden']
+
+function unitInRange(startExclusiveOfPrev: number, endInclusive: number): number {
+  return (startExclusiveOfPrev + endInclusive) / 2 / 100
+}
 
 describe('chestSystem', () => {
   it('buys cheap chests and expensive keys for GTP', () => {
@@ -44,8 +59,6 @@ describe('chestSystem', () => {
       inventoryChests: { regular: 1, silver: 0, golden: 0 },
       inventoryKeys: { regular: 1, silver: 0, golden: 0 },
     })
-    // Force shower reward via deterministic open path through engine with mocked roll:
-    // open until we get a non-shower reward is flaky; instead call openChest with fixed random.
     const save = engine.exportSave()
     const production = engine.getSnapshot().production
     const result = openChest(save, 'regular', production, () => 0.999)
@@ -55,7 +68,9 @@ describe('chestSystem', () => {
   })
 
   it('buys a shop offer by catalog index and rejects a missing index', () => {
-    const chestIndex = CHEST_SHOP_OFFERS.findIndex((o) => o.kind === 'chest' && o.tier === 'regular')
+    const chestIndex = CHEST_SHOP_OFFERS.findIndex(
+      (o) => o.kind === 'chest' && o.tier === 'regular',
+    )
     expect(chestIndex).toBeGreaterThanOrEqual(0)
     const bought = buyChestShopOfferByIndex({ ...createDefaultSave(), gtp: 500 }, chestIndex)
     expect(bought.ok).toBe(true)
@@ -73,25 +88,66 @@ describe('chestSystem', () => {
     expect(result.reason).toBe('no_chest')
   })
 
-  it('grants PP minutes from a chest roll', () => {
+  it('grants 10–30 min PP, combo GTP+PP, and a 2× idle boost', () => {
     const save = {
       ...createDefaultSave(),
       inventoryChests: { regular: 1, silver: 0, golden: 0 },
       inventoryKeys: { regular: 1, silver: 0, golden: 0 },
     }
     const production = computeProduction(save, 0, Date.now())
-    const result = openChest(save, 'regular', production, () => 0.86)
-    expect(result.ok).toBe(true)
-    expect(result.reward?.kind).toBe('pp_minutes')
-    expect(result.ppGranted).toBeDefined()
+
+    const pp = openChest(save, 'regular', production, () => unitInRange(60, 72))
+    expect(pp.reward?.kind).toBe('pp_minutes')
+    expect([10, 20, 30]).toContain(pp.reward?.ppMinutes)
+    expect(pp.ppGranted).toBeDefined()
+
+    const mix = openChest(save, 'regular', production, () => unitInRange(80, 88))
+    expect(mix.reward?.kind).toBe('combo')
+    expect(mix.reward?.gtp).toBeGreaterThan(0)
+    expect(mix.reward?.ppMinutes).toBeGreaterThan(0)
+    expect(mix.save.gtp).toBe(save.gtp + (mix.reward?.gtp ?? 0))
+
+    const boost = openChest(
+      save,
+      'regular',
+      production,
+      () => unitInRange(88, 96),
+      1_700_000_000_000,
+    )
+    expect(boost.reward?.kind).toBe('idle_boost')
+    expect(boost.reward?.idleBoostMinutes).toBe(5)
+    expect(boost.save.activeBoosts.some((item) => item.idleMultiplier === 2)).toBe(true)
+  })
+
+  it('gives a 40% chance of below-cost GTP and 20% chance of above-cost GTP', () => {
+    for (const tier of TIERS) {
+      const cost = chestOpenCostGtp(tier)
+      let lossWeight = 0
+      let winWeight = 0
+      let cursor = 0
+      for (const row of chestRewardOdds(tier)) {
+        const mid = (cursor + row.percent / 2) / 100
+        const roll = rollChestReward(tier, () => mid)
+        if (roll.kind === 'gtp' && roll.gtp < cost && roll.ppMinutes === 0) {
+          lossWeight += row.percent
+        }
+        if (roll.kind === 'gtp' && roll.gtp > cost && roll.ppMinutes === 0) {
+          winWeight += row.percent
+        }
+        cursor += row.percent
+      }
+      expect(lossWeight).toBe(CHEST_GTP_LOSS_WEIGHT)
+      expect(winWeight).toBe(CHEST_GTP_WIN_WEIGHT)
+    }
   })
 
   it('exposes chest reward odds that sum to 100%', () => {
-    for (const tier of ['regular', 'silver', 'golden'] as const) {
+    for (const tier of TIERS) {
       const rows = chestRewardOdds(tier)
       expect(rows.length).toBeGreaterThan(0)
       const total = rows.reduce((sum, row) => sum + row.percent, 0)
       expect(total).toBeCloseTo(100, 5)
+      expect(chestRewardOddsSummary(tier)).toMatch(/GTP above cost/)
     }
   })
 })

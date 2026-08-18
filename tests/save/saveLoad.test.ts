@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GameEngine } from '../../src/core/GameEngine'
+import { LargeNumber } from '../../src/core/numbers/LargeNumber'
 import { createDefaultSave } from '../../src/core/save/defaultSave'
 import {
   deserializeSave,
@@ -105,6 +106,53 @@ describe('Save/Load vertical slice', () => {
     expect(engine.exportSave().gtp).toBe(40)
     expect(engine.importSave({ schemaVersion: 2, gtp: 9 }).ok).toBe(true)
     expect(engine.exportSave().gtp).toBe(9)
+  })
+
+  it('resets all progress, keeps settings, and clears the backup save', () => {
+    const clock = new FixedClock(Date.UTC(2026, 7, 17, 12))
+    const memory = new Map<string, string>()
+    const storage = {
+      getItem: (k: string) => memory.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        memory.set(k, v)
+      },
+      removeItem: (k: string) => {
+        memory.delete(k)
+      },
+      clear: () => memory.clear(),
+      key: () => null,
+      length: 0,
+    } as Storage
+
+    const engine = new GameEngine({
+      clock,
+      save: {
+        ...createDefaultSave(clock.now()),
+        gtp: 80,
+        flushCount: 4,
+        flushPower: 40,
+        settings: { ...createDefaultSave().settings, sfx: false, music: false },
+      },
+      storage,
+    })
+    engine.debugGrantPP(50_000)
+    engine.buyGenerator('plunger_intern', 2)
+    engine.persistImmediate()
+    expect(storage.getItem(SAVE_STORAGE_KEY)).toBeTruthy()
+
+    const result = engine.resetProgress()
+    expect(result.ok).toBe(true)
+    const save = engine.exportSave()
+    expect(LargeNumber.deserialize(save.currentPP).toNumber()).toBe(0)
+    expect(save.gtp).toBe(0)
+    expect(save.flushCount).toBe(0)
+    expect(save.flushPower).toBe(0)
+    expect(save.generators.plunger_intern ?? 0).toBe(0)
+    expect(save.ownedSkins).toEqual(['classic_poop'])
+    expect(save.settings.sfx).toBe(false)
+    expect(save.settings.music).toBe(false)
+    expect(storage.getItem(SAVE_BACKUP_KEY)).toBeNull()
+    expect(loadSaveFromStorage(storage, clock.now(), SAVE_STORAGE_KEY).gtp).toBe(0)
   })
 })
 

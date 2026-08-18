@@ -98,9 +98,9 @@ describe('Quality Audit Fixes', () => {
           defId: 'golden_rain',
           type: 'golden_rain' as const,
           startedAt: now,
-          endsAt: now + 20_000,
+          endsAt: now + 15_000,
           taps: 4,
-          tapTarget: 60,
+          tapTarget: 30,
           completed: false,
           failed: false,
           rewardClaimed: false,
@@ -228,15 +228,15 @@ describe('Quality Audit Fixes', () => {
     })
   })
 
-  describe('AUD-07: golden shower starts with one live target', () => {
-    it('should spawn a catchable golden shower target immediately', () => {
+  describe('AUD-07: golden shower starts with three live targets', () => {
+    it('should spawn three catchable golden shower targets immediately', () => {
       const now = new Date('2026-01-15T12:00:00Z').getTime()
       const runtime = createEventRuntime('golden_rain', now, 0)
 
       expect(runtime).not.toBeNull()
       if (runtime) {
-        expect(runtime.targets.length).toBeGreaterThan(0)
-        expect(runtime.spawnedCount).toBe(1)
+        expect(runtime.targets).toHaveLength(3)
+        expect(runtime.spawnedCount).toBe(3)
         expect(runtime.completed).toBe(false)
       }
     })

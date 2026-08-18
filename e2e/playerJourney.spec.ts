@@ -44,7 +44,7 @@ test('launches, taps, persists currency, and navigates core panels', async ({ pa
   const nav = page.locator('.nav-dock')
   await nav.getByRole('button', { name: 'Shop' }).click()
   await expect(page.getByRole('heading', { name: 'Shop' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Generators' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Production' })).toBeVisible()
 
   await nav.getByRole('button', { name: 'Missions' }).click()
   await expect(page.getByRole('heading', { name: 'Daily Challenges' })).toBeVisible()
@@ -57,6 +57,7 @@ test('launches, taps, persists currency, and navigates core panels', async ({ pa
   await expect(page.getByText('Privacy choices')).toBeVisible()
   await expect(page.getByText('Notifications')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Restore' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Reset all progress' })).toBeVisible()
   await page.getByRole('button', { name: 'Manage' }).click()
   await expect(page.getByText(/Privacy form|Privacy choices updated/)).toBeVisible()
 })
@@ -83,15 +84,15 @@ test('claims the daily streak from Missions', async ({ page }) => {
 
 test('loads the optional store catalog without blocking gameplay', async ({ page }) => {
   await page.locator('.nav-dock').getByRole('button', { name: 'Shop' }).click()
-  await page.getByRole('button', { name: 'Store' }).click()
+  await page.getByRole('button', { name: 'Premium' }).click()
 
-  await expect(page.getByText('Remove Ads', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText(/Remove Ads/).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Restore Purchases' })).toBeVisible()
   await expect(page.getByRole('button', { name: /^Tap / })).toHaveCount(0)
 })
 
 test('shows chest odds in the shop', async ({ page }) => {
   await page.locator('.nav-dock').getByRole('button', { name: 'Shop' }).click()
-  await page.getByRole('button', { name: 'Chests' }).click()
-  await expect(page.getByText(/Odds:/).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Power-Ups' }).click()
+  await expect(page.getByText(/GTP above cost/).first()).toBeVisible()
 })

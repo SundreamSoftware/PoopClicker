@@ -1,12 +1,7 @@
 import { CHALLENGE_TEMPLATES } from '../../content/challenges'
 import { LargeNumber } from '../numbers/LargeNumber'
 import type { PlayerSaveV2 } from '../save/saveSchema'
-import {
-  daysBetweenUtc,
-  isUtcDateInFuture,
-  safeElapsed,
-  toUtcDateKey,
-} from '../time/TimeService'
+import { daysBetweenUtc, isUtcDateInFuture, safeElapsed, toUtcDateKey } from '../time/TimeService'
 import type {
   ChallengeCategory,
   ChallengeTemplate,

@@ -514,6 +514,19 @@ export const SKINS_VISUAL: Record<string, SkinVisualDef> = {
     accessories: ['tie', 'money'],
     faceStyle: 'royal',
   }),
+  wood: base({ bodyShape: 'chunky', texture: 'kernels' }),
+  stone: base({ bodyShape: 'chunky', texture: 'stone' }),
+  pink: base({ bodyShape: 'swirl', texture: 'smooth', faceStyle: 'happy' }),
+  ooze: base({ bodyShape: 'soft', texture: 'smooth' }),
+  lava: base({ bodyShape: 'swirl', texture: 'smooth' }),
+  cosmic: base({ bodyShape: 'swirl', texture: 'neon' }),
+  obsidian: base({ bodyShape: 'swirl', texture: 'void_noise' }),
+  gold: base({ bodyShape: 'swirl', texture: 'facets', headwear: 'crown' }),
+  pearl: base({ bodyShape: 'soft', texture: 'smooth' }),
+  emerald: base({ bodyShape: 'swirl', texture: 'facets' }),
+  rainbow: base({ bodyShape: 'swirl', texture: 'rainbow' }),
+  strawberry_jam: base({ bodyShape: 'soft', texture: 'smooth' }),
+  black_crystal: base({ bodyShape: 'crystal', texture: 'facets' }),
 }
 
 export function getSkinVisual(skinId: string): SkinVisualDef {

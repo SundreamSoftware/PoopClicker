@@ -1,13 +1,34 @@
-import { SKINS, SKIN_BY_ID } from '../../content/skins'
+import { resolveP4Material } from '../../content/assetPaths'
+import { COLLECTION_SKINS, SKINS, SKIN_BY_ID, isCollectionSkin } from '../../content/skins'
 import type { PlayerSaveV2 } from '../save/saveSchema'
 import { collectionPercent } from './achievements'
 
 export type SkinStatus = 'owned' | 'equipped' | 'purchasable' | 'locked' | 'achievement_locked'
 
+const COLLECTION_ID_BY_MATERIAL: Record<string, string> = Object.fromEntries(
+  COLLECTION_SKINS.map((skin) => [resolveP4Material(skin.id), skin.id]),
+)
+
+/** Grant the P4 Collection row when any legacy costume of that material is owned. */
+export function withCollectionMaterialSkins(owned: string[]): string[] {
+  const next = new Set(owned)
+  for (const id of owned) {
+    const collectionId = COLLECTION_ID_BY_MATERIAL[resolveP4Material(id)]
+    if (collectionId) next.add(collectionId)
+  }
+  return Array.from(next)
+}
+
 export function getSkinStatus(save: PlayerSaveV2, skinId: string): SkinStatus {
   const skin = SKIN_BY_ID[skinId]
   if (!skin) return 'locked'
   if (save.equippedSkinId === skinId) return 'equipped'
+  if (
+    isCollectionSkin(skinId) &&
+    resolveP4Material(save.equippedSkinId) === resolveP4Material(skinId)
+  ) {
+    return 'equipped'
+  }
   if (save.ownedSkins.includes(skinId)) return 'owned'
   if (skin.unlock.type === 'gtp' || skin.unlock.type === 'default') return 'purchasable'
   if (!isSkinUnlockRequirementMet(save, skinId)) {
@@ -78,11 +99,13 @@ export function equipSkin(
 }
 
 export function grantEligibleSkins(save: PlayerSaveV2): PlayerSaveV2 {
-  const owned = new Set(save.ownedSkins)
+  const owned = new Set(withCollectionMaterialSkins(save.ownedSkins))
   for (const skin of SKINS) {
     if (owned.has(skin.id)) continue
     if (skin.unlock.type === 'gtp' || skin.unlock.type === 'default') continue
-    if (isSkinUnlockRequirementMet(save, skin.id)) owned.add(skin.id)
+    if (isSkinUnlockRequirementMet({ ...save, ownedSkins: Array.from(owned) }, skin.id)) {
+      owned.add(skin.id)
+    }
   }
-  return { ...save, ownedSkins: Array.from(owned) }
+  return { ...save, ownedSkins: withCollectionMaterialSkins(Array.from(owned)) }
 }

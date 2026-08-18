@@ -1,10 +1,11 @@
 import { FLUSH_MILESTONES } from '../content/flushMilestones'
 import { GENERATOR_BY_ID } from '../content/generators'
-import { UPGRADES, UPGRADE_BY_ID } from '../content/upgrades'
+import { UPGRADE_BY_ID } from '../content/upgrades'
 import { IAP_BY_ID } from '../content/iapProducts'
 import { ROYAL_FLUSH_BY_ID } from '../content/royalFlush'
 import { WORLDS } from '../content/worlds'
 import {
+  bathroomMaxCharges,
   ECONOMY,
   geometricCost,
   geometricSeriesCost,
@@ -14,6 +15,7 @@ import {
 import { LargeNumber } from './numbers/LargeNumber'
 import { createDefaultSave } from './save/defaultSave'
 import {
+  clearSaveRecords,
   isImportableSave,
   loadSaveFromStorage,
   migrateSave,
@@ -21,18 +23,26 @@ import {
   writeSaveRecord,
 } from './save/migrateSave'
 import { SAVE_STORAGE_KEY, type PlayerSaveV2 } from './save/saveSchema'
-import {
-  FixedClock,
-  SystemClock,
-  TimeService,
-  safeElapsed,
-  type Clock,
-} from './time/TimeService'
-import type { ClaimResult, NextGoal, OfflineReward, TapSpeedState } from './types/gameTypes'
+import { FixedClock, SystemClock, TimeService, safeElapsed, type Clock } from './time/TimeService'
+import type {
+  AutoBuyStrategy,
+  ClaimResult,
+  NextGoal,
+  OfflineReward,
+  TapSpeedState,
+} from './types/gameTypes'
 import type { ActiveEventRuntime } from './types/eventRuntime'
 import { EVENT_SCHEDULER, scheduleNextRandomEventAt } from './types/eventRuntime'
 import { claimAchievement, syncAchievements } from './systems/achievements'
-import { decideAutoBuy } from './systems/autoBuy'
+import {
+  AUTO_BUY,
+  AUTO_BUY_SPEED_NODE_ID,
+  AUTO_BUY_STRATEGIES,
+  autoBuyIntervalMsForSave,
+  autoBuySpeedLevelFromSave,
+  decideAutoBuy,
+} from './systems/autoBuy'
+import { computeNextBestGoals } from './systems/nextGoals'
 import {
   canStartDailyDump,
   createIdleDailyDumpRuntime,
@@ -62,13 +72,15 @@ import {
   computeEventRewards,
   createEventRuntime,
   evaluateEventCompletion,
+  isGoldenShowerTargetLive,
   pickScheduledEvent,
+  refillGoldenShower,
   tickEventRuntime,
 } from './systems/eventSystem'
 import { buyChestShopOfferByIndex, openChest } from './systems/chestSystem'
 import type { ChestTier } from './types/gameTypes'
 import { buildFlushPreview, canFlush, performFlush } from './systems/flush'
-import { computeProduction, resolveTapSpeedState } from './systems/production'
+import { QUALITY, computeProduction, resolveTapSpeedState } from './systems/production'
 import { equipSkin, grantEligibleSkins, purchaseSkin } from './systems/skins'
 import {
   claimSessionMission,
@@ -85,16 +97,15 @@ const ECONOMY_CATCH_UP_DT_MS = 250
 
 export type RewardedPlacement = 'income_boost' | 'instant_pps' | 'event_retry' | 'golden_spawn'
 import type { AnalyticsSink } from '../services/analytics'
-import {
-  applyIapGrant as applyIapGrantToSave,
-  type IapGrantSource,
-} from '../services/billing'
+import { applyIapGrant as applyIapGrantToSave, type IapGrantSource } from '../services/billing'
 
 export interface TapResult {
   gained: LargeNumber
   crit: boolean
   combo: number
   state: TapSpeedState
+  splash: boolean
+  critChains: number
 }
 
 export interface EngineSnapshot {
@@ -137,6 +148,8 @@ export class GameEngine {
   private cachedProduction: ReturnType<typeof computeProduction> | null = null
   private cachedProductionSave: PlayerSaveV2 | null = null
   private cachedProductionCombo = Number.NaN
+  private cachedProductionFrenzy = false
+  private cachedProductionTapState: TapSpeedState = 'idle'
   private cachedProductionAt = 0
   private dirty = false
   private readonly listeners = new Set<Listener>()
@@ -241,7 +254,7 @@ export class GameEngine {
       this.save,
       now,
       ECONOMY.bathroomBreakIntervalMs,
-      ECONOMY.bathroomBreakMaxCharges,
+      bathroomMaxCharges(this.save.paidBathroomChargeBonus),
     )
     const production = computeProduction(this.save, 0, now)
     this.save = ensureDailyState(this.save, now, production.pps)
@@ -261,7 +274,7 @@ export class GameEngine {
         this.save.flushCount,
       )
       if (hydrated) {
-        this.eventRuntime = {
+        const merged = {
           ...hydrated,
           taps: this.save.activeEvent.taps,
           tapTarget: this.save.activeEvent.tapTarget,
@@ -273,7 +286,12 @@ export class GameEngine {
           spawnedCount: this.save.activeEvent.spawnedCount ?? hydrated.spawnedCount,
           inBandMs: this.save.activeEvent.inBandMs ?? hydrated.inBandMs,
           bandScore: this.save.activeEvent.bandScore ?? hydrated.bandScore,
+          targets: [],
         }
+        this.eventRuntime =
+          merged.type === 'golden_rain'
+            ? refillGoldenShower(merged, now)
+            : { ...merged, targets: hydrated.targets }
       }
     }
 
@@ -373,7 +391,7 @@ export class GameEngine {
       this.save,
       now,
       ECONOMY.bathroomBreakIntervalMs,
-      ECONOMY.bathroomBreakMaxCharges,
+      bathroomMaxCharges(this.save.paidBathroomChargeBonus),
     )
 
     if (now - this.lastDailyStateCheckAt >= 30_000) {
@@ -396,10 +414,14 @@ export class GameEngine {
       activeBoosts: this.save.activeBoosts.filter((b) => b.expiresAt > now),
     }
 
-    if (this.save.autoBuyUnlocked && this.save.autoBuyEnabled && now - this.lastAutoBuyAt >= 1500) {
-      this.lastAutoBuyAt = now
+    if (
+      this.save.autoBuyUnlocked &&
+      this.save.autoBuyEnabled &&
+      now - this.lastAutoBuyAt >= autoBuyIntervalMsForSave(this.save)
+    ) {
       const decision = decideAutoBuy(this.save)
       if (decision) {
+        this.lastAutoBuyAt = now
         if (decision.kind === 'generator') {
           this.buyGenerator(decision.id, decision.count)
         } else {
@@ -429,12 +451,33 @@ export class GameEngine {
       }
     }
 
-    const crit = Math.random() < production.critChance
+    const nextTapCount = this.save.tapCount + 1
+    let splash = false
     let gained = production.tapPower
+    if (
+      production.splashEveryN &&
+      nextTapCount % production.splashEveryN === 0 &&
+      production.splashMultiplier > 0
+    ) {
+      gained = gained.add(production.tapPower.mul(production.splashMultiplier))
+      splash = true
+    }
+
+    const crit = Math.random() < production.critChance
+    let critChains = 0
     if (crit) {
       gained = gained.mul(production.critMultiplier)
       this.save = { ...this.save, critCount: this.save.critCount + 1 }
       this.save = progressChallenge(this.save, 'crit_taps', 1)
+      while (
+        critChains < QUALITY.critChainCap &&
+        production.critChainChance > 0 &&
+        Math.random() < production.critChainChance
+      ) {
+        gained = gained.mul(production.critMultiplier)
+        critChains += 1
+        this.save = { ...this.save, critCount: this.save.critCount + 1 }
+      }
     }
 
     if (this.eventRuntime && this.eventRuntime.type === 'mega_clog') {
@@ -491,7 +534,7 @@ export class GameEngine {
     this.syncMeta(now)
     this.dirty = true
     this.emit()
-    return { gained, crit, combo: this.combo, state: this.tapState }
+    return { gained, crit, combo: this.combo, state: this.tapState, splash, critChains }
   }
 
   private refreshTapState(now: number, frenzyThreshold?: number): void {
@@ -537,19 +580,33 @@ export class GameEngine {
 
   private getProduction() {
     const now = this.time.now()
+    const frenzyActive = now < this.frenzyActiveUntil
     if (
       this.cachedProduction &&
       this.cachedProductionSave === this.save &&
       this.cachedProductionCombo === this.combo &&
+      this.cachedProductionFrenzy === frenzyActive &&
+      this.cachedProductionTapState === this.tapState &&
       now - this.cachedProductionAt < 100
     ) {
       return this.cachedProduction
     }
-    this.cachedProduction = computeProduction(this.save, this.combo, now)
+    this.cachedProduction = computeProduction(this.save, this.combo, now, {
+      frenzyActive,
+      tapState: this.tapState,
+    })
     this.cachedProductionSave = this.save
     this.cachedProductionCombo = this.combo
+    this.cachedProductionFrenzy = frenzyActive
+    this.cachedProductionTapState = this.tapState
     this.cachedProductionAt = now
     return this.cachedProduction
+  }
+
+  private extendFrenzyFromGolden(now: number): void {
+    const extraSec = this.getProduction().goldenFrenzySec
+    if (extraSec <= 0 || now >= this.frenzyActiveUntil) return
+    this.frenzyActiveUntil += extraSec * 1000
   }
 
   buyGenerator(generatorId: string, count?: number): ClaimResult {
@@ -622,12 +679,21 @@ export class GameEngine {
       }
     }
     if (changed) {
+      const previous = new Set(this.save.claimedGeneratorMilestones[generatorId] ?? [])
       this.save = {
         ...this.save,
         claimedGeneratorMilestones: {
           ...this.save.claimedGeneratorMilestones,
           [generatorId]: Array.from(claimed).sort((a, b) => a - b),
         },
+      }
+      for (const milestone of def.milestones) {
+        if (claimed.has(milestone.level) && !previous.has(milestone.level)) {
+          this.analytics.track('generator_milestone_reached', {
+            generatorId,
+            level: milestone.level,
+          })
+        }
       }
     }
   }
@@ -850,6 +916,7 @@ export class GameEngine {
       ...this.save,
       gtp: this.save.gtp - cost,
       royalFlushLevels: { ...this.save.royalFlushLevels, [nodeId]: level + 1 },
+      ...(nodeId === AUTO_BUY_SPEED_NODE_ID ? { autoBuySpeedLevel: level + 1 } : {}),
     }
     this.analytics.track('royal_flush_upgrade', { nodeId, level: level + 1 })
     this.syncMeta(this.time.now())
@@ -973,6 +1040,7 @@ export class GameEngine {
         lastGoldenPoopAt: now,
       }
       this.goldenInSession += 1
+      this.extendFrenzyFromGolden(now)
     }
 
     if (runtime.completed && !runtime.rewardClaimed) {
@@ -987,9 +1055,11 @@ export class GameEngine {
   catchGoldenPoop(): ClaimResult {
     if (!this.eventRuntime) return { ok: false, reason: 'inactive' }
     const now = this.time.now()
-    const target = this.eventRuntime.targets.find(
-      (t) => t.kind === 'golden' && !t.caught && t.expiresAt > now,
-    )
+    const target = this.eventRuntime.targets.find((t) => {
+      if (t.kind !== 'golden' || t.caught) return false
+      if (this.eventRuntime?.type === 'golden_rain') return isGoldenShowerTargetLive(t, now)
+      return t.expiresAt > now
+    })
     if (!target) return { ok: false, reason: 'miss' }
     return this.catchEventTarget(target.id)
   }
@@ -1012,7 +1082,7 @@ export class GameEngine {
       return { ok: false, reason: 'event_busy' }
     }
     const production = this.getProduction()
-    const result = openChest(this.save, tier, production)
+    const result = openChest(this.save, tier, production, Math.random, this.time.now())
     if (!result.ok || !result.reward) return { ok: false, reason: result.reason }
     this.save = result.save
     if (result.ppGranted && result.ppGranted.gt(0)) {
@@ -1031,15 +1101,50 @@ export class GameEngine {
     this.emit()
     return {
       ok: true,
-      gtp: result.reward.kind === 'gtp' ? result.reward.amount : undefined,
+      gtp: result.reward.gtp > 0 ? result.reward.gtp : undefined,
       pp: result.ppGranted,
       label: result.reward.label,
       startedShower,
     }
   }
 
+  buyAutoBuy(): ClaimResult {
+    if (this.save.autoBuyUnlocked) return { ok: false, reason: 'owned' }
+    if (this.save.gtp < ECONOMY.autoBuyGtpCost) return { ok: false, reason: 'insufficient_gtp' }
+    this.save = {
+      ...this.save,
+      gtp: this.save.gtp - ECONOMY.autoBuyGtpCost,
+      autoBuyUnlocked: true,
+      autoBuyEnabled: true,
+    }
+    this.analytics.track('auto_buy_unlock', { method: 'gtp', cost: ECONOMY.autoBuyGtpCost })
+    this.persistImmediate()
+    this.emit()
+    return { ok: true }
+  }
+
+  buyAutoBuySpeed(): ClaimResult {
+    if (!this.save.autoBuyUnlocked) return { ok: false, reason: 'locked' }
+    if (autoBuySpeedLevelFromSave(this.save) >= AUTO_BUY.maxSpeedLevel) {
+      return { ok: false, reason: 'maxed' }
+    }
+    const result = this.buyRoyalFlush(AUTO_BUY_SPEED_NODE_ID)
+    if (result.ok) {
+      this.analytics.track('auto_buy_speed', { level: this.save.autoBuySpeedLevel })
+    }
+    return result
+  }
+
   setAutoBuyEnabled(enabled: boolean): void {
     this.save = { ...this.save, autoBuyEnabled: enabled }
+    this.persistImmediate()
+    this.emit()
+  }
+
+  setAutoBuyStrategy(strategy: AutoBuyStrategy): void {
+    if (!AUTO_BUY_STRATEGIES.includes(strategy)) return
+    this.save = { ...this.save, autoBuyStrategy: strategy }
+    this.analytics.track('auto_buy_strategy_changed', { strategy })
     this.persistImmediate()
     this.emit()
   }
@@ -1051,6 +1156,10 @@ export class GameEngine {
     }
     this.persistImmediate()
     this.emit()
+  }
+
+  trackUi(event: string, payload: Record<string, unknown> = {}): void {
+    this.analytics.track(event, payload)
   }
 
   updateSettings(partial: Partial<PlayerSaveV2['settings']>): void {
@@ -1291,6 +1400,7 @@ export class GameEngine {
         goldenPoopsCaught: this.save.goldenPoopsCaught + 1,
         lastGoldenPoopAt: this.time.now(),
       }
+      this.extendFrenzyFromGolden(this.time.now())
     }
     if (runtime.type === 'mega_clog') {
       this.save = { ...this.save, clogsCompleted: this.save.clogsCompleted + 1 }
@@ -1460,65 +1570,7 @@ export class GameEngine {
   }
 
   private computeNextGoals(_production: ReturnType<typeof computeProduction>): NextGoal[] {
-    const goals: NextGoal[] = []
-    const dailyDone = this.save.dailyChallenges.filter((c) => c.completed).length
-    if (this.save.dailyChallenges.length > 0 && dailyDone < 3) {
-      goals.push({
-        kind: 'daily',
-        title: 'DAILY',
-        subtitle: `${dailyDone} / 3`,
-        progress: dailyDone / 3,
-      })
-    }
-
-    const runPP = LargeNumber.deserialize(this.save.runPPEarned)
-    const nextMilestone = FLUSH_MILESTONES.find((m) => m.flushCount > this.save.flushCount)
-    if (!canFlush(this.save)) {
-      goals.push({
-        kind: 'flush',
-        title: 'NEXT FLUSH',
-        subtitle: `+${buildFlushPreview(this.save, this.time.now()).flushPowerGain} Flush Power`,
-        progress: Math.min(1, runPP.div(ECONOMY.firstFlushRequirement).toNumber()),
-      })
-    } else if (nextMilestone) {
-      goals.push({
-        kind: 'flush',
-        title: 'NEXT MILESTONE',
-        subtitle: nextMilestone.name,
-        progress: Math.min(1, this.save.flushCount / nextMilestone.flushCount),
-      })
-    } else {
-      goals.push({
-        kind: 'flush',
-        title: 'FLUSH READY',
-        subtitle: `+${buildFlushPreview(this.save, this.time.now()).flushPowerGain} Flush Power`,
-        progress: 1,
-      })
-    }
-
-    const balance = LargeNumber.deserialize(this.save.currentPP)
-    const nextUpgrade = UPGRADES.find((u) => {
-      const level = this.save.purchasedRunUpgrades[u.id] ?? 0
-      if (level >= u.maxLevel) return false
-      if ((u.requiresFlushCount ?? 0) > this.save.flushCount) return false
-      return true
-    })
-    if (nextUpgrade) {
-      const level = this.save.purchasedRunUpgrades[nextUpgrade.id] ?? 0
-      const cost = geometricCost(
-        LargeNumber.from(nextUpgrade.baseCost),
-        nextUpgrade.costGrowth,
-        level,
-      )
-      goals.push({
-        kind: 'upgrade',
-        title: 'NEXT UPGRADE',
-        subtitle: nextUpgrade.name,
-        progress: Math.min(1, balance.div(cost).toNumber()),
-      })
-    }
-
-    return goals.slice(0, 3)
+    return computeNextBestGoals(this.save, this.time.now())
   }
 
   foreground(): void {
@@ -1530,7 +1582,7 @@ export class GameEngine {
       this.save,
       now,
       ECONOMY.bathroomBreakIntervalMs,
-      ECONOMY.bathroomBreakMaxCharges,
+      bathroomMaxCharges(this.save.paidBathroomChargeBonus),
     )
     if (away > 5_000 && (!this.offlineReward || this.offlineReward.claimed)) {
       const production = this.getProduction()
@@ -1654,6 +1706,42 @@ export class GameEngine {
     this.save = migrateSave(raw as PlayerSaveV2, this.time.now())
     this.bootstrap(this.time.now(), { countSession: false })
     this.persistImmediate()
+    this.emit()
+    return { ok: true }
+  }
+
+  /** Wipes run and meta progress. Keeps audio/haptics/notification preferences. */
+  resetProgress(): ClaimResult {
+    const settings = this.save.settings
+    const now = this.time.now()
+    if (this.storage) clearSaveRecords(this.storage, this.storageKey)
+
+    this.save = { ...createDefaultSave(now), settings }
+    this.combo = 0
+    this.rollingCps = 0
+    this.instantCps = 0
+    this.tapState = 'idle'
+    this.tapTimestamps = []
+    this.lastTapAt = 0
+    this.offlineReward = null
+    this.goldenInSession = 0
+    this.absenceMs = 0
+    this.flushWithCorny = 0
+    this.pendingEconomyDt = 0
+    this.cachedProduction = null
+    this.cachedProductionSave = null
+    this.eventRuntime = null
+    this.dailyDumpRuntime = createIdleDailyDumpRuntime()
+    this.lastAutoBuyAt = 0
+    this.frenzyStartedAt = 0
+    this.frenzyActiveUntil = 0
+    this.firstTapTracked = false
+    this.sessionMissions = restoreSessionMissions(undefined)
+    this.lastTickAt = now
+
+    this.bootstrap(now, { countSession: false })
+    this.persistImmediate()
+    this.analytics.track('progress_reset', {})
     this.emit()
     return { ok: true }
   }
