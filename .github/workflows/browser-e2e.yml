@@ -11,15 +11,6 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/browser-e2e.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'e2e/**'
-      - 'playwright.config.ts'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/browser-e2e.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,7 +19,7 @@ concurrency:
 jobs:
   journey:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,15 +27,21 @@ jobs:
           node-version: '22'
           cache: npm
       - name: Install
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
+      - name: Cache Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: .playwright-browsers
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Install Chromium
         run: PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers npx playwright install --with-deps chromium
       - name: Run mobile browser journeys
         run: npm run e2e
-      - name: Upload Playwright report
-        if: always()
+      - name: Upload Playwright report on failure
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
           if-no-files-found: warn
+          retention-days: 5
