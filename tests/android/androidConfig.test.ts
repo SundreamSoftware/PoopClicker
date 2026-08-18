@@ -1,11 +1,42 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
+const APP_ID = 'pl.sundreamsoftware.poopclicker'
+const FORBIDDEN_APP_ID = 'com.sundreamsoftware.poopclicker'
 const manifestPath = 'android/app/src/main/AndroidManifest.xml'
 const gradlePath = 'android/app/build.gradle'
-const activityPath = 'android/app/src/main/java/com/sundreamsoftware/poopclicker/MainActivity.java'
+const activityPath = 'android/app/src/main/java/pl/sundreamsoftware/poopclicker/MainActivity.java'
+const leftoverComJavaPaths = [
+  'android/app/src/main/java/com/sundreamsoftware/poopclicker/MainActivity.java',
+  'android/app/src/test/java/com/sundreamsoftware/poopclicker/ExampleUnitTest.java',
+  'android/app/src/androidTest/java/com/sundreamsoftware/poopclicker/ExampleInstrumentedTest.java',
+] as const
 
 describe('Android startup configuration', () => {
+  it('uses the Play applicationId as Capacitor appId and Gradle namespace', () => {
+    const capacitorConfig = readFileSync('capacitor.config.ts', 'utf8')
+    const gradle = readFileSync(gradlePath, 'utf8')
+
+    expect(capacitorConfig).toContain(`appId: '${APP_ID}'`)
+    expect(gradle).toContain(`namespace = "${APP_ID}"`)
+    expect(gradle).toContain(`applicationId "${APP_ID}"`)
+    expect(existsSync(activityPath)).toBe(true)
+  })
+
+  it('rejects leftover com.sundreamsoftware.poopclicker identity and IAP store IDs', () => {
+    const capacitorConfig = readFileSync('capacitor.config.ts', 'utf8')
+    const gradle = readFileSync(gradlePath, 'utf8')
+    const iapCatalog = readFileSync('src/content/iapProducts.ts', 'utf8')
+
+    expect(capacitorConfig).not.toContain(FORBIDDEN_APP_ID)
+    expect(gradle).not.toContain(FORBIDDEN_APP_ID)
+    expect(iapCatalog).not.toContain(FORBIDDEN_APP_ID)
+
+    for (const leftoverPath of leftoverComJavaPaths) {
+      expect(existsSync(leftoverPath), leftoverPath).toBe(false)
+    }
+  })
+
   it('declares the Google Mobile Ads application id metadata', () => {
     const manifest = readFileSync(manifestPath, 'utf8')
 

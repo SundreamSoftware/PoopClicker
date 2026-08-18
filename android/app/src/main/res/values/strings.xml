@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Poop Clicker</string>
     <string name="title_activity_main">Poop Clicker</string>
-    <string name="package_name">com.sundreamsoftware.poopclicker</string>
-    <string name="custom_url_scheme">com.sundreamsoftware.poopclicker</string>
+    <string name="package_name">pl.sundreamsoftware.poopclicker</string>
+    <string name="custom_url_scheme">pl.sundreamsoftware.poopclicker</string>
 </resources>

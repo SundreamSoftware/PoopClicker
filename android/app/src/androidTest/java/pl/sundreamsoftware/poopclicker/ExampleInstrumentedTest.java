@@ -1,4 +1,4 @@
-package com.sundreamsoftware.poopclicker;
+package pl.sundreamsoftware.poopclicker;
 
 import static org.junit.Assert.*;
 
@@ -22,7 +22,7 @@ public class ExampleInstrumentedTest {
     public void useAppContext() throws Exception {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("com.sundreamsoftware.poopclicker", appContext.getPackageName());
+        assertEquals("pl.sundreamsoftware.poopclicker", appContext.getPackageName());
     }
 
     @Test

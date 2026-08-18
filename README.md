@@ -6,7 +6,7 @@ Absurd casual / clicker / idle game focused on retention, Flush prestige, collec
 
 - TypeScript + React 19 + Vite
 - Pure TS game engine (`src/core`) + data-driven content (`src/content`)
-- Capacitor Android shell (`com.sundreamsoftware.poopclicker`)
+- Capacitor Android shell (`pl.sundreamsoftware.poopclicker`)
 - Vitest, oxlint, Prettier, GitHub Actions CI
 
 ## Quick start

@@ -37,7 +37,7 @@ export interface IapProductDef {
 export const IAP_PRODUCTS: IapProductDef[] = [
   {
     id: 'remove_ads',
-    storeId: 'com.sundreamsoftware.poopclicker.remove_ads',
+    storeId: 'pl.sundreamsoftware.poopclicker.remove_ads',
     title: 'Remove Ads',
     description: 'Grants: Remove interstitial ads. Rewarded ads stay optional.',
     kind: 'non_consumable',
@@ -46,7 +46,7 @@ export const IAP_PRODUCTS: IapProductDef[] = [
   },
   {
     id: 'gtp_small',
-    storeId: 'com.sundreamsoftware.poopclicker.gtp_small',
+    storeId: 'pl.sundreamsoftware.poopclicker.gtp_small',
     title: 'Small GTP Pack',
     description: 'Grants: 50 Golden Toilet Paper.',
     kind: 'consumable',
@@ -55,7 +55,7 @@ export const IAP_PRODUCTS: IapProductDef[] = [
   },
   {
     id: 'gtp_medium',
-    storeId: 'com.sundreamsoftware.poopclicker.gtp_medium',
+    storeId: 'pl.sundreamsoftware.poopclicker.gtp_medium',
     title: 'Medium GTP Pack',
     description: 'Grants: 180 Golden Toilet Paper.',
     kind: 'consumable',
@@ -64,7 +64,7 @@ export const IAP_PRODUCTS: IapProductDef[] = [
   },
   {
     id: 'gtp_large',
-    storeId: 'com.sundreamsoftware.poopclicker.gtp_large',
+    storeId: 'pl.sundreamsoftware.poopclicker.gtp_large',
     title: 'Large GTP Pack',
     description: 'Grants: 350 Golden Toilet Paper.',
     kind: 'consumable',
@@ -73,7 +73,7 @@ export const IAP_PRODUCTS: IapProductDef[] = [
   },
   {
     id: 'gtp_huge',
-    storeId: 'com.sundreamsoftware.poopclicker.gtp_huge',
+    storeId: 'pl.sundreamsoftware.poopclicker.gtp_huge',
     title: 'Huge GTP Pack',
     description: 'Grants: 800 Golden Toilet Paper.',
     kind: 'consumable',
@@ -82,7 +82,7 @@ export const IAP_PRODUCTS: IapProductDef[] = [
   },
   {
     id: 'gtp_mega',
-    storeId: 'com.sundreamsoftware.poopclicker.gtp_mega',
+    storeId: 'pl.sundreamsoftware.poopclicker.gtp_mega',
     title: 'Mega GTP Pack',
     description: 'Grants: 2000 Golden Toilet Paper.',
     kind: 'consumable',
@@ -91,7 +91,7 @@ export const IAP_PRODUCTS: IapProductDef[] = [
   },
   {
     id: 'toilet_tycoon_pack',
-    storeId: 'com.sundreamsoftware.poopclicker.toilet_tycoon_pack',
+    storeId: 'pl.sundreamsoftware.poopclicker.toilet_tycoon_pack',
     title: 'Toilet Tycoon Pack',
     description: 'Grants: Remove Ads, 250 GTP, Toilet Tycoon skin.',
     kind: 'bundle',
@@ -104,7 +104,7 @@ export const IAP_PRODUCTS: IapProductDef[] = [
   },
   {
     id: 'convenience_pack',
-    storeId: 'com.sundreamsoftware.poopclicker.convenience_pack',
+    storeId: 'pl.sundreamsoftware.poopclicker.convenience_pack',
     title: 'Convenience Pack',
     description: 'Grants: Auto-Buy, Remove Ads, +4h offline cap, +1 Bathroom Break charge.',
     kind: 'bundle',

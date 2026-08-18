@@ -150,19 +150,19 @@ describe('native purchase grant filters', () => {
     expect(isPurchasedAndroidState('PENDING')).toBe(false)
     expect(
       restorableProductFromPurchase({
-        productIdentifier: 'com.sundreamsoftware.poopclicker.remove_ads',
+        productIdentifier: 'pl.sundreamsoftware.poopclicker.remove_ads',
         purchaseState: 'PURCHASED',
       })?.id,
     ).toBe('remove_ads')
     expect(
       restorableProductFromPurchase({
-        productIdentifier: 'com.sundreamsoftware.poopclicker.gtp_small',
+        productIdentifier: 'pl.sundreamsoftware.poopclicker.gtp_small',
         purchaseState: 'PURCHASED',
       }),
     ).toBeNull()
     expect(
       restorableProductFromPurchase({
-        productIdentifier: 'com.sundreamsoftware.poopclicker.remove_ads',
+        productIdentifier: 'pl.sundreamsoftware.poopclicker.remove_ads',
         purchaseState: 'PENDING',
       }),
     ).toBeNull()
@@ -181,7 +181,8 @@ describe('IAP catalog store IDs', () => {
 
   it('uses the production package prefix and no placeholder tokens', () => {
     for (const product of IAP_PRODUCTS) {
-      expect(product.storeId.startsWith('com.sundreamsoftware.poopclicker.')).toBe(true)
+      expect(product.storeId.startsWith('pl.sundreamsoftware.poopclicker.')).toBe(true)
+      expect(product.storeId).not.toContain('com.sundreamsoftware.poopclicker')
       expect(product.storeId.toLowerCase()).not.toMatch(/placeholder|changeme|todo|example/)
     }
   })

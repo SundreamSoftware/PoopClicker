@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.sundreamsoftware.poopclicker',
+  appId: 'pl.sundreamsoftware.poopclicker',
   appName: 'Poop Clicker',
   webDir: 'dist',
   server: {
