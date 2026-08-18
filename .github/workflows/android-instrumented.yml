@@ -2,7 +2,7 @@ name: Android Instrumented Smoke
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches: [main]
     paths:
       - 'android/**'
@@ -13,8 +13,6 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/android-instrumented.yml'
-  schedule:
-    - cron: '17 3 * * *'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -23,7 +21,7 @@ concurrency:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,8 +32,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
       - name: Install
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
       - name: Build and sync
         run: npm run build && npx cap sync android
       - name: Run launch and WebView smoke tests
@@ -46,8 +45,8 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: cd android && ./gradlew connectedDebugAndroidTest --no-daemon
-      - name: Upload Android test reports
-        if: always()
+      - name: Upload Android test reports on failure
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: android-instrumented-reports
@@ -55,3 +54,4 @@ jobs:
             android/app/build/reports/androidTests/
             android/app/build/outputs/androidTest-results/
           if-no-files-found: warn
+          retention-days: 5
