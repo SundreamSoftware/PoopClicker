@@ -11,7 +11,7 @@ Deploy `dist/` to your static host. `base: './'` supports file:// and embedded W
 
 ## Android debug APK
 
-Package: **`com.sundreamsoftware.poopclicker`**
+Package: **`pl.sundreamsoftware.poopclicker`**
 
 ```bash
 npm run cap:apk
@@ -22,11 +22,11 @@ Prebuilt artifact for sideload: `artifacts/PoopClicker-debug.apk` (when present 
 
 Requirements: JDK 21+, Android SDK, `android/local.properties` pointing at SDK.
 
-Instrumented tests live under `android/app/src/androidTest/java/com/sundreamsoftware/poopclicker/`.
+Instrumented tests live under `android/app/src/androidTest/java/pl/sundreamsoftware/poopclicker/`.
 
 ## Play Store release (outline)
 
-1. Create Play Console app with package `com.sundreamsoftware.poopclicker`
+1. Create Play Console app with package `pl.sundreamsoftware.poopclicker`
 2. Create IAP products matching `src/content/iapProducts.ts` store IDs
 3. Create AdMob ad units; set `VITE_ADMOB_*` env vars for production builds
 4. Configure release keystore; run `./gradlew bundleRelease` in `android/`

@@ -19,7 +19,7 @@ Date: 2026-08-08
 - AdMob / UMP / Billing architecture (`createAdService`, consent, IAP catalog, restore)
 - Analytics wired into `GameEngine.fromStorage({ analytics })` with Firebase on native
 - Notifications scheduler + delayed permission prompt helpers
-- Android package smoke tests for `com.sundreamsoftware.poopclicker`
+- Android package smoke tests for `pl.sundreamsoftware.poopclicker`
 - CI: PR-only + Android assembleDebug artifact; `android-release.yml` workflow
 - Economy simulator profiles + expanded content/ads/billing/UI/time tests
 - Debug APK removed from git (CI artifact instead)
@@ -116,7 +116,7 @@ Date: 2026-08-08
 
 ## Android
 
-- Package `com.sundreamsoftware.poopclicker`
+- Package `pl.sundreamsoftware.poopclicker`
 - Instrumented smoke asserts correct package
 - PR CI runs `cap sync` + `assembleDebug` + uploads artifact
 - Release workflow: `android-release.yml` (manual)

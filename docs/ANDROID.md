@@ -1,6 +1,6 @@
 # Android APK
 
-Poop Clicker ships as a **Capacitor** WebView shell (`com.sundreamsoftware.poopclicker`).
+Poop Clicker ships as a **Capacitor** WebView shell (`pl.sundreamsoftware.poopclicker`).
 
 > APKs built before the Android startup fix lacked the required AdMob application-id
 > manifest metadata and can crash before the activity opens. Use the latest release;
@@ -27,14 +27,14 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 
 ## Package & tests
 
-| Item               | Value                                                                |
-| ------------------ | -------------------------------------------------------------------- |
-| Application ID     | `com.sundreamsoftware.poopclicker`                                   |
-| Main activity      | `com.sundreamsoftware.poopclicker.MainActivity`                      |
-| Instrumented tests | `android/app/src/androidTest/java/com/sundreamsoftware/poopclicker/` |
-| Unit tests         | `android/app/src/test/java/com/sundreamsoftware/poopclicker/`        |
+| Item               | Value                                                               |
+| ------------------ | ------------------------------------------------------------------- |
+| Application ID     | `pl.sundreamsoftware.poopclicker`                                   |
+| Main activity      | `pl.sundreamsoftware.poopclicker.MainActivity`                      |
+| Instrumented tests | `android/app/src/androidTest/java/pl/sundreamsoftware/poopclicker/` |
+| Unit tests         | `android/app/src/test/java/pl/sundreamsoftware/poopclicker/`        |
 
-Instrumented smoke test asserts the runtime package name matches `com.sundreamsoftware.poopclicker` (not the Capacitor template `com.getcapacitor.app`).
+Instrumented smoke test asserts the runtime package name matches `pl.sundreamsoftware.poopclicker` (not the Capacitor template `com.getcapacitor.app`).
 
 ## Native integrations
 

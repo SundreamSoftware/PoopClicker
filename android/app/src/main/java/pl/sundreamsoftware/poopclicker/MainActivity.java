@@ -1,4 +1,4 @@
-package com.sundreamsoftware.poopclicker;
+package pl.sundreamsoftware.poopclicker;
 
 import android.os.Bundle;
 import android.view.View;

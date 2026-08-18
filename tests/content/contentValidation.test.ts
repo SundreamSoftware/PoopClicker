@@ -4,6 +4,7 @@ import { CHALLENGE_TEMPLATES } from '../../src/content/challenges'
 import { EVENTS } from '../../src/content/events'
 import { FLUSH_MILESTONES } from '../../src/content/flushMilestones'
 import { GENERATORS } from '../../src/content/generators'
+import { IAP_PRODUCTS } from '../../src/content/iapProducts'
 import {
   ROYAL_FLUSH_CATEGORY_ORDER,
   ROYAL_FLUSH_NODES,
@@ -99,6 +100,21 @@ describe('Content validation', () => {
       CHALLENGE_TEMPLATES.map((x) => x.id),
       'challenges',
     )
+    assertUniqueIds(
+      IAP_PRODUCTS.map((x) => x.id),
+      'iap products',
+    )
+    assertUniqueIds(
+      IAP_PRODUCTS.map((x) => x.storeId),
+      'iap storeIds',
+    )
+  })
+
+  it('IAP store IDs use pl.sundreamsoftware.poopclicker and never com.', () => {
+    for (const product of IAP_PRODUCTS) {
+      expect(product.storeId.startsWith('pl.sundreamsoftware.poopclicker.')).toBe(true)
+      expect(product.storeId).not.toContain('com.sundreamsoftware.poopclicker')
+    }
   })
 
   it('Auto-Buy speed levels go from 15s to 5s', () => {

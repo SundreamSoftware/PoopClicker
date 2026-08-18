@@ -51,7 +51,7 @@ Uses `FixedClock`, seeded RNG, and `GameEngine` to assert:
 
 ## Android instrumented tests
 
-Package namespace: **`com.sundreamsoftware.poopclicker`** (not Capacitor template `com.getcapacitor.*`).
+Package namespace: **`pl.sundreamsoftware.poopclicker`** (not Capacitor template `com.getcapacitor.*`).
 
 Run on device/emulator from Android Studio or:
 

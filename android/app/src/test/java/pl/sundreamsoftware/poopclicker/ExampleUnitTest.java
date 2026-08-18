@@ -1,4 +1,4 @@
-package com.sundreamsoftware.poopclicker;
+package pl.sundreamsoftware.poopclicker;
 
 import static org.junit.Assert.*;
 
