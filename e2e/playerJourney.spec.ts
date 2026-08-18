@@ -94,5 +94,5 @@ test('loads the optional store catalog without blocking gameplay', async ({ page
 test('shows chest odds in the shop', async ({ page }) => {
   await page.locator('.nav-dock').getByRole('button', { name: 'Shop' }).click()
   await page.getByRole('button', { name: 'Power-Ups' }).click()
-  await expect(page.getByText(/Odds:/).first()).toBeVisible()
+  await expect(page.getByText(/GTP above cost/).first()).toBeVisible()
 })
